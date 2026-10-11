@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
+import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
+import TourListPage from './pages/TourListPage';
+import TourDetailPage from './pages/TourDetailPage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 
@@ -15,20 +18,16 @@ import useAuthModal from './modules/user/useAuthModal';
  */
 function App() {
   const { isOpen, currentView, sharedEmail, openModal, closeModal, switchView } = useAuthModal();
-  const [user, setUser] = useState(null);
-
-  // Khôi phục thông tin User từ LocalStorage khi App mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-      }
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      return null;
     }
-  }, []);
+  });
 
   // Callback Handler khi Đăng nhập thành công: Cập nhật State User mà không redirect trang
   const handleLoginSuccess = useCallback((data) => {
@@ -53,12 +52,21 @@ function App() {
       />
 
       {/* Main Content Area - Render nội dung các Route */}
-      <div style={{ paddingTop: '72px' }}>
+      <div style={{ paddingTop: '102px', minHeight: 'calc(100vh - 350px)' }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          {/* Các Route khác sẽ được mở rộng theo từng Module */}
+          <Route path="/tour-trong-nuoc" element={<TourListPage categoryType="domestic" />} />
+          <Route path="/tour-trong-nuoc/:region" element={<TourListPage categoryType="domestic" />} />
+          <Route path="/tour-nuoc-ngoai" element={<TourListPage categoryType="international" />} />
+          <Route path="/tour-nuoc-ngoai/:region" element={<TourListPage categoryType="international" />} />
+          <Route path="/tours" element={<TourListPage categoryType="domestic" />} />
+          <Route path="/tour/:id" element={<TourDetailPage />} />
+          <Route path="/tours/:id" element={<TourDetailPage />} />
         </Routes>
       </div>
+
+      {/* Footer chung toàn hệ thống */}
+      <Footer />
 
       {/* Auth Modal Popup - Hiển thị đè lên nội dung trang chính */}
       <AuthModal

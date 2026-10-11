@@ -1,0 +1,159 @@
+/* Footer Styles - Nền xám trang nhã (Neutral Gray) kết hợp Cam Hoàng Hôn */
+.footer-wrapper {
+  background-color: #e5e7eb;
+  color: #1f2937;
+  padding: 50px 0 28px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border-top: 1px solid #d1d5db;
+}
+
+.footer-newsletter-card {
+  background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+  border-radius: 16px;
+  padding: 32px 40px;
+  margin-bottom: 40px;
+  box-shadow: 0 8px 24px rgba(234, 88, 12, 0.25);
+}
+
+.footer-newsletter-title {
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.footer-newsletter-form-wrapper {
+  background-color: #ffffff;
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+}
+
+.footer-newsletter-input {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 8px 16px;
+  font-size: 14px;
+  color: #334155;
+  background: transparent;
+  width: 100%;
+}
+
+.footer-newsletter-input::placeholder {
+  color: #94a3b8;
+}
+
+.footer-newsletter-btn {
+  background-color: #ea580c !important;
+  border-color: #ea580c !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  padding: 8px 22px !important;
+  border-radius: 8px !important;
+  white-space: nowrap;
+  transition: all 0.2s ease !important;
+}
+
+.footer-newsletter-btn:hover {
+  background-color: #c2410c !important;
+  border-color: #c2410c !important;
+  transform: translateY(-1px);
+}
+
+.footer-nav-link {
+  color: #374151;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-nav-link:hover {
+  color: #ea580c;
+}
+
+.footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #374151;
+  background: #ffffff;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.footer-social-icon:hover {
+  color: #ffffff;
+  background-color: #ea580c;
+  transform: translateY(-2px);
+}
+
+.footer-divider {
+  border-color: #d1d5db;
+  margin: 32px 0 24px;
+  opacity: 1;
+}
+
+.footer-bottom-text {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.footer-sub-link {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-sub-link:hover {
+  color: #ea580c;
+}
+
+/* Mobile Responsiveness for Footer */
+@media (max-width: 768px) {
+  .footer-newsletter-card {
+    padding: 24px 20px;
+    margin-bottom: 28px;
+  }
+
+  .footer-newsletter-title {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .footer-newsletter-form-wrapper {
+    flex-direction: column;
+    gap: 8px;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .footer-newsletter-input {
+    background: #ffffff !important;
+    border-radius: 8px !important;
+    padding: 10px 14px;
+  }
+
+  .footer-newsletter-btn {
+    width: 100%;
+    padding: 10px 0 !important;
+  }
+
+  .footer-nav-link {
+    font-size: 13.5px;
+  }
+}
+
+

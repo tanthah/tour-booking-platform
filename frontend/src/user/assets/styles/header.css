@@ -1,0 +1,130 @@
+/* Header Styles - Tông màu Cam Hoàng Hôn (Sunset Amber) */
+.header-topbar {
+  background-color: #ea580c;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 0;
+  letter-spacing: 0.2px;
+}
+
+.header-topbar-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffffff;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.header-topbar-item:hover {
+  opacity: 0.85;
+  color: #ffffff;
+}
+
+.header-main-nav {
+  background-color: #ffffff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 12px 0;
+  z-index: 1000;
+}
+
+.header-nav-link {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1e293b !important;
+  padding: 8px 14px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.header-nav-link:hover,
+.header-nav-link.active,
+.header-nav-link:focus {
+  color: #ea580c !important;
+}
+
+.header-nav-dropdown .dropdown-toggle::after {
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.header-cart-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #ea580c;
+  cursor: pointer;
+  padding: 6px;
+  transition: transform 0.2s ease;
+}
+
+.header-cart-btn:hover {
+  transform: scale(1.08);
+}
+
+.header-cart-badge {
+  position: absolute;
+  top: 0px;
+  right: -2px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
+}
+
+.header-auth-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 6px 16px;
+  transition: all 0.2s ease;
+}
+
+/* Mobile Responsiveness for Header */
+@media (max-width: 768px) {
+  .header-topbar {
+    font-size: 11px;
+    padding: 6px 0;
+  }
+
+  .header-main-nav {
+    padding: 8px 0;
+  }
+
+  .header-nav-link {
+    font-size: 14px;
+    padding: 10px 0 !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-topbar {
+    font-size: 10.5px;
+  }
+
+  .header-topbar-item span {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header-auth-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
