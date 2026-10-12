@@ -197,7 +197,7 @@ const TourListPage = ({ categoryType }) => {
                   </Form.Select>
                 </Form.Group>
 
-                <Button type="submit" className="tour-filter-btn-apply">
+                <Button type="submit" className="tour-filter-btn-apply w-100 d-flex justify-content-center align-items-center">
                   Áp Dụng
                 </Button>
               </Form>

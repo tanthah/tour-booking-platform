@@ -112,7 +112,7 @@ const Footer = () => {
         <Row className="align-items-center gy-3 text-center text-md-start">
           <Col md={4} xs={12}>
             <p className="footer-bottom-text">
-              © 2024 TRAVEL. All rights reserved.
+              © 2026 TRAVEL. All rights reserved.
             </p>
           </Col>
 

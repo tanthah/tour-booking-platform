@@ -1,0 +1,92 @@
+/* Cart Page Styles - Trang Giỏ Hàng tông màu cam */
+
+/* Khung bọc trang giỏ hàng */
+.cart-page-wrapper { background-color: #f8f9fa; min-height: 100vh; padding: 32px 0 80px; }
+.cart-page-title { font-size: 28px; font-weight: 800; color: #ea580c; margin-bottom: 4px; }
+.cart-back-link { color: #ea580c; text-decoration: none; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s ease; }
+.cart-back-link:hover { color: #c2410c; text-decoration: underline; }
+
+/* Card chứa thông tin trong trang giỏ hàng */
+.cart-card { background: #ffffff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06); margin-bottom: 24px; }
+
+/* Item tour trong giỏ */
+.cart-item { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid #f1f5f9; position: relative; }
+.cart-item:last-child { border-bottom: none; }
+
+/* Nút xóa tour khỏi giỏ */
+.cart-item-remove { position: absolute; top: 20px; left: 0; background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 18px; padding: 0; line-height: 1; transition: color 0.2s; }
+.cart-item-remove:hover { color: #ef4444; }
+
+/* Checkbox chọn tour để thanh toán */
+.cart-item-checkbox { width: 20px; height: 20px; accent-color: #ea580c; cursor: pointer; margin-top: 30px; flex-shrink: 0; }
+
+/* Ảnh tour */
+.cart-item-image { width: 160px; height: 110px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+
+/* Thông tin tour */
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-title { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 6px; line-height: 1.4; }
+.cart-item-meta { font-size: 12.5px; color: #64748b; margin-bottom: 3px; }
+.cart-item-meta strong { color: #334155; }
+
+/* Cảnh báo tour đã qua ngày khởi hành */
+.cart-item-warning { background-color: #fef3c7; color: #92400e; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; margin-top: 8px; display: inline-block; }
+
+/* Số lượng hành khách */
+.cart-item-passengers { min-width: 240px; flex-shrink: 0; }
+.cart-passenger-label { font-size: 12px; font-weight: 700; color: #ea580c; margin-bottom: 8px; }
+.cart-passenger-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: 13px; }
+.cart-passenger-row span:first-child { color: #475569; min-width: 55px; }
+
+/* Nút tăng giảm số lượng hành khách */
+.cart-qty-btn { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ea580c; background: #ffffff; color: #ea580c; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s ease; padding: 0; }
+.cart-qty-btn:hover { background: #ea580c; color: #ffffff; }
+.cart-passenger-price { color: #ea580c; font-weight: 700; font-size: 13px; min-width: 100px; text-align: right; }
+
+/* Mã giảm giá coupon */
+.cart-coupon-wrapper { display: flex; gap: 10px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #f1f5f9; }
+.cart-coupon-input { flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; font-size: 13px; outline: none; transition: border-color 0.2s; }
+.cart-coupon-input:focus { border-color: #ea580c; }
+
+/* Nút áp dụng mã giảm giá */
+.cart-coupon-btn { background-color: #ea580c; color: #ffffff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; }
+.cart-coupon-btn:hover { background-color: #c2410c; }
+
+/* Tổng thanh toán */
+.cart-summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; margin-bottom: 8px; color: #475569; }
+.cart-summary-total { font-size: 22px; font-weight: 900; color: #ea580c; }
+
+/* Tiêu đề từng phần thông tin */
+.cart-section-title { font-size: 22px; font-weight: 800; color: #ea580c; margin-bottom: 20px; }
+.cart-form-input { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; font-size: 14px; width: 100%; outline: none; transition: border-color 0.2s; }
+.cart-form-input:focus { border-color: #ea580c; }
+
+.cart-form-textarea { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; font-size: 14px; width: 100%; min-height: 100px; outline: none; resize: vertical; transition: border-color 0.2s; }
+.cart-form-textarea:focus { border-color: #ea580c; }
+
+/* Phương thức thanh toán */
+.cart-payment-option { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; font-size: 14px; color: #334155; }
+.cart-payment-option:hover { border-color: #ea580c; }
+.cart-payment-option.selected { border-color: #ea580c; background-color: #fff7ed; }
+.cart-payment-radio { width: 18px; height: 18px; accent-color: #ea580c; cursor: pointer; }
+
+/* Nút đặt tour chính */
+.cart-checkout-btn { background-color: #ea580c; color: #ffffff; border: none; border-radius: 12px; padding: 14px 0; font-size: 16px; font-weight: 800; width: 100%; cursor: pointer; transition: all 0.2s; margin-top: 20px; }
+.cart-checkout-btn:hover { background-color: #c2410c; transform: translateY(-1px); }
+.cart-checkout-btn:disabled { background-color: #94a3b8; cursor: not-allowed; transform: none; }
+
+/* Trạng thái giỏ hàng trống */
+.cart-empty { text-align: center; padding: 60px 20px; }
+.cart-empty-title { font-size: 20px; font-weight: 700; color: #64748b; margin-top: 16px; margin-bottom: 8px; }
+.cart-empty-desc { font-size: 14px; color: #94a3b8; margin-bottom: 24px; }
+.cart-empty-btn { background-color: #ea580c; color: #ffffff; border: none; border-radius: 10px; padding: 12px 32px; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-block; transition: background-color 0.2s; }
+.cart-empty-btn:hover { background-color: #c2410c; color: #ffffff; }
+
+/* Responsive trên thiết bị di động */
+@media (max-width: 768px) {
+  .cart-item { flex-direction: column; gap: 12px; }
+  .cart-item-image { width: 100%; height: 180px; }
+  .cart-item-passengers { min-width: 100%; }
+  .cart-page-title { font-size: 22px; }
+  .cart-card { padding: 16px; }
+}

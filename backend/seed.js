@@ -5,6 +5,8 @@ dotenv.config();
 const Tour = require('./modules/tour/tour.model');
 const { MONGO_URI } = require('./config/env');
 
+const Category = require('./modules/category/category.model');
+
 /**
  * Danh sách 15 Tour Trong Nước & 15 Tour Nước Ngoài mẫu
  */
@@ -47,7 +49,7 @@ const intlTemplates = [
 /**
  * Tạo danh sách 30 Tour hoàn chỉnh từ các mẫu trên
  */
-const buildTours = () => {
+const buildTours = (domesticCatId, intlCatId) => {
   const allTours = [];
 
   // Tạo 15 Tour trong nước
@@ -56,7 +58,7 @@ const buildTours = () => {
       code: t.code,
       title: t.title,
       description: `Hành trình khám phá ${t.to} với dịch vụ chất lượng cao, trọn gói tiện nghi nhất.`,
-      category: 'DOMESTIC',
+      category: domesticCatId,
       region: t.region,
       departure_location: t.from,
       destination_location: t.to,
@@ -66,8 +68,17 @@ const buildTours = () => {
       vehicle: i % 2 === 0 ? 'Máy bay + Ô tô' : 'Ô tô 45 chỗ',
       price: t.price,
       original_price: t.oldPrice,
+      price_adult: t.price,
+      price_child: Math.round(t.price * 0.7),
+      price_baby: Math.round(t.price * 0.3),
+      original_price_adult: t.oldPrice,
+      original_price_child: Math.round(t.oldPrice * 0.7),
+      original_price_baby: Math.round(t.oldPrice * 0.3),
       total_slots: t.slots,
       remaining_slots: t.remain,
+      max_adults: t.slots,
+      max_children: Math.round(t.slots * 0.5),
+      max_babies: Math.round(t.slots * 0.2),
       status: 'PUBLISHED',
       main_image: t.img,
       gallery: [t.img, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop'],
@@ -86,7 +97,7 @@ const buildTours = () => {
       code: t.code,
       title: t.title,
       description: `Tour khám phá thế giới tuyệt mỹ tại ${t.to} cùng hướng dẫn viên chuyên nghiệp.`,
-      category: 'INTERNATIONAL',
+      category: intlCatId,
       region: t.region,
       departure_location: t.from,
       destination_location: t.to,
@@ -96,8 +107,17 @@ const buildTours = () => {
       vehicle: 'Máy bay quốc tế',
       price: t.price,
       original_price: t.oldPrice,
+      price_adult: t.price,
+      price_child: Math.round(t.price * 0.75),
+      price_baby: Math.round(t.price * 0.35),
+      original_price_adult: t.oldPrice,
+      original_price_child: Math.round(t.oldPrice * 0.75),
+      original_price_baby: Math.round(t.oldPrice * 0.35),
       total_slots: t.slots,
       remaining_slots: t.remain,
+      max_adults: t.slots,
+      max_children: Math.round(t.slots * 0.5),
+      max_babies: Math.round(t.slots * 0.2),
       status: 'PUBLISHED',
       main_image: t.img,
       gallery: [t.img, 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'],
@@ -122,11 +142,17 @@ const seedTourData = async () => {
     await mongoose.connect(dbUri);
     console.log('🔗 Đã kết nối MongoDB thành công');
 
-    // Dọn dẹp dữ liệu Tour cũ
+    // Dọn dẹp dữ liệu cũ
+    await Category.deleteMany({});
     await Tour.deleteMany({});
-    console.log('🧹 Đã dọn dẹp dữ liệu Tour cũ');
+    console.log('🧹 Đã dọn dẹp dữ liệu Danh mục và Tour cũ');
 
-    const toursToInsert = buildTours();
+    // Tao 2 danh muc mac dinh (có code để frontend lọc theo DOMESTIC/INTERNATIONAL)
+    const domesticCat = await Category.create({ name: 'Tour Trong Nước', code: 'DOMESTIC', position: 1 });
+    const intlCat = await Category.create({ name: 'Tour Nước Ngoài', code: 'INTERNATIONAL', position: 2 });
+    console.log('✅ Đã tạo 2 danh mục: Tour Trong Nước, Tour Nước Ngoài');
+
+    const toursToInsert = buildTours(domesticCat._id, intlCat._id);
     const createdTours = await Tour.insertMany(toursToInsert);
     console.log(`✅ Đã chèn thành công ${createdTours.length} Tour (15 Trong Nước + 15 Nước Ngoài) vào Database!`);
 

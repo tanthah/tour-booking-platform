@@ -57,8 +57,15 @@ const authorize = (...roles) => {
     }
 
     // Kiểm tra xem User hiện tại có sở hữu ít nhất một Role hợp lệ hay không
-    const userRoles = req.user.roles || [];
-    const hasRole = userRoles.some((role) => roles.includes(role));
+    let userRoles = [];
+    if (req.user.roles && Array.isArray(req.user.roles) && req.user.roles.length > 0) {
+      userRoles = req.user.roles;
+    } else if (req.user.role) {
+      userRoles = [req.user.role];
+    }
+    
+    const allowedRoles = roles.map(r => r.toUpperCase());
+    const hasRole = userRoles.some((role) => allowedRoles.includes(role.toUpperCase()));
 
     if (!hasRole) {
       return ApiResponse.error(res, 403, 'Bạn không có quyền thực hiện hành động này.');
