@@ -26,9 +26,9 @@ const tourSchema = new mongoose.Schema(
       default: '',
     },
     category: {
-      type: String,
-      enum: ['DOMESTIC', 'INTERNATIONAL'],
-      required: [true, 'Phân loại Tour là bắt buộc (DOMESTIC hoặc INTERNATIONAL)'],
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: [true, 'Danh mục Tour là bắt buộc'],
     },
     region: {
       type: String,
@@ -61,7 +61,7 @@ const tourSchema = new mongoose.Schema(
       type: String,
       default: 'Ô tô 45 chỗ',
     },
-    // Giá duy nhất tại một thời điểm (theo yêu cầu nghiệp vụ M2)
+    // Giá duy nhất tại một thời điểm (hiển thị chung)
     price: {
       type: Number,
       required: [true, 'Giá Tour là bắt buộc'],
@@ -72,6 +72,14 @@ const tourSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Giá gốc phải >= 0'],
     },
+    // Giá theo độ tuổi (Mới)
+    price_adult: { type: Number, default: 0 },
+    price_child: { type: Number, default: 0 },
+    price_baby: { type: Number, default: 0 },
+    original_price_adult: { type: Number, default: 0 },
+    original_price_child: { type: Number, default: 0 },
+    original_price_baby: { type: Number, default: 0 },
+
     // Quản lý chỗ ngồi / slot
     total_slots: {
       type: Number,
@@ -83,10 +91,14 @@ const tourSchema = new mongoose.Schema(
       required: [true, 'Số chỗ còn lại là bắt buộc'],
       min: [0, 'Số chỗ còn lại phải >= 0'],
     },
+    // Quản lý chỗ theo độ tuổi (Mới)
+    max_adults: { type: Number, default: 0 },
+    max_children: { type: Number, default: 0 },
+    max_babies: { type: Number, default: 0 },
     // Trạng thái vòng đời Tour
     status: {
       type: String,
-      enum: ['DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'],
+      enum: ['ACTIVE', 'INACTIVE', 'DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'],
       default: 'DRAFT',
     },
     // Hình ảnh đại diện và thư viện ảnh

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Container, Row, Col, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
 import { Link, useParams } from 'react-router-dom';
+import TourBookingCard from '../components/TourBookingCard';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
 
@@ -14,6 +15,7 @@ import '../assets/styles/tour.css';
  */
 const TourDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,8 +23,11 @@ const TourDetailPage = () => {
 
   const [activeImage, setActiveImage] = useState('');
   const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [babies, setBabies] = useState(0);
   const [departureCity, setDepartureCity] = useState('');
   const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
 
   useEffect(() => {
     const fetchTourDetail = async () => {
@@ -71,11 +76,31 @@ const TourDetailPage = () => {
 
   const galleryImages = [tour.main_image, ...(tour.gallery || [])].filter(Boolean);
   const unitPrice = tour.price || 0;
-  const totalPrice = adults * unitPrice;
+  const childPrice = tour.child_price || Math.round(unitPrice * 0.7);
+  const babyPrice = tour.baby_price || Math.round(unitPrice * 0.3);
+  const totalPrice = (adults * unitPrice) + (children * childPrice) + (babies * babyPrice);
+  const totalPassengers = adults + children + babies;
+  const canAddPassenger = !tour.remaining_slots || totalPassengers < tour.remaining_slots;
 
-  const handleAddToCart = () => {
-    setIsAddedToCart(true);
-    setTimeout(() => setIsAddedToCart(false), 3000);
+  // Thêm tour vào giỏ hàng qua API backend
+  const handleAddToCart = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Vui lòng đăng nhập để thêm tour vào giỏ hàng.');
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+      await axiosClient.post('/cart/items', { tour_id: tour._id, quantity: 1 });
+      setIsAddedToCart(true);
+      window.dispatchEvent(new Event('cartUpdated'));
+      setTimeout(() => setIsAddedToCart(false), 3000);
+    } catch (err) {
+      alert(err.message || 'Không thể thêm tour vào giỏ hàng.');
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const departureDateStr = tour.departure_date
@@ -180,106 +205,26 @@ const TourDetailPage = () => {
 
           {/* CỘT PHẢI (Widget đặt tour - Chuyến Đi Của Bạn) */}
           <Col lg={5} xs={12}>
-            <div className="tour-booking-card">
-              <h3 className="tour-booking-title">Chuyến Đi Của Bạn</h3>
-
-              {/* Thông tin vắn tắt tour */}
-              <div className="tour-booking-mini-item">
-                <img src={tour.main_image} alt={tour.title} className="tour-booking-mini-img" />
-                <div>
-                  <h5 style={{ fontSize: '14px', fontWeight: 700, margin: '0 0 4px', color: '#1e293b' }}>
-                    {tour.title}
-                  </h5>
-                  <div className="d-flex align-items-center gap-1" style={{ fontSize: '12px' }}>
-                    <span style={{ color: '#f59e0b' }}>★★★★★</span>
-                    <span style={{ color: '#64748b' }}>Còn {tour.remaining_slots} chỗ trống</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Thông tin thông số tour */}
-              <div className="mb-3">
-                <div className="tour-booking-meta-row">
-                  <span>🎫 Mã Tour:</span> <strong className="text-dark">{tour.code}</strong>
-                </div>
-                <div className="tour-booking-meta-row">
-                  <span>📅 Thời Gian:</span> <strong className="text-dark">{tour.duration}</strong>
-                </div>
-                <div className="tour-booking-meta-row">
-                  <span>🚗 Phương Tiện:</span> <strong className="text-dark">{tour.vehicle || 'Ô tô'}</strong>
-                </div>
-                <div className="tour-booking-meta-row">
-                  <span>📅 Ngày Khởi Hành:</span> <strong className="text-dark">{departureDateStr}</strong>
-                </div>
-                <div className="tour-booking-meta-row">
-                  <span>📍 Điểm Đến:</span> <strong className="text-dark">{tour.destination_location}</strong>
-                </div>
-              </div>
-
-              {/* Chọn điểm khởi hành */}
-              <Form.Group className="mb-3">
-                <Form.Label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
-                  Khởi Hành Tại:
-                </Form.Label>
-                <Form.Select
-                  value={departureCity}
-                  onChange={(e) => setDepartureCity(e.target.value)}
-                  style={{ borderRadius: '8px', fontSize: '13px' }}
-                >
-                  <option value={tour.departure_location}>{tour.departure_location}</option>
-                  <option value="Hà Nội">Hà Nội</option>
-                  <option value="TP.HCM">TP. Hồ Chí Minh</option>
-                  <option value="Đà Nẵng">Đà Nẵng</option>
-                </Form.Select>
-              </Form.Group>
-
-              {/* Bộ chọn số lượng hành khách */}
-              <div className="mb-3">
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#334155', marginBottom: '8px' }}>
-                  Số Lượng Hành Khách
-                </div>
-
-                <div className="d-flex justify-content-between align-items-center mb-2" style={{ fontSize: '13px' }}>
-                  <span style={{ minWidth: '70px' }}>Số khách:</span>
-                  <div className="d-flex align-items-center gap-2">
-                    <button
-                      className="tour-booking-qty-btn"
-                      onClick={() => setAdults(Math.max(1, adults - 1))}
-                    >
-                      -
-                    </button>
-                    <span style={{ width: '20px', textAlign: 'center', fontWeight: 700 }}>{adults}</span>
-                    <button
-                      className="tour-booking-qty-btn"
-                      onClick={() => setAdults(Math.min(tour.remaining_slots || 10, adults + 1))}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <span style={{ color: '#ea580c', fontWeight: 600 }}>
-                    {adults} x {unitPrice.toLocaleString('vi-VN')} đ
-                  </span>
-                </div>
-              </div>
-
-              {/* Tổng cộng & Nút Thêm Vào Giỏ */}
-              <div className="d-flex justify-content-between align-items-center pt-3 border-top">
-                <span style={{ fontSize: '15px', fontWeight: 700 }}>Tổng cộng:</span>
-                <span className="tour-booking-total">{totalPrice.toLocaleString('vi-VN')} đ</span>
-              </div>
-
-              <Button
-                onClick={handleAddToCart}
-                className="tour-booking-submit-btn"
-                disabled={tour.remaining_slots <= 0}
-              >
-                {tour.remaining_slots <= 0
-                  ? 'Tour Đã Hết Chỗ'
-                  : isAddedToCart
-                  ? 'Đã Thêm Vào Giỏ Hàng ✓'
-                  : 'Thêm Vào Giỏ Hàng'}
-              </Button>
-            </div>
+            <TourBookingCard
+              tour={tour}
+              departureDateStr={departureDateStr}
+              departureCity={departureCity}
+              setDepartureCity={setDepartureCity}
+              adults={adults}
+              setAdults={setAdults}
+              children={children}
+              setChildren={setChildren}
+              babies={babies}
+              setBabies={setBabies}
+              unitPrice={unitPrice}
+              childPrice={childPrice}
+              babyPrice={babyPrice}
+              totalPrice={totalPrice}
+              canAddPassenger={canAddPassenger}
+              handleAddToCart={handleAddToCart}
+              addingToCart={addingToCart}
+              isAddedToCart={isAddedToCart}
+            />
           </Col>
         </Row>
       </Container>

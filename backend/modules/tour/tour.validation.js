@@ -15,9 +15,8 @@ const createTourValidation = [
     .isLength({ min: 5, max: 255 }).withMessage('Tên Tour phải từ 5 đến 255 ký tự'),
 
   body('category')
-    .trim()
-    .notEmpty().withMessage('Phân loại Tour là bắt buộc')
-    .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại phải là DOMESTIC hoặc INTERNATIONAL'),
+    .notEmpty().withMessage('Danh mục Tour là bắt buộc')
+    .isMongoId().withMessage('Danh mục Tour không hợp lệ'),
 
   body('region')
     .optional()
@@ -52,6 +51,13 @@ const createTourValidation = [
     .optional()
     .isFloat({ min: 0 }).withMessage('Giá gốc phải là số >= 0'),
 
+  body('price_adult').optional().isFloat({ min: 0 }).withMessage('Giá người lớn phải >= 0'),
+  body('price_child').optional().isFloat({ min: 0 }).withMessage('Giá trẻ em phải >= 0'),
+  body('price_baby').optional().isFloat({ min: 0 }).withMessage('Giá em bé phải >= 0'),
+  body('original_price_adult').optional().isFloat({ min: 0 }).withMessage('Giá gốc người lớn phải >= 0'),
+  body('original_price_child').optional().isFloat({ min: 0 }).withMessage('Giá gốc trẻ em phải >= 0'),
+  body('original_price_baby').optional().isFloat({ min: 0 }).withMessage('Giá gốc em bé phải >= 0'),
+
   body('total_slots')
     .notEmpty().withMessage('Tổng số chỗ là bắt buộc')
     .isInt({ min: 1 }).withMessage('Tổng số chỗ phải là số nguyên >= 1'),
@@ -60,9 +66,18 @@ const createTourValidation = [
     .notEmpty().withMessage('Số chỗ còn lại là bắt buộc')
     .isInt({ min: 0 }).withMessage('Số chỗ còn lại phải là số nguyên >= 0'),
 
+  body('max_adults').optional().isInt({ min: 0 }).withMessage('Số người lớn tối đa phải >= 0'),
+  body('max_children').optional().isInt({ min: 0 }).withMessage('Số trẻ em tối đa phải >= 0'),
+  body('max_babies').optional().isInt({ min: 0 }).withMessage('Số em bé tối đa phải >= 0'),
+
   body('main_image')
     .trim()
     .notEmpty().withMessage('Ảnh đại diện Tour là bắt buộc'),
+
+  body('status')
+    .optional()
+    .isIn(['ACTIVE', 'INACTIVE', 'DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'])
+    .withMessage('Trạng thái không hợp lệ'),
 ];
 
 /**
@@ -80,7 +95,7 @@ const updateTourValidation = [
 
   body('category')
     .optional()
-    .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại phải là DOMESTIC hoặc INTERNATIONAL'),
+    .isMongoId().withMessage('Danh mục Tour không hợp lệ'),
 
   body('region')
     .optional()
@@ -91,6 +106,14 @@ const updateTourValidation = [
     .optional()
     .isFloat({ min: 0 }).withMessage('Giá Tour phải là số >= 0'),
 
+  body('original_price').optional().isFloat({ min: 0 }).withMessage('Giá gốc phải >= 0'),
+  body('price_adult').optional().isFloat({ min: 0 }).withMessage('Giá người lớn phải >= 0'),
+  body('price_child').optional().isFloat({ min: 0 }).withMessage('Giá trẻ em phải >= 0'),
+  body('price_baby').optional().isFloat({ min: 0 }).withMessage('Giá em bé phải >= 0'),
+  body('original_price_adult').optional().isFloat({ min: 0 }).withMessage('Giá gốc người lớn phải >= 0'),
+  body('original_price_child').optional().isFloat({ min: 0 }).withMessage('Giá gốc trẻ em phải >= 0'),
+  body('original_price_baby').optional().isFloat({ min: 0 }).withMessage('Giá gốc em bé phải >= 0'),
+
   body('total_slots')
     .optional()
     .isInt({ min: 1 }).withMessage('Tổng số chỗ phải là số nguyên >= 1'),
@@ -99,6 +122,10 @@ const updateTourValidation = [
     .optional()
     .isInt({ min: 0 }).withMessage('Số chỗ còn lại phải là số nguyên >= 0'),
 
+  body('max_adults').optional().isInt({ min: 0 }).withMessage('Số người lớn tối đa phải >= 0'),
+  body('max_children').optional().isInt({ min: 0 }).withMessage('Số trẻ em tối đa phải >= 0'),
+  body('max_babies').optional().isInt({ min: 0 }).withMessage('Số em bé tối đa phải >= 0'),
+
   body('departure_date')
     .optional()
     .isISO8601().withMessage('Ngày khởi hành phải đúng định dạng ISO 8601'),
@@ -106,6 +133,11 @@ const updateTourValidation = [
   body('end_date')
     .optional()
     .isISO8601().withMessage('Ngày kết thúc phải đúng định dạng ISO 8601'),
+
+  body('status')
+    .optional()
+    .isIn(['ACTIVE', 'INACTIVE', 'DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'])
+    .withMessage('Trạng thái không hợp lệ'),
 ];
 
 /**
@@ -118,8 +150,8 @@ const changeStatusValidation = [
   body('status')
     .trim()
     .notEmpty().withMessage('Trạng thái mới là bắt buộc')
-    .isIn(['DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'])
-    .withMessage('Trạng thái phải là DRAFT, PUBLISHED, FULL, CLOSED hoặc CANCELLED'),
+    .isIn(['ACTIVE', 'INACTIVE', 'DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'])
+    .withMessage('Trạng thái không hợp lệ'),
 ];
 
 /**
@@ -144,7 +176,7 @@ const listToursValidation = [
 
   query('category')
     .optional()
-    .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại không hợp lệ'),
+    .isString().withMessage('Danh mục không hợp lệ'),
 
   query('region')
     .optional()

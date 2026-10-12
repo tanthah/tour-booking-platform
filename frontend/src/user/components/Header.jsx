@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navbar, Container, Nav, NavDropdown, Button } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from './Logo';
+import useCart from '../hooks/useCart';
 import '../assets/styles/header.css';
 
 /**
@@ -10,17 +11,30 @@ import '../assets/styles/header.css';
  * 1. Topbar màu cam: Hotline, Email, Địa chỉ
  * 2. Main Navbar: Logo TRAVEL, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
  */
-const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, cartCount = 1 }) => {
+const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { cart, fetchCart } = useCart();
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 30);
     };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    
+    // Lắng nghe sự kiện cập nhật giỏ hàng từ các component khác
+    const handleCartUpdate = () => {
+      fetchCart();
+    };
+    window.addEventListener('cartUpdated', handleCartUpdate);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('cartUpdated', handleCartUpdate);
+    };
+  }, [fetchCart]);
+
+  const cartCount = cart?.items?.length || 0;
 
   const isActive = (path) => location.pathname === path;
 
@@ -190,6 +204,18 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, cartCount = 1 }) 
                   <span className="d-none d-md-inline fw-semibold text-dark fs-6">
                     {user.full_name}
                   </span>
+                  {(user.role === 'ADMIN' || user.role === 'STAFF' || (user.roles && (user.roles.includes('ADMIN') || user.roles.includes('STAFF')))) && (
+                    <Button
+                      as={Link}
+                      to="/admin"
+                      variant="outline-primary"
+                      size="sm"
+                      className="header-auth-btn mx-2"
+                      style={{ borderColor: '#ea580c', color: '#ea580c' }}
+                    >
+                      Quản trị
+                    </Button>
+                  )}
                   <Button
                     variant="outline-secondary"
                     size="sm"

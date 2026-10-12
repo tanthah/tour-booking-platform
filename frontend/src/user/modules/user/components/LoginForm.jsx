@@ -53,17 +53,17 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess, onClo
         password: formData.password,
       });
 
-      // Lưu trữ Token và Thông tin User vào LocalStorage
+      // Luu Token va thong tin User vao LocalStorage
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
 
-      // Kích hoạt Callback Handler thông báo Đăng nhập thành công và đóng Modal
+      // Kich hoat callback chuyen huong truoc, sau do moi dong Modal
       if (onLoginSuccess) {
         onLoginSuccess(response.data);
       }
       onClose();
     } catch (err) {
-      setError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+      setError(err.message || 'Dang nhap that bai. Vui long thu lai.');
     } finally {
       setLoading(false);
     }
