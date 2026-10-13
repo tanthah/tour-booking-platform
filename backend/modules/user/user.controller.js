@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const userService = require('./user.service');
 const ApiResponse = require('../../utils/apiResponse');
 const asyncHandler = require('../../utils/asyncHandler');
+const { uploadToCloudinary } = require('../../middlewares/upload.middleware');
 
 /**
  * Hàm helper kiểm tra và xử lý lỗi Validation từ express-validator
@@ -111,7 +112,12 @@ const getProfile = asyncHandler(async (req, res) => {
  * HTTP Method: PATCH /api/auth/me
  */
 const updateProfile = asyncHandler(async (req, res) => {
-  const user = await userService.updateProfile(req.user._id, req.body);
+  let updateData = { ...req.body };
+  if (req.file) {
+    const result = await uploadToCloudinary(req.file.buffer, 'tour-booking/avatars');
+    updateData.avatar_url = result.secure_url;
+  }
+  const user = await userService.updateProfile(req.user._id, updateData);
   ApiResponse.success(res, 200, 'Cập nhật thông tin thành công', user);
 });
 

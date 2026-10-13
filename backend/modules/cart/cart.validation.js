@@ -11,20 +11,50 @@ const addItemValidation = [
   body('quantity')
     .optional()
     .isInt({ min: 1, max: 50 }).withMessage('Số lượng phải là số nguyên từ 1 đến 50'),
+  body('quantity_adult')
+    .optional()
+    .isInt({ min: 1, max: 50 }).withMessage('Số lượng người lớn phải là số nguyên từ 1 đến 50'),
+  body('quantity_child')
+    .optional()
+    .isInt({ min: 0, max: 50 }).withMessage('Số lượng trẻ em phải là số nguyên từ 0 đến 50'),
+  body('quantity_baby')
+    .optional()
+    .isInt({ min: 0, max: 50 }).withMessage('Số lượng em bé phải là số nguyên từ 0 đến 50'),
 ];
 
 /**
  * Validation: Cập nhật số lượng item trong giỏ hàng
  * Params: itemId (ID của item trong giỏ)
- * Body: quantity (bắt buộc)
+ * Body: quantity hoặc quantity_adult/quantity_child/quantity_baby
  */
 const updateItemValidation = [
   param('itemId')
     .notEmpty().withMessage('Item ID là bắt buộc')
     .isMongoId().withMessage('Item ID không hợp lệ'),
   body('quantity')
-    .notEmpty().withMessage('Số lượng là bắt buộc')
+    .optional()
     .isInt({ min: 1, max: 50 }).withMessage('Số lượng phải là số nguyên từ 1 đến 50'),
+  body('quantity_adult')
+    .optional()
+    .isInt({ min: 1, max: 50 }).withMessage('Số lượng người lớn phải là số nguyên từ 1 đến 50'),
+  body('quantity_child')
+    .optional()
+    .isInt({ min: 0, max: 50 }).withMessage('Số lượng trẻ em phải là số nguyên từ 0 đến 50'),
+  body('quantity_baby')
+    .optional()
+    .isInt({ min: 0, max: 50 }).withMessage('Số lượng em bé phải là số nguyên từ 0 đến 50'),
+  body().custom((value, { req }) => {
+    const { quantity, quantity_adult, quantity_child, quantity_baby } = req.body;
+    if (
+      quantity === undefined &&
+      quantity_adult === undefined &&
+      quantity_child === undefined &&
+      quantity_baby === undefined
+    ) {
+      throw new Error('Cần cung cấp ít nhất một thông tin số lượng để cập nhật');
+    }
+    return true;
+  }),
 ];
 
 /**

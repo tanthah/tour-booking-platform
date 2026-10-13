@@ -6,8 +6,10 @@ import HomePage from './pages/HomePage';
 import TourListPage from './pages/TourListPage';
 import TourDetailPage from './pages/TourDetailPage';
 import CartPage from './pages/CartPage';
+import UserProfilePage from './pages/UserProfilePage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
+import axiosClient from './config/axiosClient';
 
 import AdminApp from '../admin/App';
 
@@ -26,6 +28,20 @@ function App() {
       return null;
     }
   });
+  
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axiosClient.get('/settings/public');
+        setSettings(res.data);
+      } catch (error) {
+        console.error('Không thể tải cài đặt:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Callback Handler khi đăng nhập thành công
   const handleLoginSuccess = useCallback((data) => {
@@ -66,6 +82,7 @@ function App() {
               onOpenLogin={() => openModal('login')}
               onOpenRegister={() => openModal('register')}
               onLogout={handleLogout}
+              settings={settings}
             />
             <div style={{ paddingTop: '102px', minHeight: 'calc(100vh - 350px)' }}>
               <Routes>
@@ -78,9 +95,10 @@ function App() {
                 <Route path="/tour/:id" element={<TourDetailPage />} />
                 <Route path="/tours/:id" element={<TourDetailPage />} />
                 <Route path="/gio-hang" element={<CartPage />} />
+                <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
               </Routes>
             </div>
-            <Footer />
+            <Footer settings={settings} />
           </>
         } />
       </Routes>

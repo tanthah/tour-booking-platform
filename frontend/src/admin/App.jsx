@@ -4,6 +4,7 @@ import Categories from './pages/Categories';
 import CategoryForm from './pages/CategoryForm';
 import Tours from './pages/Tours';
 import TourForm from './pages/TourForm';
+import Settings from './pages/Settings';
 import './index.css';
 
 function App() {
@@ -22,6 +23,9 @@ function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="categories/create" element={<CategoryForm />} />
         <Route path="categories/edit/:id" element={<CategoryForm />} />
+
+        {/* Routes Cài đặt chung */}
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

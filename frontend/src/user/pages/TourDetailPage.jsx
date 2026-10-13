@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import TourBookingCard from '../components/TourBookingCard';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
@@ -92,7 +92,12 @@ const TourDetailPage = () => {
 
     try {
       setAddingToCart(true);
-      await axiosClient.post('/cart/items', { tour_id: tour._id, quantity: 1 });
+      await axiosClient.post('/cart/items', {
+        tour_id: tour._id,
+        quantity_adult: adults,
+        quantity_child: children,
+        quantity_baby: babies,
+      });
       setIsAddedToCart(true);
       window.dispatchEvent(new Event('cartUpdated'));
       setTimeout(() => setIsAddedToCart(false), 3000);

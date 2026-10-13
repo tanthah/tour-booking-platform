@@ -1,8 +1,8 @@
 /**
- * Logo Component - Đại diện thương hiệu TRAVEL
+ * Logo Component - Đại diện thương hiệu Tourn Go
  * Được vẽ bằng SVG vector chuẩn nét cao, tông màu Cam Hoàng Hôn năng động
  */
-const Logo = ({ height = 36 }) => {
+const Logo = ({ height = 36, logoUrl = '' }) => {
   return (
     <div
       style={{
@@ -13,6 +13,9 @@ const Logo = ({ height = 36 }) => {
         userSelect: 'none',
       }}
     >
+      {logoUrl ? (
+        <img src={logoUrl} alt="Logo" style={{ height: height, objectFit: 'contain' }} />
+      ) : (
       <svg
         width={height * 1.25}
         height={height}
@@ -47,18 +50,18 @@ const Logo = ({ height = 36 }) => {
           />
         </g>
       </svg>
-
+      )}
       <span
         style={{
           fontFamily: "'Inter', sans-serif",
           fontWeight: 900,
           fontSize: `${Math.round(height * 0.58)}px`,
-          color: '#ea580c',
           letterSpacing: '1px',
           lineHeight: 1,
         }}
       >
-        TRAVEL
+        <span style={{ color: '#0A2E65' }}>Tourn</span>{' '}
+        <span style={{ color: '#0086FF' }}>Go</span>
       </span>
     </div>
   );

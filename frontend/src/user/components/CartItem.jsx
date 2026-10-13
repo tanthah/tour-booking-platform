@@ -11,6 +11,19 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
     return new Date(dateStr).toLocaleDateString('vi-VN');
   };
 
+  const qtyAdult = item.quantity_adult !== undefined && item.quantity_adult !== null
+    ? item.quantity_adult
+    : (item.quantity || 1);
+  const qtyChild = item.quantity_child || 0;
+  const qtyBaby = item.quantity_baby || 0;
+
+  const adultPrice = item.price_adult || item.price || 0;
+  const childPrice = item.price_child || Math.round(adultPrice * 0.7);
+  const babyPrice = item.price_baby || Math.round(adultPrice * 0.3);
+
+  const totalPassengers = qtyAdult + qtyChild + qtyBaby;
+  const canAddPassenger = !item.remaining_slots || totalPassengers < item.remaining_slots;
+
   return (
     <div className="cart-item">
       {/* Nút xóa item */}
@@ -63,27 +76,29 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
           <span>Người lớn:</span>
           <div className="d-flex align-items-center gap-2">
             <span style={{ width: '18px', textAlign: 'center', fontWeight: 700 }}>
-              {item.quantity}
+              {qtyAdult}
             </span>
             <div className="d-flex flex-column">
               <button
                 className="cart-qty-btn"
                 style={{ marginBottom: '2px', height: '16px', width: '20px', fontSize: '10px' }}
-                onClick={() => onUpdateQuantity(item._id, item.quantity + 1)}
-                disabled={actionLoading}
+                onClick={() => onUpdateQuantity(item._id, { quantity_adult: qtyAdult + 1 })}
+                disabled={actionLoading || !canAddPassenger}
+                title="Tăng số lượng người lớn"
               >&#9650;</button>
               <button
                 className="cart-qty-btn"
                 style={{ height: '16px', width: '20px', fontSize: '10px' }}
                 onClick={() => {
-                  if (item.quantity > 1) onUpdateQuantity(item._id, item.quantity - 1);
+                  if (qtyAdult > 1) onUpdateQuantity(item._id, { quantity_adult: qtyAdult - 1 });
                 }}
-                disabled={actionLoading || item.quantity <= 1}
+                disabled={actionLoading || qtyAdult <= 1}
+                title="Giảm số lượng người lớn"
               >&#9660;</button>
             </div>
           </div>
           <span className="cart-passenger-price">
-            {item.quantity} x {item.price?.toLocaleString('vi-VN')}
+            {qtyAdult} x {adultPrice.toLocaleString('vi-VN')} đ
           </span>
         </div>
 
@@ -91,18 +106,28 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
         <div className="cart-passenger-row">
           <span>Trẻ em:</span>
           <div className="d-flex align-items-center gap-2">
-            <span style={{ width: '18px', textAlign: 'center', fontWeight: 700 }}>0</span>
+            <span style={{ width: '18px', textAlign: 'center', fontWeight: 700 }}>{qtyChild}</span>
             <div className="d-flex flex-column">
-              <button className="cart-qty-btn"
+              <button
+                className="cart-qty-btn"
                 style={{ marginBottom: '2px', height: '16px', width: '20px', fontSize: '10px' }}
-                disabled>&#9650;</button>
-              <button className="cart-qty-btn"
+                onClick={() => onUpdateQuantity(item._id, { quantity_child: qtyChild + 1 })}
+                disabled={actionLoading || !canAddPassenger}
+                title="Tăng số lượng trẻ em"
+              >&#9650;</button>
+              <button
+                className="cart-qty-btn"
                 style={{ height: '16px', width: '20px', fontSize: '10px' }}
-                disabled>&#9660;</button>
+                onClick={() => {
+                  if (qtyChild > 0) onUpdateQuantity(item._id, { quantity_child: qtyChild - 1 });
+                }}
+                disabled={actionLoading || qtyChild <= 0}
+                title="Giảm số lượng trẻ em"
+              >&#9660;</button>
             </div>
           </div>
           <span className="cart-passenger-price">
-            0 x {Math.round((item.price || 0) * 0.7)?.toLocaleString('vi-VN')}
+            {qtyChild} x {childPrice.toLocaleString('vi-VN')} đ
           </span>
         </div>
 
@@ -110,18 +135,28 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
         <div className="cart-passenger-row">
           <span>Em bé:</span>
           <div className="d-flex align-items-center gap-2">
-            <span style={{ width: '18px', textAlign: 'center', fontWeight: 700 }}>0</span>
+            <span style={{ width: '18px', textAlign: 'center', fontWeight: 700 }}>{qtyBaby}</span>
             <div className="d-flex flex-column">
-              <button className="cart-qty-btn"
+              <button
+                className="cart-qty-btn"
                 style={{ marginBottom: '2px', height: '16px', width: '20px', fontSize: '10px' }}
-                disabled>&#9650;</button>
-              <button className="cart-qty-btn"
+                onClick={() => onUpdateQuantity(item._id, { quantity_baby: qtyBaby + 1 })}
+                disabled={actionLoading || !canAddPassenger}
+                title="Tăng số lượng em bé"
+              >&#9650;</button>
+              <button
+                className="cart-qty-btn"
                 style={{ height: '16px', width: '20px', fontSize: '10px' }}
-                disabled>&#9660;</button>
+                onClick={() => {
+                  if (qtyBaby > 0) onUpdateQuantity(item._id, { quantity_baby: qtyBaby - 1 });
+                }}
+                disabled={actionLoading || qtyBaby <= 0}
+                title="Giảm số lượng em bé"
+              >&#9660;</button>
             </div>
           </div>
           <span className="cart-passenger-price">
-            0 x {Math.round((item.price || 0) * 0.3)?.toLocaleString('vi-VN')}
+            {qtyBaby} x {babyPrice.toLocaleString('vi-VN')} đ
           </span>
         </div>
       </div>
