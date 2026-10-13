@@ -31,6 +31,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    date_of_birth: {
+      type: Date,
+      default: null,
+    },
+    address: {
+      type: String,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['PENDING_VERIFICATION', 'ACTIVE', 'INACTIVE', 'LOCKED'],

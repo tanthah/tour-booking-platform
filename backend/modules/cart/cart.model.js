@@ -17,6 +17,21 @@ const cartItemSchema = new mongoose.Schema(
       min: [1, 'Số lượng phải >= 1'],
       default: 1,
     },
+    quantity_adult: {
+      type: Number,
+      min: [1, 'Số lượng người lớn phải >= 1'],
+      default: 1,
+    },
+    quantity_child: {
+      type: Number,
+      min: [0, 'Số lượng trẻ em phải >= 0'],
+      default: 0,
+    },
+    quantity_baby: {
+      type: Number,
+      min: [0, 'Số lượng em bé phải >= 0'],
+      default: 0,
+    },
   },
   {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },

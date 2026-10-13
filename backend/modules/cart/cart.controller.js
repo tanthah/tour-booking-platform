@@ -34,8 +34,8 @@ const getCart = asyncHandler(async (req, res) => {
  */
 const addItem = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
-  const { tour_id, quantity } = req.body;
-  const cart = await cartService.addItem(req.user._id, tour_id, quantity || 1);
+  const { tour_id } = req.body;
+  const cart = await cartService.addItem(req.user._id, tour_id, req.body);
   ApiResponse.success(res, 200, 'Thêm tour vào giỏ hàng thành công', cart);
 });
 
@@ -45,8 +45,7 @@ const addItem = asyncHandler(async (req, res) => {
  */
 const updateItem = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
-  const { quantity } = req.body;
-  const cart = await cartService.updateItem(req.user._id, req.params.itemId, quantity);
+  const cart = await cartService.updateItem(req.user._id, req.params.itemId, req.body);
   ApiResponse.success(res, 200, 'Cập nhật số lượng thành công', cart);
 });
 

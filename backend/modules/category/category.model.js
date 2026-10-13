@@ -60,8 +60,6 @@ const categorySchema = new mongoose.Schema(
 );
 
 // Tạo Index cho các trường thường xuyên truy vấn và tìm kiếm
-categorySchema.index({ slug: 1 });
-categorySchema.index({ code: 1 });
 categorySchema.index({ parent_id: 1 });
 categorySchema.index({ status: 1 });
 categorySchema.index({ deleted_at: 1 });

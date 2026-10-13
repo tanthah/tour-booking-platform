@@ -40,7 +40,8 @@
 
 /* Nút tăng giảm số lượng hành khách */
 .cart-qty-btn { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #ea580c; background: #ffffff; color: #ea580c; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 700; font-size: 14px; transition: all 0.2s ease; padding: 0; }
-.cart-qty-btn:hover { background: #ea580c; color: #ffffff; }
+.cart-qty-btn:hover:not(:disabled) { background: #ea580c; color: #ffffff; }
+.cart-qty-btn:disabled { border-color: #cbd5e1; color: #cbd5e1; cursor: not-allowed; background: #f8fafc; }
 .cart-passenger-price { color: #ea580c; font-weight: 700; font-size: 13px; min-width: 100px; text-align: right; }
 
 /* Mã giảm giá coupon */

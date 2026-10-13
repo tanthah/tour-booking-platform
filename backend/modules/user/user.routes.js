@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('./user.controller');
 const { authenticate } = require('../../middlewares/auth.middleware');
+const { upload } = require('../../middlewares/upload.middleware');
 const {
   registerValidation,
   loginValidation,
@@ -40,6 +41,6 @@ router.post('/logout', authenticate, userController.logout);
 router.get('/me', authenticate, userController.getProfile);
 
 // Endpoint Cập nhật thông tin hồ sơ cá nhân (Profile)
-router.patch('/me', authenticate, userController.updateProfile);
+router.patch('/me', authenticate, upload.single('avatar'), userController.updateProfile);
 
 module.exports = router;

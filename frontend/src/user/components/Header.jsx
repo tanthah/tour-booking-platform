@@ -6,12 +6,12 @@ import useCart from '../hooks/useCart';
 import '../assets/styles/header.css';
 
 /**
- * Header Component - Thanh điều hướng thương hiệu TRAVEL
+ * Header Component - Thanh điều hướng thương hiệu Tourn Go
  * Gồm 2 phần:
  * 1. Topbar màu cam: Hotline, Email, Địa chỉ
- * 2. Main Navbar: Logo TRAVEL, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
+ * 2. Main Navbar: Logo Tourn Go, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
  */
-const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
+const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { cart, fetchCart } = useCart();
@@ -21,7 +21,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
       setScrolled(window.scrollY > 30);
     };
     window.addEventListener('scroll', handleScroll);
-    
+
     // Lắng nghe sự kiện cập nhật giỏ hàng từ các component khác
     const handleCartUpdate = () => {
       fetchCart();
@@ -45,19 +45,19 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
         <Container>
           <div className="d-flex flex-wrap justify-content-center justify-content-md-end align-items-center gap-3 gap-md-4">
             {/* Phone */}
-            <a href="tel:0123456789" className="header-topbar-item">
+            <a href={`tel:${settings?.phone || '0123456789'}`} className="header-topbar-item">
               <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6.62 10.79a15.053 15.053 0 006.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
               </svg>
-              <span>0123.456.789</span>
+              <span>{settings?.phone || '0123.456.789'}</span>
             </a>
 
             {/* Email */}
-            <a href="mailto:contact@travel.com" className="header-topbar-item">
+            <a href={`mailto:${settings?.email || 'contact@tourngo.com'}`} className="header-topbar-item">
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
               </svg>
-              <span>contact@travel.com</span>
+              <span>{settings?.email || 'contact@tourngo.com'}</span>
             </a>
 
             {/* Address */}
@@ -65,7 +65,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
               <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
               </svg>
-              <span>Số 123, đường ABC, thành phố XYZ</span>
+              <span>{settings?.address || 'Số 123, đường ABC, thành phố XYZ'}</span>
             </span>
           </div>
         </Container>
@@ -77,9 +77,9 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
         className={`header-main-nav ${scrolled ? 'scrolled' : ''}`}
       >
         <Container>
-          {/* Logo TRAVEL */}
+          {/* Logo tour go */}
           <Navbar.Brand as={Link} to="/" className="p-0">
-            <Logo height={38} />
+            <Logo height={70} logoUrl={settings?.logo_url} />
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="main-navbar-nav" />
@@ -185,25 +185,38 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
               {/* User Authentication Actions */}
               {user ? (
                 <div className="d-flex align-items-center gap-2">
-                  <span
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      backgroundColor: '#ea580c',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 700,
-                      fontSize: '13px',
-                    }}
-                  >
-                    {user.full_name?.charAt(0)?.toUpperCase() || 'U'}
-                  </span>
-                  <span className="d-none d-md-inline fw-semibold text-dark fs-6">
-                    {user.full_name}
-                  </span>
+                  <Link to="/ho-so-ca-nhan" style={{ textDecoration: 'none' }} title="Hồ sơ cá nhân">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt="Avatar"
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid #ea580c'
+                        }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '50%',
+                          backgroundColor: '#ea580c',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontWeight: 700,
+                          fontSize: '15px',
+                        }}
+                      >
+                        {user.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                      </span>
+                    )}
+                  </Link>
                   {(user.role === 'ADMIN' || user.role === 'STAFF' || (user.roles && (user.roles.includes('ADMIN') || user.roles.includes('STAFF')))) && (
                     <Button
                       as={Link}
@@ -216,14 +229,6 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout }) => {
                       Quản trị
                     </Button>
                   )}
-                  <Button
-                    variant="outline-secondary"
-                    size="sm"
-                    onClick={onLogout}
-                    className="header-auth-btn"
-                  >
-                    Đăng xuất
-                  </Button>
                 </div>
               ) : (
                 <div className="d-flex align-items-center gap-2">

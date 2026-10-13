@@ -23,6 +23,13 @@ function Sidebar() {
           <Grid size={20} />
           <span>Quản lý Danh mục</span>
         </NavLink>
+        <NavLink 
+          to="/admin/settings" 
+          className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+        >
+          <Compass size={20} />
+          <span>Quản lý chung</span>
+        </NavLink>
       </nav>
     </aside>
   );

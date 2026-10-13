@@ -29,10 +29,11 @@ const useCart = () => {
   }, []);
 
   // Cập nhật số lượng item
-  const updateQuantity = async (itemId, quantity) => {
+  const updateQuantity = async (itemId, payload) => {
     try {
       setActionLoading(true);
-      const res = await axiosClient.patch(`/cart/items/${itemId}`, { quantity });
+      const data = typeof payload === 'number' ? { quantity: payload } : payload;
+      const res = await axiosClient.patch(`/cart/items/${itemId}`, data);
       if (res?.success && res.data) {
         setCart(res.data);
       }

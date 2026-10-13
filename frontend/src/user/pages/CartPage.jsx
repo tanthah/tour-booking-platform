@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container, Row, Col, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
@@ -57,10 +57,17 @@ const CartPage = () => {
     if (token) fetchUserInfo();
   }, []);
 
-  // Tự động chọn tất cả item khi giỏ hàng được tải
+  const isInitialLoaded = useRef(false);
+
+  // Tự động chọn tất cả item khi giỏ hàng được tải lần đầu,
+  // và bảo lưu lựa chọn của người dùng khi cập nhật số lượng
   useEffect(() => {
-    if (cart?.items?.length > 0) {
+    if (cart?.items?.length > 0 && !isInitialLoaded.current) {
       setSelectedItems(cart.items.map((item) => item._id));
+      isInitialLoaded.current = true;
+    } else if (cart?.items) {
+      // Giữ lại các ID đang được chọn và còn tồn tại trong giỏ (loại bỏ item đã bị xóa)
+      setSelectedItems((prev) => prev.filter((id) => cart.items.some((item) => item._id === id)));
     }
   }, [cart]);
 
@@ -92,12 +99,6 @@ const CartPage = () => {
       setDiscount(0);
       alert('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
     }
-  };
-
-  // Format ngày tháng
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'Liên hệ';
-    return new Date(dateStr).toLocaleDateString('vi-VN');
   };
 
   // Trạng thái loading

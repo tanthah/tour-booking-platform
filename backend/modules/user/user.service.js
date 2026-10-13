@@ -248,7 +248,7 @@ class UserService {
    */
   async updateProfile(userId, updateData) {
     // Chỉ lọc các trường thông tin cho phép cập nhật (Whitelist)
-    const allowedFields = ['full_name', 'phone', 'avatar_url'];
+    const allowedFields = ['full_name', 'phone', 'avatar_url', 'date_of_birth', 'address'];
     const filteredData = {};
     Object.keys(updateData).forEach((key) => {
       if (allowedFields.includes(key)) {
