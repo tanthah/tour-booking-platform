@@ -11,46 +11,18 @@ const useTourForm = (tourId) => {
   const navigate = useNavigate();
   const isEdit = Boolean(tourId);
 
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Hàm chuẩn hóa trạng thái về ACTIVE / INACTIVE cho form
-  const normalizeTourStatus = (st) => {
-    if (!st || st === 'ACTIVE' || st === 'PUBLISHED') return 'ACTIVE';
-    return 'INACTIVE';
-  };
-
-  // Khởi tạo dữ liệu form mặc định
+  // Khởi tạo dữ liệu form mặc định theo API mới
   const [formData, setFormData] = useState({
-    title: '', code: '', category: '', status: 'ACTIVE',
-    departure_location: '', destination_location: '', duration: '',
-    vehicle: '', departure_date: '', main_image: '', gallery: [],
-    description: '', content_html: '',
-    price: 0, original_price: 0,
-    price_adult: 0, price_child: 0, price_baby: 0,
-    original_price_adult: 0, original_price_child: 0, original_price_baby: 0,
-    total_slots: 1, remaining_slots: 1,
-    max_adults: 0, max_children: 0, max_babies: 0,
-    itinerary: [],
-    region: 'MIEN_BAC',
+    title: '', code: '', category: 'DOMESTIC', status: 'ACTIVE',
+    region: 'MIEN_BAC', destination_location: '', duration: '',
+    original_price: 0, discount_percent: 0,
+    main_image: '', gallery: [],
+    content_html: '', itinerary: [],
+    is_hot: false, is_flash_sale: false,
   });
-
-  // Danh sách điểm khởi hành có sẵn
-  const departureOptions = ['Hà Nội', 'Đà Nẵng', 'Nha Trang', 'Hồ Chí Minh'];
-
-  // Lấy danh sách danh mục hoạt động từ API
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await axiosAdmin.get('/categories/active');
-        if (res?.success) setCategories(res.data || []);
-      } catch (err) {
-        console.error('Lỗi khi tải danh mục:', err);
-      }
-    };
-    fetchCategories();
-  }, []);
 
   // Khi sửa: tải dữ liệu Tour hiện tại từ API
   useEffect(() => {
@@ -63,25 +35,18 @@ const useTourForm = (tourId) => {
           const t = res.data;
           setFormData({
             title: t.title || '', code: t.code || '',
-            category: t.category?._id || t.category || '',
-            status: normalizeTourStatus(t.status),
-            departure_location: t.departure_location || '',
-            destination_location: t.destination_location || '',
-            duration: t.duration || '', vehicle: t.vehicle || '',
-            departure_date: t.departure_date ? t.departure_date.substring(0, 10) : '',
-            main_image: t.main_image || '', gallery: t.gallery || [],
-            description: t.description || '', content_html: t.content_html || '',
-            price: t.price || 0, original_price: t.original_price || 0,
-            price_adult: t.price_adult || 0, price_child: t.price_child || 0,
-            price_baby: t.price_baby || 0,
-            original_price_adult: t.original_price_adult || 0,
-            original_price_child: t.original_price_child || 0,
-            original_price_baby: t.original_price_baby || 0,
-            total_slots: t.total_slots || 1, remaining_slots: t.remaining_slots || 1,
-            max_adults: t.max_adults || 0, max_children: t.max_children || 0,
-            max_babies: t.max_babies || 0,
-            itinerary: t.itinerary || [],
+            category: t.category || 'DOMESTIC',
+            status: t.status || 'DRAFT',
             region: t.region || 'MIEN_BAC',
+            destination_location: t.destination_location || '',
+            duration: t.duration || '',
+            original_price: t.original_price || 0,
+            discount_percent: t.discount_percent || 0,
+            main_image: t.main_image || '', gallery: t.gallery || [],
+            content_html: t.content_html || '',
+            itinerary: t.itinerary || [],
+            is_hot: t.is_hot || false,
+            is_flash_sale: t.is_flash_sale || false,
           });
         }
       } catch (err) {
@@ -96,10 +61,10 @@ const useTourForm = (tourId) => {
 
   // Cập nhật giá trị trường form
   const handleChange = useCallback((e) => {
-    const { name, value, type } = e.target;
+    const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value),
     }));
   }, []);
 
@@ -111,33 +76,59 @@ const useTourForm = (tourId) => {
   // Gửi dữ liệu form lên API
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.code.trim()) {
-      alert('Vui lòng nhập đầy đủ thông tin bắt buộc');
+    if (!formData.title.trim() || (!isEdit && !formData.code.trim())) {
+      alert('Vui lòng nhập đầy đủ tên và mã Tour');
       return;
     }
+    if (!formData.destination_location.trim()) {
+      alert('Vui lòng nhập điểm đến chính của Tour');
+      return;
+    }
+    if (!formData.duration.trim()) {
+      alert('Vui lòng nhập thời lượng Tour (VD: 3 Ngày 2 Đêm)');
+      return;
+    }
+    if (!formData.main_image.trim()) {
+      alert('Vui lòng tải lên ảnh đại diện cho Tour');
+      return;
+    }
+
     try {
       setSubmitting(true);
-      const payload = { ...formData, price: Number(formData.price) };
+      const payload = {
+        ...formData,
+        original_price: Number(formData.original_price) || 0,
+        discount_percent: Number(formData.discount_percent) || 0,
+      };
+
       if (isEdit) {
-        await axiosAdmin.put(`/tours/${tourId}`, payload);
+        delete payload.code; // Mã Tour không cho phép chỉnh sửa
+        await axiosAdmin.patch(`/tours/${tourId}`, payload);
         alert('Cập nhật Tour thành công');
       } else {
-        await axiosAdmin.post('/tours', payload);
-        alert('Tạo Tour thành công');
+        const res = await axiosAdmin.post('/tours', payload);
+        const newTourId = res?.data?._id;
+        alert('Tạo Tour thành công! Tiếp tục thêm các đợt khởi hành cho chuyến đi này.');
+        if (newTourId) {
+          navigate(`/admin/tours/edit/${newTourId}?tab=departures&autoAdd=true`);
+        } else {
+          navigate('/admin/tours');
+        }
       }
-      navigate('/admin/tours');
     } catch (err) {
-      alert(err.message || 'Có lỗi xảy ra khi lưu Tour');
+      const errorMsg = Array.isArray(err?.errors) && err.errors.length > 0
+        ? err.errors.map((item) => item.message).join('\n')
+        : (err?.message || 'Có lỗi xảy ra khi lưu Tour');
+      alert(errorMsg);
     } finally {
       setSubmitting(false);
     }
   }, [formData, isEdit, tourId, navigate]);
 
   return {
-    formData, categories, loading, submitting, isEdit, departureOptions,
-    handleChange, setField, handleSubmit, navigate,
+    formData, loading, submitting, isEdit,
+    handleChange, setField, handleSubmit, navigate, tourId
   };
 };
 
 export default useTourForm;
-

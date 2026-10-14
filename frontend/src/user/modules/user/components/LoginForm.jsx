@@ -72,7 +72,7 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess, onClo
   return (
     <div className="auth-form-active">
       <div className="auth-modal-header">
-        <h2>Đăng nhập</h2>
+        <h2>Chào mừng bạn trở lại </h2>
         <p>Vui lòng đăng nhập email và mật khẩu để tiếp tục</p>
       </div>
 
@@ -150,7 +150,7 @@ const LoginForm = ({ onSwitchToRegister, onSwitchToForgot, onLoginSuccess, onClo
       <div className="auth-footer">
         Bạn chưa có tài khoản?{' '}
         <span className="auth-link" onClick={onSwitchToRegister}>
-          Tạo tài khoản
+          Đăng ký
         </span>
       </div>
     </div>

@@ -1,11 +1,14 @@
 const mongoose = require('mongoose');
 
 /**
- * Tour Schema — Quản lý dữ liệu Tour du lịch trong MongoDB
- * Trạng thái vòng đời: DRAFT -> PUBLISHED -> FULL / CLOSED / CANCELLED
+ * Product (Tour) Schema — Quản lý dữ liệu Tour du lịch trong MongoDB
+ * Trạng thái vòng đời: DRAFT → ACTIVE ↔ INACTIVE
+ * Giá bán (sale_price) được backend tự tính từ original_price và discount_percent
+ * Sức chứa & ngày khởi hành được quản lý ở TourDeparture (quan hệ 1-N)
  */
 const tourSchema = new mongoose.Schema(
   {
+    // Mã Tour — duy nhất, tự chuyển chữ hoa
     code: {
       type: String,
       required: [true, 'Mã Tour là bắt buộc'],
@@ -13,95 +16,65 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    // Tên Tour
     title: {
       type: String,
       required: [true, 'Tên Tour là bắt buộc'],
       trim: true,
       maxlength: [255, 'Tên Tour không được quá 255 ký tự'],
     },
-    description: {
-      type: String,
-      trim: true,
-      maxlength: [1000, 'Mô tả ngắn không được quá 1000 ký tự'],
-      default: '',
-    },
+    // Phân loại: Tour trong nước hoặc quốc tế
     category: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Category',
-      required: [true, 'Danh mục Tour là bắt buộc'],
+      type: String,
+      enum: ['DOMESTIC', 'INTERNATIONAL'],
+      required: [true, 'Phân loại Tour là bắt buộc (DOMESTIC hoặc INTERNATIONAL)'],
     },
+    // Khu vực — phải phù hợp với danh mục
     region: {
       type: String,
       enum: ['MIEN_BAC', 'MIEN_TRUNG', 'MIEN_NAM', 'CHAU_A', 'CHAU_AU', 'CHAU_MY', 'CHAU_UC'],
-      default: 'MIEN_BAC',
+      default: null,
     },
-    departure_location: {
-      type: String,
-      required: [true, 'Điểm khởi hành là bắt buộc'],
-      trim: true,
-    },
+    // Điểm đến chính của Tour
     destination_location: {
       type: String,
       required: [true, 'Điểm đến là bắt buộc'],
       trim: true,
     },
+    // Thời lượng Tour (VD: "2 Ngày 1 Đêm")
     duration: {
       type: String,
-      required: [true, 'Thời gian Tour là bắt buộc (VD: 6 Ngày 5 Đêm)'],
+      required: [true, 'Thời gian Tour là bắt buộc (VD: 2 Ngày 1 Đêm)'],
     },
-    departure_date: {
-      type: Date,
-      required: [true, 'Ngày khởi hành là bắt buộc'],
-    },
-    end_date: {
-      type: Date,
-      default: null,
-    },
-    vehicle: {
-      type: String,
-      default: 'Ô tô 45 chỗ',
-    },
-    // Giá duy nhất tại một thời điểm (hiển thị chung)
-    price: {
-      type: Number,
-      required: [true, 'Giá Tour là bắt buộc'],
-      min: [0, 'Giá Tour phải >= 0'],
-    },
+    // ========== GIÁ ==========
+    // Giá gốc (VNĐ) — Admin nhập
     original_price: {
       type: Number,
-      default: 0,
+      required: [true, 'Giá gốc là bắt buộc'],
       min: [0, 'Giá gốc phải >= 0'],
     },
-    // Giá theo độ tuổi (Mới)
-    price_adult: { type: Number, default: 0 },
-    price_child: { type: Number, default: 0 },
-    price_baby: { type: Number, default: 0 },
-    original_price_adult: { type: Number, default: 0 },
-    original_price_child: { type: Number, default: 0 },
-    original_price_baby: { type: Number, default: 0 },
-
-    // Quản lý chỗ ngồi / slot
-    total_slots: {
+    // Phần trăm giảm giá (0–100) — Admin nhập, mặc định 0
+    discount_percent: {
       type: Number,
-      required: [true, 'Tổng số chỗ là bắt buộc'],
-      min: [1, 'Tổng số chỗ phải >= 1'],
+      default: 0,
+      min: [0, 'Phần trăm giảm phải >= 0'],
+      max: [100, 'Phần trăm giảm phải <= 100'],
     },
-    remaining_slots: {
+    // Giá bán sau giảm — Backend tự tính, KHÔNG nhận từ frontend
+    sale_price: {
       type: Number,
-      required: [true, 'Số chỗ còn lại là bắt buộc'],
-      min: [0, 'Số chỗ còn lại phải >= 0'],
+      min: [0, 'Giá bán phải >= 0'],
     },
-    // Quản lý chỗ theo độ tuổi (Mới)
-    max_adults: { type: Number, default: 0 },
-    max_children: { type: Number, default: 0 },
-    max_babies: { type: Number, default: 0 },
-    // Trạng thái vòng đời Tour
-    status: {
-      type: String,
-      enum: ['ACTIVE', 'INACTIVE', 'DRAFT', 'PUBLISHED', 'FULL', 'CLOSED', 'CANCELLED'],
-      default: 'DRAFT',
+    // ========== ĐÁNH DẤU ==========
+    is_flash_sale: {
+      type: Boolean,
+      default: false,
     },
-    // Hình ảnh đại diện và thư viện ảnh
+    is_hot: {
+      type: Boolean,
+      default: false,
+    },
+    // ========== HÌNH ẢNH ==========
     main_image: {
       type: String,
       required: [true, 'Ảnh đại diện Tour là bắt buộc'],
@@ -110,7 +83,8 @@ const tourSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
-    // Nội dung chi tiết Tour - lưu HTML từ Rich Text Editor (WYSIWYG)
+    // ========== NỘI DUNG ==========
+    // Nội dung chi tiết Tour — lưu HTML từ Rich Text Editor (WYSIWYG)
     content_html: {
       type: String,
       default: '',
@@ -121,12 +95,15 @@ const tourSchema = new mongoose.Schema(
         day_title: { type: String, required: true },
         description: { type: String, required: true },
         image: { type: String, default: '' },
+        images: { type: [String], default: [] },
+        order: { type: Number, default: 0 },
       },
     ],
-    // Điều kiện / ghi chú Tour
-    notes: {
+    // ========== TRẠNG THÁI ==========
+    status: {
       type: String,
-      default: '',
+      enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
+      default: 'DRAFT',
     },
     // Xóa mềm (Soft Delete)
     deleted_at: {
@@ -139,11 +116,30 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
-// Tạo Index cho các trường lọc, tìm kiếm và sắp xếp
+// ========== PRE-SAVE: Tự tính sale_price ==========
+tourSchema.pre('save', function (next) {
+  if (this.isModified('original_price') || this.isModified('discount_percent')) {
+    const discount = this.discount_percent || 0;
+    this.sale_price = Math.round(this.original_price * (100 - discount) / 100);
+  }
+  next();
+});
+
+// ========== PRE-FINDONEANDUPDATE: Tự tính sale_price khi update ==========
+tourSchema.pre('findOneAndUpdate', function (next) {
+  const update = this.getUpdate();
+  if (update.original_price !== undefined || update.discount_percent !== undefined) {
+    // Cần lấy giá trị hiện tại nếu chỉ sửa 1 trong 2 trường
+    this._needRecalcPrice = true;
+  }
+  next();
+});
+
+// ========== INDEX ==========
 tourSchema.index({ category: 1, region: 1 });
+tourSchema.index({ sale_price: 1 });
 tourSchema.index({ status: 1 });
-tourSchema.index({ price: 1 });
-tourSchema.index({ departure_date: 1 });
+tourSchema.index({ is_flash_sale: 1 });
 tourSchema.index({ deleted_at: 1 });
 tourSchema.index({ title: 'text', destination_location: 'text' });
 

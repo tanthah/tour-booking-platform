@@ -29,17 +29,32 @@ const TourDetailPage = () => {
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
 
+  const [departures, setDepartures] = useState([]);
+  const [selectedDeparture, setSelectedDeparture] = useState(null);
+
   useEffect(() => {
     const fetchTourDetail = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await axiosClient.get(`/tours/public/${id}`);
-        if (res?.success && res.data) {
-          const tourData = res.data;
+        
+        // Chạy song song 2 request: lấy chi tiết tour và danh sách đợt khởi hành đang mở
+        const [tourRes, depRes] = await Promise.all([
+          axiosClient.get(`/tours/public/${id}`),
+          axiosClient.get(`/tours/${id}/departures/public`)
+        ]);
+
+        if (tourRes?.success && tourRes.data) {
+          const tourData = tourRes.data;
           setTour(tourData);
           setActiveImage(tourData.main_image || '');
-          setDepartureCity(tourData.departure_location || 'Hà Nội');
+          
+          if (depRes?.success && depRes.data) {
+            setDepartures(depRes.data);
+            if (depRes.data.length > 0) {
+              setSelectedDeparture(depRes.data[0]); // Chọn mặc định đợt đầu tiên
+            }
+          }
         } else {
           setError('Không tìm thấy thông tin tour.');
         }
@@ -75,12 +90,15 @@ const TourDetailPage = () => {
   }
 
   const galleryImages = [tour.main_image, ...(tour.gallery || [])].filter(Boolean);
-  const unitPrice = tour.price || 0;
-  const childPrice = tour.child_price || Math.round(unitPrice * 0.7);
-  const babyPrice = tour.baby_price || Math.round(unitPrice * 0.3);
+  const unitPrice = tour.sale_price || tour.original_price || 0;
+  const childPrice = unitPrice;
+  const babyPrice = unitPrice;
   const totalPrice = (adults * unitPrice) + (children * childPrice) + (babies * babyPrice);
   const totalPassengers = adults + children + babies;
-  const canAddPassenger = !tour.remaining_slots || totalPassengers < tour.remaining_slots;
+  
+  // Sức chứa dựa trên đợt khởi hành đã chọn
+  const availableSlots = selectedDeparture ? selectedDeparture.available_slots : 0;
+  const canAddPassenger = totalPassengers < availableSlots;
 
   // Thêm tour vào giỏ hàng qua API backend
   const handleAddToCart = async () => {
@@ -89,11 +107,17 @@ const TourDetailPage = () => {
       alert('Vui lòng đăng nhập để thêm tour vào giỏ hàng.');
       return;
     }
+    
+    if (!selectedDeparture) {
+      alert('Vui lòng chọn đợt khởi hành.');
+      return;
+    }
 
     try {
       setAddingToCart(true);
       await axiosClient.post('/cart/items', {
         tour_id: tour._id,
+        departure_id: selectedDeparture._id,
         quantity_adult: adults,
         quantity_child: children,
         quantity_baby: babies,
@@ -102,15 +126,11 @@ const TourDetailPage = () => {
       window.dispatchEvent(new Event('cartUpdated'));
       setTimeout(() => setIsAddedToCart(false), 3000);
     } catch (err) {
-      alert(err.message || 'Không thể thêm tour vào giỏ hàng.');
+      alert(err.response?.data?.message || err.message || 'Không thể thêm tour vào giỏ hàng.');
     } finally {
       setAddingToCart(false);
     }
   };
-
-  const departureDateStr = tour.departure_date
-    ? new Date(tour.departure_date).toLocaleDateString('vi-VN')
-    : 'Liên hệ';
 
   return (
     <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', paddingBottom: '80px' }}>
@@ -185,24 +205,42 @@ const TourDetailPage = () => {
                 </h3>
 
                 <div className="tour-timeline-wrapper">
-                  {tour.itinerary.map((item, idx) => (
-                    <div className="tour-timeline-day" key={idx}>
-                      <div className="tour-timeline-dot" />
-                      <span className="tour-timeline-badge">{item.day_title}</span>
-                      <div className="tour-timeline-card">
-                        <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.7, marginBottom: item.image ? '14px' : '0' }}>
-                          {item.description}
-                        </p>
-                        {item.image && (
-                          <img
-                            src={item.image}
-                            alt={item.day_title}
-                            style={{ width: '100%', borderRadius: '10px', height: '240px', objectFit: 'cover' }}
-                          />
-                        )}
+                  {tour.itinerary.map((item, idx) => {
+                    const dayImgs = Array.isArray(item.images) && item.images.length > 0
+                      ? item.images
+                      : (item.image ? [item.image] : []);
+
+                    return (
+                      <div className="tour-timeline-day" key={idx}>
+                        <div className="tour-timeline-dot" />
+                        <span className="tour-timeline-badge">{item.day_title}</span>
+                        <div className="tour-timeline-card">
+                          <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.7, marginBottom: dayImgs.length > 0 ? '14px' : '0' }}>
+                            {item.description}
+                          </p>
+                          {dayImgs.length === 1 && (
+                            <img
+                              src={dayImgs[0]}
+                              alt={item.day_title}
+                              style={{ width: '100%', borderRadius: '10px', height: '240px', objectFit: 'cover' }}
+                            />
+                          )}
+                          {dayImgs.length > 1 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
+                              {dayImgs.map((imgUrl, i) => (
+                                <img
+                                  key={i}
+                                  src={imgUrl}
+                                  alt={`${item.day_title} ${i + 1}`}
+                                  style={{ width: '100%', borderRadius: '8px', height: '130px', objectFit: 'cover' }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -212,9 +250,9 @@ const TourDetailPage = () => {
           <Col lg={5} xs={12}>
             <TourBookingCard
               tour={tour}
-              departureDateStr={departureDateStr}
-              departureCity={departureCity}
-              setDepartureCity={setDepartureCity}
+              departures={departures}
+              selectedDeparture={selectedDeparture}
+              setSelectedDeparture={setSelectedDeparture}
               adults={adults}
               setAdults={setAdults}
               children={children}
