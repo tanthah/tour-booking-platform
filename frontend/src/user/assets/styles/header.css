@@ -94,6 +94,18 @@
   transition: all 0.2s ease;
 }
 
+.header-login-btn {
+  border-color: #ea580c !important;
+  color: #ea580c !important;
+  background-color: transparent !important;
+}
+
+.header-login-btn:hover {
+  background-color: #ea580c !important;
+  color: #ffffff !important;
+  border-color: #ea580c !important;
+}
+
 /* Mobile Responsiveness for Header */
 @media (max-width: 768px) {
   .header-topbar {

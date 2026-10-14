@@ -7,9 +7,9 @@ import { Heart } from 'lucide-react';
  */
 const TourBookingCard = ({
   tour,
-  departureDateStr,
-  departureCity,
-  setDepartureCity,
+  departures,
+  selectedDeparture,
+  setSelectedDeparture,
   adults,
   setAdults,
   children,
@@ -25,6 +25,8 @@ const TourBookingCard = ({
   addingToCart,
   isAddedToCart,
 }) => {
+  const availableSlots = selectedDeparture ? selectedDeparture.available_slots : 0;
+  
   return (
     <div className="tour-booking-card">
       <h3 className="tour-booking-title">Chuyến Đi Của Bạn</h3>
@@ -37,12 +39,37 @@ const TourBookingCard = ({
             {tour.title}
           </h5>
           <div className="d-flex align-items-center gap-1" style={{ fontSize: '12px' }}>
-            <span style={{ color: '#64748b' }}>Còn {tour.remaining_slots} chỗ trống</span>
+            <span style={{ color: '#64748b' }}>Còn {availableSlots} chỗ trống</span>
           </div>
         </div>
       </div>
 
-      {/* Thông tin thông số tour */}
+      {/* Chọn đợt khởi hành */}
+      <Form.Group className="mb-3">
+        <Form.Label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+          Chọn Đợt Khởi Hành:
+        </Form.Label>
+        {departures && departures.length > 0 ? (
+          <Form.Select
+            value={selectedDeparture ? selectedDeparture._id : ''}
+            onChange={(e) => {
+              const dep = departures.find(d => d._id === e.target.value);
+              setSelectedDeparture(dep);
+            }}
+            style={{ borderRadius: '8px', fontSize: '13px' }}
+          >
+            {departures.map(dep => (
+              <option key={dep._id} value={dep._id}>
+                {new Date(dep.departure_date).toLocaleDateString('vi-VN')} - {dep.departure_location}
+              </option>
+            ))}
+          </Form.Select>
+        ) : (
+          <div style={{ fontSize: '13px', color: '#dc3545' }}>Hiện chưa có đợt khởi hành nào.</div>
+        )}
+      </Form.Group>
+
+      {/* Thông tin thông số tour (của đợt đã chọn) */}
       <div className="mb-3">
         <div className="tour-booking-meta-row">
           <span>Mã Tour:</span> <strong className="text-dark">{tour.code}</strong>
@@ -51,32 +78,19 @@ const TourBookingCard = ({
           <span>Thời Gian:</span> <strong className="text-dark">{tour.duration}</strong>
         </div>
         <div className="tour-booking-meta-row">
-          <span>Phương Tiện:</span> <strong className="text-dark">{tour.vehicle || 'Ô tô'}</strong>
-        </div>
-        <div className="tour-booking-meta-row">
-          <span>Ngày Khởi Hành:</span> <strong className="text-dark">{departureDateStr}</strong>
-        </div>
-        <div className="tour-booking-meta-row">
           <span>Điểm Đến:</span> <strong className="text-dark">{tour.destination_location}</strong>
         </div>
+        {selectedDeparture && (
+          <>
+            <div className="tour-booking-meta-row">
+              <span>Phương Tiện:</span> <strong className="text-dark">{selectedDeparture.vehicle || 'Ô tô'}</strong>
+            </div>
+            <div className="tour-booking-meta-row">
+              <span>Khởi hành từ:</span> <strong className="text-dark">{selectedDeparture.departure_location}</strong>
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Chọn điểm khởi hành */}
-      <Form.Group className="mb-3">
-        <Form.Label style={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
-          Khởi Hành Tại:
-        </Form.Label>
-        <Form.Select
-          value={departureCity}
-          onChange={(e) => setDepartureCity(e.target.value)}
-          style={{ borderRadius: '8px', fontSize: '13px' }}
-        >
-          <option value={tour.departure_location}>{tour.departure_location}</option>
-          <option value="Hà Nội">Hà Nội</option>
-          <option value="TP.HCM">TP. Hồ Chí Minh</option>
-          <option value="Đà Nẵng">Đà Nẵng</option>
-        </Form.Select>
-      </Form.Group>
 
       {/* Bộ chọn số lượng hành khách */}
       <div className="mb-3">
@@ -164,10 +178,10 @@ const TourBookingCard = ({
         <Button
           onClick={handleAddToCart}
           className="tour-booking-submit-btn flex-grow-1 d-flex justify-content-center align-items-center m-0"
-          disabled={tour.remaining_slots <= 0 || addingToCart}
+          disabled={availableSlots <= 0 || addingToCart}
         >
-          {tour.remaining_slots <= 0
-            ? 'Tour Đã Hết Chỗ'
+          {availableSlots <= 0
+            ? 'Đợt Này Đã Hết Chỗ'
             : addingToCart
             ? 'Đang thêm...'
             : isAddedToCart

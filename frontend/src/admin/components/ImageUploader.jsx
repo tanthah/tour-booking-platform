@@ -11,22 +11,37 @@ import axiosAdmin from '../config/axiosAdmin';
  * @param {string[]} images - Danh sách URL ảnh (dùng khi multiple=true)
  * @param {Function} onImagesChange - Callback khi danh sách ảnh thay đổi
  */
-const ImageUploader = ({ value, onChange, multiple = false, images = [], onImagesChange }) => {
+const ImageUploader = ({
+  value,
+  onChange,
+  multiple = false,
+  images = [],
+  onImagesChange,
+  maxBatch = 5,
+}) => {
   const [uploading, setUploading] = useState(false);
+  const [uploadCount, setUploadCount] = useState(0);
   const fileInputRef = useRef(null);
 
-  // Xử lý upload ảnh lên Cloudinary qua API /api/upload/image
+  // Xử lý upload ảnh lên Cloudinary qua API
   const handleUpload = async (e) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    if (multiple && files.length > maxBatch) {
+      alert(`Bạn chỉ có thể chọn tải lên tối đa ${maxBatch} ảnh trong 1 lần. Vui lòng chọn lại.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     try {
       setUploading(true);
+      setUploadCount(files.length);
 
       if (multiple) {
-        // Upload nhiều ảnh cùng lúc
+        // Upload nhiều ảnh cùng lúc (tối đa maxBatch ảnh)
         const formData = new FormData();
-        Array.from(files).forEach((file) => formData.append('images', file));
+        files.forEach((file) => formData.append('images', file));
         const res = await axiosAdmin.post('/upload/images', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
@@ -49,7 +64,7 @@ const ImageUploader = ({ value, onChange, multiple = false, images = [], onImage
       alert(err.message || 'Lỗi khi upload ảnh');
     } finally {
       setUploading(false);
-      // Reset input file để cho phép chọn lại cùng file
+      setUploadCount(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -105,27 +120,36 @@ const ImageUploader = ({ value, onChange, multiple = false, images = [], onImage
 
       {/* Chế độ upload nhiều ảnh */}
       {multiple && (
-        <div className="img-gallery-grid">
-          {images.map((url, idx) => (
-            <div key={idx} className="img-preview-wrapper">
-              <img src={url} alt={`Gallery ${idx + 1}`} className="img-preview" />
-              <button type="button" className="img-remove-btn" onClick={() => handleRemoveFromList(idx)}>
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="img-add-btn"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <span className="img-uploading-text">Đang tải...</span>
-            ) : (
-              <Plus size={28} />
-            )}
-          </button>
+        <div>
+          <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '8px' }}>
+            💡 Bạn có thể giữ phím <strong>Ctrl</strong> (hoặc <strong>Shift</strong>) để chọn cùng lúc tối đa {maxBatch} ảnh từ máy tính.
+          </div>
+          <div className="img-gallery-grid">
+            {images.map((url, idx) => (
+              <div key={idx} className="img-preview-wrapper">
+                <img src={url} alt={`Gallery ${idx + 1}`} className="img-preview" />
+                <button type="button" className="img-remove-btn" onClick={() => handleRemoveFromList(idx)}>
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="img-add-btn"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              title={`Chọn cùng lúc tối đa ${maxBatch} ảnh`}
+            >
+              {uploading ? (
+                <span className="img-uploading-text">Đang tải {uploadCount} ảnh...</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                  <Plus size={24} />
+                  <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>+ {maxBatch} ảnh</span>
+                </div>
+              )}
+            </button>
+          </div>
         </div>
       )}
     </div>

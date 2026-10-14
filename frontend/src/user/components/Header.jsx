@@ -191,8 +191,8 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
                         src={user.avatar_url}
                         alt="Avatar"
                         style={{
-                          width: '36px',
-                          height: '36px',
+                          width: '40px',
+                          height: '40px',
                           borderRadius: '50%',
                           objectFit: 'cover',
                           border: '2px solid #ea580c'
@@ -236,18 +236,9 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
                     variant="outline-primary"
                     size="sm"
                     onClick={onOpenLogin}
-                    className="header-auth-btn"
-                    style={{ borderColor: '#ea580c', color: '#ea580c' }}
+                    className="header-auth-btn header-login-btn"
                   >
                     Đăng nhập
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={onOpenRegister}
-                    className="header-auth-btn"
-                    style={{ backgroundColor: '#ea580c', borderColor: '#ea580c', color: '#fff' }}
-                  >
-                    Đăng ký
                   </Button>
                 </div>
               )}

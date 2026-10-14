@@ -186,7 +186,7 @@ const RegisterForm = ({ onSwitchToLogin, onRegisterSuccess }) => {
               type={showPassword ? 'text' : 'password'}
               name="password"
               className={`auth-form-input ${fieldErrors.password ? 'is-invalid' : ''}`}
-              placeholder="••••••"
+              placeholder="tối thiểu 8 kí tự"
               value={formData.password}
               onChange={handleChange}
             />

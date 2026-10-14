@@ -22,7 +22,7 @@ const handleValidation = (req, res) => {
 // ============ PUBLIC CONTROLLERS — Khách hàng xem Tour ============
 
 /**
- * Controller: Lấy danh sách Tour đã PUBLISHED (có phân trang, lọc, tìm kiếm, sắp xếp)
+ * Controller: Lấy danh sách Tour đang ACTIVE (có phân trang, lọc, tìm kiếm, sắp xếp)
  * HTTP Method: GET /api/tours/public
  */
 const getPublishedTours = asyncHandler(async (req, res) => {
@@ -32,7 +32,7 @@ const getPublishedTours = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Lấy chi tiết Tour đã PUBLISHED theo ID (dành cho Khách hàng)
+ * Controller: Lấy chi tiết Tour đang ACTIVE theo ID (dành cho Khách hàng)
  * HTTP Method: GET /api/tours/public/:id
  */
 const getPublishedTourDetail = asyncHandler(async (req, res) => {
@@ -41,10 +41,10 @@ const getPublishedTourDetail = asyncHandler(async (req, res) => {
   ApiResponse.success(res, 200, 'Lấy chi tiết Tour thành công', tour);
 });
 
-// ============ ADMIN / STAFF CONTROLLERS — Quản lý Tour ============
+// ============ ADMIN CONTROLLERS — Quản lý Tour ============
 
 /**
- * Controller: Tạo Tour mới (ADMIN/STAFF)
+ * Controller: Tạo Tour mới (ADMIN)
  * HTTP Method: POST /api/tours
  */
 const createTour = asyncHandler(async (req, res) => {
@@ -54,7 +54,7 @@ const createTour = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Lấy danh sách tất cả Tour (ADMIN/STAFF — mọi trạng thái)
+ * Controller: Lấy danh sách tất cả Tour (ADMIN — mọi trạng thái)
  * HTTP Method: GET /api/tours
  */
 const getAllTours = asyncHandler(async (req, res) => {
@@ -64,7 +64,7 @@ const getAllTours = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Lấy chi tiết Tour theo ID (ADMIN/STAFF — mọi trạng thái)
+ * Controller: Lấy chi tiết Tour theo ID (ADMIN — mọi trạng thái)
  * HTTP Method: GET /api/tours/:id
  */
 const getTourById = asyncHandler(async (req, res) => {
@@ -74,8 +74,8 @@ const getTourById = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Cập nhật thông tin Tour (ADMIN/STAFF)
- * HTTP Method: PUT /api/tours/:id
+ * Controller: Cập nhật thông tin Tour (ADMIN)
+ * HTTP Method: PATCH /api/tours/:id
  */
 const updateTour = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
@@ -84,7 +84,7 @@ const updateTour = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Đổi trạng thái Tour (ADMIN/STAFF)
+ * Controller: Đổi trạng thái Tour (ADMIN)
  * HTTP Method: PATCH /api/tours/:id/status
  */
 const changeStatus = asyncHandler(async (req, res) => {
@@ -94,7 +94,7 @@ const changeStatus = asyncHandler(async (req, res) => {
 });
 
 /**
- * Controller: Xóa mềm Tour (ADMIN/STAFF)
+ * Controller: Xóa mềm Tour (ADMIN)
  * HTTP Method: DELETE /api/tours/:id
  */
 const deleteTour = asyncHandler(async (req, res) => {
