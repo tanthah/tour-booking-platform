@@ -20,6 +20,9 @@ const addItemValidation = [
   body('quantity_baby')
     .optional()
     .isInt({ min: 0, max: 50 }).withMessage('Số lượng em bé phải là số nguyên từ 0 đến 50'),
+  body('departure_id')
+    .optional({ values: 'falsy' })
+    .isMongoId().withMessage('Đợt khởi hành ID không hợp lệ'),
 ];
 
 /**

@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Nav, Card, Form, Button, Spinner, ToastContainer, Toast } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
+import UserOrdersList from '../modules/order/components/UserOrdersList';
 
 const UserProfilePage = ({ user, setUser }) => {
   const navigate = useNavigate();
@@ -13,8 +14,34 @@ const UserProfilePage = ({ user, setUser }) => {
     full_name: user?.full_name || '',
     phone: user?.phone || '',
     date_of_birth: user?.date_of_birth ? new Date(user.date_of_birth).toISOString().split('T')[0] : '',
-    address: user?.address || ''
+    address: user?.address || '',
+    gender: user?.gender || '',
+    id_number: user?.id_number || '',
   });
+
+  useEffect(() => {
+    const fetchFreshProfile = async () => {
+      try {
+        const res = await axiosClient.get('/auth/me');
+        if (res?.data) {
+          const freshUser = res.data;
+          setUser(freshUser);
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          setFormData({
+            full_name: freshUser.full_name || '',
+            phone: freshUser.phone || '',
+            date_of_birth: freshUser.date_of_birth ? new Date(freshUser.date_of_birth).toISOString().split('T')[0] : '',
+            address: freshUser.address || '',
+            gender: freshUser.gender || '',
+            id_number: freshUser.id_number || '',
+          });
+        }
+      } catch (err) {
+        console.error('Lỗi tải thông tin cá nhân:', err);
+      }
+    };
+    fetchFreshProfile();
+  }, [setUser]);
   
   const fileInputRef = useRef(null);
 
@@ -162,6 +189,29 @@ const UserProfilePage = ({ user, setUser }) => {
                           <Form.Control type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} />
                         </Form.Group>
                       </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label className="fw-semibold">Giới tính</Form.Label>
+                          <Form.Select name="gender" value={formData.gender} onChange={handleInputChange}>
+                            <option value="">-- Chọn giới tính --</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
+                            <option value="OTHER">Khác</option>
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label className="fw-semibold">Số CCCD / Hộ chiếu</Form.Label>
+                          <Form.Control
+                            type="text"
+                            name="id_number"
+                            placeholder="Nhập số CCCD hoặc hộ chiếu"
+                            value={formData.id_number}
+                            onChange={handleInputChange}
+                          />
+                        </Form.Group>
+                      </Col>
                       <Col md={12}>
                         <Form.Group className="mb-3">
                           <Form.Label className="fw-semibold">Địa chỉ</Form.Label>
@@ -178,12 +228,7 @@ const UserProfilePage = ({ user, setUser }) => {
                 </div>
               )}
               {activeTab === 'orders' && (
-                <div>
-                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 600 }}>Đơn hàng của tôi</h4>
-                  <div className="text-center py-5 text-muted bg-light rounded">
-                    Chưa có đơn hàng nào
-                  </div>
-                </div>
+                <UserOrdersList />
               )}
               {activeTab === 'wishlist' && (
                 <div>

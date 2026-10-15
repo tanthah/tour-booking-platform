@@ -39,6 +39,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    gender: {
+      type: String,
+      enum: ['MALE', 'FEMALE', 'OTHER'],
+      default: null,
+    },
+    id_number: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: [20, 'Số CCCD/Hộ chiếu không được vượt quá 20 ký tự'],
+    },
     status: {
       type: String,
       enum: ['PENDING_VERIFICATION', 'ACTIVE', 'INACTIVE', 'LOCKED'],

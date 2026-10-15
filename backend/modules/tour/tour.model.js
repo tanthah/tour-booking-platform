@@ -65,6 +65,18 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       min: [0, 'Giá bán phải >= 0'],
     },
+    // Giá trẻ em (nếu không nhập, backend tự tính theo tỷ lệ)
+    price_child: {
+      type: Number,
+      default: null,
+      min: [0, 'Giá trẻ em phải >= 0'],
+    },
+    // Giá em bé (nếu không nhập, backend tự tính theo tỷ lệ)
+    price_baby: {
+      type: Number,
+      default: null,
+      min: [0, 'Giá em bé phải >= 0'],
+    },
     // ========== ĐÁNH DẤU ==========
     is_flash_sale: {
       type: Boolean,
