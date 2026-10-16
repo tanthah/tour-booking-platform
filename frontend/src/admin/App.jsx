@@ -4,6 +4,7 @@ import Categories from './pages/Categories';
 import CategoryForm from './pages/CategoryForm';
 import Tours from './pages/Tours';
 import TourForm from './pages/TourForm';
+import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import './index.css';
 
@@ -13,6 +14,9 @@ function App() {
       <Route path="/" element={<AdminLayout />}>
         {/* Redirect trang chủ admin vào trang tours */}
         <Route index element={<Navigate to="tours" replace />} />
+
+        {/* Routes quản lý Đơn hàng */}
+        <Route path="orders" element={<Orders />} />
 
         {/* Routes quản lý Tour */}
         <Route path="tours" element={<Tours />} />

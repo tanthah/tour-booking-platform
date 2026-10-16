@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Container, Row, Col, Spinner } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
-import axiosClient from '../config/axiosClient';
+import { Container, Spinner } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
 import useCart from '../hooks/useCart';
 import CartItem from '../components/CartItem';
 import '../assets/styles/cart.css';
@@ -9,53 +8,14 @@ import '../assets/styles/cart.css';
 /**
  * CartPage - Trang Giỏ hàng
  * Hiển thị danh sách tour đã thêm, số lượng hành khách, mã giảm giá,
- * thông tin khách hàng, phương thức thanh toán
+ * và điều hướng sang trang Đặt tour (Checkout)
  */
 const CartPage = () => {
+  const navigate = useNavigate();
   const { cart, loading, error, actionLoading, updateQuantity, removeItem } = useCart();
 
   // Danh sách item được chọn để thanh toán
   const [selectedItems, setSelectedItems] = useState([]);
-  // Mã giảm giá
-  const [couponCode, setCouponCode] = useState('');
-  const [discount, setDiscount] = useState(0);
-  // Thông tin khách hàng (lấy từ tài khoản đăng nhập)
-  const [customerInfo, setCustomerInfo] = useState({
-    full_name: '',
-    phone: '',
-    note: '',
-  });
-  // Phương thức thanh toán
-  const [paymentMethod, setPaymentMethod] = useState('MOMO');
-
-  // Lấy thông tin khách hàng từ tài khoản đăng nhập
-  useEffect(() => {
-    const fetchUserInfo = async () => {
-      try {
-        const res = await axiosClient.get('/auth/me');
-        if (res?.success && res.data) {
-          setCustomerInfo((prev) => ({
-            ...prev,
-            full_name: res.data.full_name || '',
-            phone: res.data.phone || '',
-          }));
-        }
-      } catch {
-        // Sử dụng dữ liệu từ localStorage nếu API lỗi
-        try {
-          const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
-          setCustomerInfo((prev) => ({
-            ...prev,
-            full_name: storedUser.full_name || '',
-            phone: storedUser.phone || '',
-          }));
-        } catch { /* bỏ qua */ }
-      }
-    };
-
-    const token = localStorage.getItem('token');
-    if (token) fetchUserInfo();
-  }, []);
 
   const isInitialLoaded = useRef(false);
 
@@ -66,7 +26,6 @@ const CartPage = () => {
       setSelectedItems(cart.items.map((item) => item._id));
       isInitialLoaded.current = true;
     } else if (cart?.items) {
-      // Giữ lại các ID đang được chọn và còn tồn tại trong giỏ (loại bỏ item đã bị xóa)
       setSelectedItems((prev) => prev.filter((id) => cart.items.some((item) => item._id === id)));
     }
   }, [cart]);
@@ -88,20 +47,22 @@ const CartPage = () => {
       .reduce((sum, item) => sum + item.item_total, 0);
   };
 
-  const subtotal = calculateSelectedTotal();
-  const total = Math.max(0, subtotal - discount);
+  const total = calculateSelectedTotal();
 
-  // Áp dụng mã giảm giá (demo)
-  const handleApplyCoupon = () => {
-    if (couponCode.trim().toUpperCase() === 'TOURMUAHE2024') {
-      setDiscount(Math.round(subtotal * 0.1));
-    } else {
-      setDiscount(0);
-      alert('Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+  // Tiến hành chuyển sang trang Checkout
+  const handleProceedToCheckout = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Vui lòng đăng nhập tài khoản để tiến hành đặt tour.');
+      return;
     }
+    if (selectedItems.length === 0) {
+      alert('Vui lòng chọn ít nhất một tour trong giỏ để đặt.');
+      return;
+    }
+    navigate('/checkout', { state: { selectedItems } });
   };
 
-  // Trạng thái loading
   if (loading) {
     return (
       <div className="cart-page-wrapper d-flex justify-content-center align-items-center">
@@ -110,7 +71,6 @@ const CartPage = () => {
     );
   }
 
-  // Chưa đăng nhập hoặc lỗi
   if (error) {
     return (
       <div className="cart-page-wrapper">
@@ -124,7 +84,6 @@ const CartPage = () => {
     );
   }
 
-  // Giỏ hàng trống
   if (!cart?.items || cart.items.length === 0) {
     return (
       <div className="cart-page-wrapper">
@@ -147,7 +106,6 @@ const CartPage = () => {
   return (
     <div className="cart-page-wrapper">
       <Container>
-        {/* Tiêu đề và link quay lại */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h1 className="cart-page-title">Giỏ Hàng</h1>
           <Link to="/tour-trong-nuoc" className="cart-back-link">
@@ -155,7 +113,6 @@ const CartPage = () => {
           </Link>
         </div>
 
-        {/* Danh sách item trong giỏ */}
         <div className="cart-card">
           {cart.items.map((item) => (
             <CartItem
@@ -169,102 +126,25 @@ const CartPage = () => {
             />
           ))}
 
-          {/* Mã giảm giá */}
-          <div className="cart-coupon-wrapper">
-            <input
-              type="text"
-              className="cart-coupon-input"
-              placeholder="Nhập mã giảm giá"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-            />
-            <button
-              className="cart-coupon-btn"
-              onClick={handleApplyCoupon}
-              disabled={!couponCode.trim()}
-            >
-              Dùng Mã
-            </button>
-          </div>
-
           {/* Tổng thanh toán */}
           <div className="mt-4 pt-3 border-top">
             <div className="cart-summary-row">
-              <span>Tổng tiền:</span>
-              <span style={{ fontWeight: 700 }}>{subtotal.toLocaleString('vi-VN')} đ</span>
-            </div>
-            {discount > 0 && (
-              <div className="cart-summary-row">
-                <span>Giảm:</span>
-                <span style={{ fontWeight: 700, color: '#16a34a' }}>-{discount.toLocaleString('vi-VN')} đ</span>
-              </div>
-            )}
-            <div className="cart-summary-row">
-              <span style={{ fontWeight: 700, fontSize: '15px' }}>Thanh toán:</span>
+              <span style={{ fontWeight: 700, fontSize: '15px' }}>Tổng thanh toán ({selectedItems.length} tour đã chọn):</span>
               <span className="cart-summary-total">{total.toLocaleString('vi-VN')} đ</span>
             </div>
           </div>
-        </div>
 
-        {/* Thông tin khách hàng */}
-        <div className="cart-card">
-          <h3 className="cart-section-title">Thông Tin Khách Hàng</h3>
-          <Row className="g-3">
-            <Col md={6}>
-              <input
-                type="text"
-                className="cart-form-input"
-                placeholder="Họ và tên"
-                value={customerInfo.full_name}
-                onChange={(e) => setCustomerInfo({ ...customerInfo, full_name: e.target.value })}
-              />
-            </Col>
-            <Col md={6}>
-              <input
-                type="text"
-                className="cart-form-input"
-                placeholder="Số điện thoại"
-                value={customerInfo.phone}
-                onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })}
-              />
-            </Col>
-            <Col xs={12}>
-              <textarea
-                className="cart-form-textarea"
-                placeholder="Ghi chú"
-                value={customerInfo.note}
-                onChange={(e) => setCustomerInfo({ ...customerInfo, note: e.target.value })}
-              />
-            </Col>
-          </Row>
-        </div>
-
-        {/* Phương thức thanh toán */}
-        <div className="cart-card">
-          <h3 className="cart-section-title">Chọn Phương Thức Thanh Toán</h3>
-          <label
-            className={`cart-payment-option ${paymentMethod === 'MOMO' ? 'selected' : ''}`}
-            onClick={() => setPaymentMethod('MOMO')}
+          {/* Nút đặt tour */}
+          <button
+            className="cart-checkout-btn"
+            disabled={selectedItems.length === 0 || actionLoading}
+            onClick={handleProceedToCheckout}
           >
-            <input
-              type="radio"
-              className="cart-payment-radio"
-              name="payment"
-              value="MOMO"
-              checked={paymentMethod === 'MOMO'}
-              onChange={() => setPaymentMethod('MOMO')}
-            />
-            Ví MoMo
-          </label>
+            {actionLoading
+              ? 'Đang xử lý...'
+              : `Tiến Hành Đặt Tour (${selectedItems.length} tour đã chọn)`}
+          </button>
         </div>
-
-        {/* Nút đặt tour */}
-        <button
-          className="cart-checkout-btn"
-          disabled={selectedItems.length === 0 || actionLoading}
-        >
-          {actionLoading ? 'Đang xử lý...' : `Đặt Tour (${selectedItems.length} tour)`}
-        </button>
       </Container>
     </div>
   );

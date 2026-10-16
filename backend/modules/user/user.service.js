@@ -93,9 +93,7 @@ class UserService {
   }
 
   // Gửi lại mã OTP mới cho người dùng
-
   async resendOtp({ email, type }) {
-    // Kiểm tra tính tồn tại của tài khoản User
     const user = await User.findOne({ email, deleted_at: null });
     if (!user) {
       const error = new Error('Email không tồn tại trong hệ thống');
@@ -103,40 +101,30 @@ class UserService {
       throw error;
     }
 
-    // Hủy / Xóa các bản ghi OTP cũ chưa được sử dụng
     await OtpVerification.deleteMany({ email, type, is_used: false });
-
-    // Tạo và phát hành mã OTP mới qua Email
     await this._createAndSendOtp(email, type);
-
     return { message: 'Mã OTP mới đã được gửi tới email của bạn' };
   }
 
   // Đăng nhập người dùng và khởi tạo JWT Access Token
-
   async login({ email, password }) {
-    // Tìm kiếm User chưa bị xóa mềm trong CSDL
     const user = await User.findOne({ email, deleted_at: null });
-
     if (!user) {
       const error = new Error('Email hoặc mật khẩu không đúng');
       error.statusCode = 401;
       throw error;
     }
 
-    // Kiểm tra trạng thái kích hoạt của tài khoản (Status Check)
     if (user.status === 'PENDING_VERIFICATION') {
       const error = new Error('Tài khoản chưa được xác thực. Vui lòng kiểm tra email để nhận mã OTP.');
       error.statusCode = 403;
       throw error;
     }
-
     if (user.status === 'LOCKED') {
       const error = new Error('Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.');
       error.statusCode = 403;
       throw error;
     }
-
     if (user.status === 'INACTIVE') {
       const error = new Error('Tài khoản đã bị vô hiệu hóa.');
       error.statusCode = 403;
@@ -247,8 +235,7 @@ class UserService {
    * Cập nhật thông tin hồ sơ cá nhân người dùng (Profile)
    */
   async updateProfile(userId, updateData) {
-    // Chỉ lọc các trường thông tin cho phép cập nhật (Whitelist)
-    const allowedFields = ['full_name', 'phone', 'avatar_url', 'date_of_birth', 'address'];
+    const allowedFields = ['full_name', 'phone', 'avatar_url', 'date_of_birth', 'address', 'gender', 'id_number'];
     const filteredData = {};
     Object.keys(updateData).forEach((key) => {
       if (allowedFields.includes(key)) {

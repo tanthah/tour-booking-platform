@@ -72,9 +72,6 @@ const TourBookingCard = ({
       {/* Thông tin thông số tour (của đợt đã chọn) */}
       <div className="mb-3">
         <div className="tour-booking-meta-row">
-          <span>Mã Tour:</span> <strong className="text-dark">{tour.code}</strong>
-        </div>
-        <div className="tour-booking-meta-row">
           <span>Thời Gian:</span> <strong className="text-dark">{tour.duration}</strong>
         </div>
         <div className="tour-booking-meta-row">

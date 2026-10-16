@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Map, Grid } from 'lucide-react';
+import { Compass, Map, Grid, ShoppingBag } from 'lucide-react';
 
 function Sidebar() {
   return (
@@ -22,6 +22,13 @@ function Sidebar() {
         >
           <Grid size={20} />
           <span>Quản lý Danh mục</span>
+        </NavLink>
+        <NavLink 
+          to="/admin/orders" 
+          className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+        >
+          <ShoppingBag size={20} />
+          <span>Quản lý Đơn hàng</span>
         </NavLink>
         <NavLink 
           to="/admin/settings" 
