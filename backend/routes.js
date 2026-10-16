@@ -8,7 +8,9 @@ const departureRoutes = require('./modules/tour/tourDeparture.routes');
 const categoryRoutes = require('./modules/category/category.routes');
 const uploadRoutes = require('./modules/upload/upload.routes');
 const cartRoutes = require('./modules/cart/cart.routes');
+const orderRoutes = require('./modules/order/order.routes');
 const settingRoutes = require('./modules/setting/setting.routes');
+const couponRoutes = require('./modules/coupon/coupon.routes');
 
 // Đăng ký các Endpoint phân hệ User & Authentication theo prefix /auth
 router.use('/auth', userRoutes);
@@ -28,7 +30,13 @@ router.use('/upload', uploadRoutes);
 // Đăng ký các Endpoint phân hệ Giỏ hàng theo prefix /cart
 router.use('/cart', cartRoutes);
 
+// Đăng ký các Endpoint phân hệ Đơn hàng theo prefix /orders
+router.use('/orders', orderRoutes);
+
 // Đăng ký các Endpoint phân hệ Cài đặt chung theo prefix /settings
 router.use('/settings', settingRoutes);
+
+// Đăng ký các Endpoint phân hệ Mã giảm giá theo prefix /coupons
+router.use('/coupons', couponRoutes);
 
 module.exports = router;

@@ -11,6 +11,11 @@ const cartItemSchema = new mongoose.Schema(
       ref: 'Tour',
       required: [true, 'Tour là bắt buộc'],
     },
+    departure_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'TourDeparture',
+      default: null,
+    },
     quantity: {
       type: Number,
       required: [true, 'Số lượng là bắt buộc'],

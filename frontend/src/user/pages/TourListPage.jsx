@@ -11,9 +11,10 @@ import '../assets/styles/tour.css';
  */
 const TourListPage = ({ categoryType }) => {
   const location = useLocation();
-  const isDomestic = categoryType === 'domestic' || location.pathname.includes('trong-nuoc');
-  const categoryEnum = isDomestic ? 'DOMESTIC' : 'INTERNATIONAL';
-  const pageTitle = isDomestic ? 'Tour Trong Nước' : 'Tour Nước Ngoài';
+  const isAll = categoryType === 'all' || location.pathname === '/tours';
+  const isDomestic = !isAll && (categoryType === 'domestic' || location.pathname.includes('trong-nuoc'));
+  const categoryEnum = isAll ? undefined : (isDomestic ? 'DOMESTIC' : 'INTERNATIONAL');
+  const pageTitle = isAll ? 'Tất Cả Các Tour' : (isDomestic ? 'Tour Trong Nước' : 'Tour Nước Ngoài');
 
   // Trạng thái bộ lọc và sắp xếp
   const [departureFrom, setDepartureFrom] = useState('');
@@ -35,10 +36,10 @@ const TourListPage = ({ categoryType }) => {
     try {
       setLoading(true);
       const params = {
-        category: categoryEnum,
         sort: activeSort,
         limit: 12,
       };
+      if (categoryEnum) params.category = categoryEnum;
 
       if (destination) params.search = destination;
       if (departureFrom) params.departure_location = departureFrom;
@@ -212,7 +213,9 @@ const TourListPage = ({ categoryType }) => {
                 {pageTitle}
               </h2>
               <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-                {isDomestic
+                {isAll
+                  ? 'Khám phá tất cả các hành trình du lịch trong nước và quốc tế hấp dẫn với dịch vụ tiêu chuẩn tốt nhất từ Tourn Go.'
+                  : isDomestic
                   ? 'Khám phá những danh lam thắng cảnh tuyệt sắc của dải đất hình chữ S từ Bắc chí Nam cùng dịch vụ tour trọn gói chu đáo nhất.'
                   : 'Du lịch Châu Á & Thế Giới: Trải nghiệm những nền văn hóa độc đáo, công trình kiến trúc kỳ vĩ và cảnh quan ngoạn mục năm châu.'}
               </p>

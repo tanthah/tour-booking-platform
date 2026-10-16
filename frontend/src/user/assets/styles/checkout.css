@@ -1,0 +1,162 @@
+/* Checkout Page Styles - Giao diện Đặt Tour & Thanh Toán */
+.checkout-wrapper {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding: 36px 0 80px;
+}
+
+.checkout-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.checkout-step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.checkout-step-item.active {
+  color: #ea580c;
+}
+
+.checkout-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.checkout-step-item.active .checkout-step-num {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.checkout-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px 28px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border: 1px solid #f1f5f9;
+}
+
+.checkout-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkout-passenger-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.checkout-passenger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.checkout-copy-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ea580c;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.checkout-copy-btn:hover {
+  background: #ea580c;
+  color: #ffffff;
+}
+
+.payment-method-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.payment-method-card:hover {
+  border-color: #ea580c;
+}
+
+.payment-method-card.selected {
+  border-color: #ea580c;
+  background: #fffaf5;
+  box-shadow: 0 0 0 1px #ea580c;
+}
+
+.payment-method-radio {
+  margin-top: 4px;
+  accent-color: #ea580c;
+  width: 18px;
+  height: 18px;
+}
+
+.payment-method-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fee2e2;
+  color: #dc2626;
+  margin-left: 8px;
+}
+
+.checkout-btn-submit {
+  background-color: #ea580c;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 0;
+  font-size: 17px;
+  font-weight: 800;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 6px 16px rgba(234, 88, 12, 0.25);
+}
+
+.checkout-btn-submit:hover:not(:disabled) {
+  background-color: #c2410c;
+  transform: translateY(-1px);
+}
+
+.checkout-btn-submit:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}

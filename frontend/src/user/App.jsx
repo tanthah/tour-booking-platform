@@ -5,11 +5,15 @@ import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
 import TourListPage from './pages/TourListPage';
 import TourDetailPage from './pages/TourDetailPage';
+import PromotionPage from './pages/PromotionPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
+import ScrollToTop from './components/ScrollToTop';
 
 import AdminApp from '../admin/App';
 
@@ -70,6 +74,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <Routes>
         {/* Route dành cho Admin */}
         <Route path="/admin/*" element={<AdminApp />} />
@@ -91,10 +96,14 @@ function App() {
                 <Route path="/tour-trong-nuoc/:region" element={<TourListPage categoryType="domestic" />} />
                 <Route path="/tour-nuoc-ngoai" element={<TourListPage categoryType="international" />} />
                 <Route path="/tour-nuoc-ngoai/:region" element={<TourListPage categoryType="international" />} />
-                <Route path="/tours" element={<TourListPage categoryType="domestic" />} />
+                <Route path="/tours" element={<TourListPage categoryType="all" />} />
+                <Route path="/uu-dai" element={<PromotionPage />} />
+                <Route path="/khuyen-mai" element={<PromotionPage />} />
                 <Route path="/tour/:id" element={<TourDetailPage />} />
                 <Route path="/tours/:id" element={<TourDetailPage />} />
                 <Route path="/gio-hang" element={<CartPage />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/don-hang/:id" element={<OrderDetailPage />} />
                 <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
               </Routes>
             </div>
