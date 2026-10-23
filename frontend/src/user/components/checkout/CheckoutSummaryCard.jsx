@@ -12,6 +12,7 @@ const CheckoutSummaryCard = ({
   subtotal,
   totalAmount,
   submitting,
+  paymentType = 'FULL',
   couponCode = '',
   setCouponCode,
   discount = 0,
@@ -19,8 +20,12 @@ const CheckoutSummaryCard = ({
   couponMessage = '',
   couponError = false,
   onApplyCoupon,
+  onRecommendCoupon,
   onRemoveCoupon,
 }) => {
+  const depositAmount = Math.ceil((totalAmount || 0) * 0.5);
+  const remainingAmount = (totalAmount || 0) - depositAmount;
+  const amountToPay = paymentType === 'DEPOSIT' ? depositAmount : (totalAmount || 0);
   // Format ngày đi
   const formatDepartureDate = (dateStr) => {
     if (!dateStr) return 'Chưa xác định';
@@ -153,9 +158,22 @@ const CheckoutSummaryCard = ({
           border: '1px solid #e2e8f0',
         }}
       >
-        <div className="d-flex align-items-center gap-2 mb-2" style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
-          <Tag size={15} color="#ea580c" />
-          <span>Mã giảm giá ưu đãi</span>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+            <Tag size={15} color="#ea580c" />
+            <span>Mã giảm giá ưu đãi</span>
+          </div>
+          {onRecommendCoupon && !appliedCoupon && (
+            <button
+              type="button"
+              className="btn btn-link p-0 text-decoration-none"
+              style={{ fontSize: '12px', color: '#ea580c', fontWeight: 700, cursor: 'pointer' }}
+              onClick={onRecommendCoupon}
+              title="Tìm mã giảm giá tiết kiệm nhất cho đơn này"
+            >
+              ⚡ Gợi ý mã tốt nhất
+            </button>
+          )}
         </div>
 
         {appliedCoupon ? (
@@ -163,7 +181,7 @@ const CheckoutSummaryCard = ({
             <div>
               <span className="badge bg-success me-2">{appliedCoupon}</span>
               <span style={{ fontSize: '12.5px', color: '#16a34a', fontWeight: 600 }}>
-                Giảm 10% (-{discount.toLocaleString('vi-VN')} đ)
+                Giảm: -{discount.toLocaleString('vi-VN')} đ
               </span>
             </div>
             <button
@@ -237,14 +255,30 @@ const CheckoutSummaryCard = ({
       )}
 
       <div
-        className="d-flex justify-content-between pt-3 mb-4"
-        style={{ borderTop: '1px solid #e2e8f0', fontSize: '16px' }}
+        className="d-flex justify-content-between pt-3 mb-2"
+        style={{ borderTop: '1px solid #e2e8f0', fontSize: '15px' }}
       >
-        <span style={{ fontWeight: 800, color: '#1e293b' }}>Tổng thanh toán:</span>
-        <span style={{ fontWeight: 900, fontSize: '20px', color: '#ea580c' }}>
-          {totalAmount.toLocaleString('vi-VN')} đ
+        <span style={{ fontWeight: 700, color: '#1e293b' }}>Tổng đơn hàng:</span>
+        <span style={{ fontWeight: 800, fontSize: '17px', color: '#1e293b' }}>
+          {(totalAmount || 0).toLocaleString('vi-VN')} đ
         </span>
       </div>
+
+      {/* Hiển thị số tiền thực tế cần thanh toán ngay */}
+      {paymentType === 'DEPOSIT' ? (
+        <div className="deposit-info-box mb-4">
+          <div>🧾 Mức thanh toán: <strong>Đặt cọc 50%</strong></div>
+          <div className="mt-1">Thanh toán ngay: <span className="deposit-pay-now">{depositAmount.toLocaleString('vi-VN')} đ</span></div>
+          <div className="deposit-remaining">Còn lại: {remainingAmount.toLocaleString('vi-VN')} đ — trả trước ngày khởi hành</div>
+        </div>
+      ) : (
+        <div className="d-flex justify-content-between mb-4 pt-2" style={{ fontSize: '16px' }}>
+          <span style={{ fontWeight: 800, color: '#1e293b' }}>Thanh toán ngay:</span>
+          <span style={{ fontWeight: 900, fontSize: '20px', color: '#ea580c' }}>
+            {amountToPay.toLocaleString('vi-VN')} đ
+          </span>
+        </div>
+      )}
 
       <button
         type="submit"
@@ -256,6 +290,8 @@ const CheckoutSummaryCard = ({
             <Spinner animation="border" size="sm" />
             Đang xử lý đơn...
           </span>
+        ) : paymentType === 'DEPOSIT' ? (
+          `Đặt Cọc ${depositAmount.toLocaleString('vi-VN')} đ Ngay`
         ) : (
           'Xác Nhận Đặt Tour'
         )}

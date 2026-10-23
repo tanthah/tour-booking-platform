@@ -6,6 +6,8 @@ import Tours from './pages/Tours';
 import TourForm from './pages/TourForm';
 import Orders from './pages/Orders';
 import Settings from './pages/Settings';
+import Coupons from './pages/Coupons';
+import CouponForm from './pages/CouponForm';
 import './index.css';
 
 function App() {
@@ -17,6 +19,11 @@ function App() {
 
         {/* Routes quản lý Đơn hàng */}
         <Route path="orders" element={<Orders />} />
+
+        {/* Routes quản lý Mã giảm giá (Coupon) */}
+        <Route path="coupons" element={<Coupons />} />
+        <Route path="coupons/create" element={<CouponForm />} />
+        <Route path="coupons/edit/:id" element={<CouponForm />} />
 
         {/* Routes quản lý Tour */}
         <Route path="tours" element={<Tours />} />

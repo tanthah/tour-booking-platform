@@ -66,6 +66,12 @@ const checkoutValidation = [
     .optional()
     .isString().withMessage('Phương thức thanh toán phải là chuỗi'),
 
+  // Mức thanh toán: toàn bộ 100% hoặc đặt cọc 50%
+  body('payment_type')
+    .optional()
+    .isIn(['FULL', 'DEPOSIT'])
+    .withMessage('Mức thanh toán phải là FULL hoặc DEPOSIT'),
+
   // Mã giảm giá
   body('coupon_code')
     .optional({ values: 'falsy' })
