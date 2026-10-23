@@ -3,6 +3,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const Tour = require('./modules/tour/tour.model');
+const TourDeparture = require('./modules/tour/tourDeparture.model');
 const { MONGO_URI } = require('./config/env');
 
 const Category = require('./modules/category/category.model');
@@ -49,7 +50,7 @@ const intlTemplates = [
 /**
  * Tạo danh sách 30 Tour hoàn chỉnh từ các mẫu trên
  */
-const buildTours = (domesticCatId, intlCatId) => {
+const buildTours = () => {
   const allTours = [];
 
   // Tạo 15 Tour trong nước
@@ -58,7 +59,8 @@ const buildTours = (domesticCatId, intlCatId) => {
       code: t.code,
       title: t.title,
       description: `Hành trình khám phá ${t.to} với dịch vụ chất lượng cao, trọn gói tiện nghi nhất.`,
-      category: domesticCatId,
+      // Tour schema hiện dùng enum, không còn tham chiếu ObjectId Category.
+      category: 'DOMESTIC',
       region: t.region,
       departure_location: t.from,
       destination_location: t.to,
@@ -68,6 +70,8 @@ const buildTours = (domesticCatId, intlCatId) => {
       vehicle: i % 2 === 0 ? 'Máy bay + Ô tô' : 'Ô tô 45 chỗ',
       price: t.price,
       original_price: t.oldPrice,
+      // sale_price được schema tự tính từ hai trường này.
+      discount_percent: Math.round((1 - t.price / t.oldPrice) * 100),
       price_adult: t.price,
       price_child: Math.round(t.price * 0.7),
       price_baby: Math.round(t.price * 0.3),
@@ -79,7 +83,7 @@ const buildTours = (domesticCatId, intlCatId) => {
       max_adults: t.slots,
       max_children: Math.round(t.slots * 0.5),
       max_babies: Math.round(t.slots * 0.2),
-      status: 'PUBLISHED',
+      status: 'ACTIVE',
       main_image: t.img,
       gallery: [t.img, 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&auto=format&fit=crop'],
       content_html: `<h2>Khám phá vẻ đẹp ${t.to}</h2><p>Chuyến đi mang lại trải nghiệm tuyệt vời cùng gia đình và bạn bè.</p>`,
@@ -97,7 +101,8 @@ const buildTours = (domesticCatId, intlCatId) => {
       code: t.code,
       title: t.title,
       description: `Tour khám phá thế giới tuyệt mỹ tại ${t.to} cùng hướng dẫn viên chuyên nghiệp.`,
-      category: intlCatId,
+      // Tour schema hiện dùng enum, không còn tham chiếu ObjectId Category.
+      category: 'INTERNATIONAL',
       region: t.region,
       departure_location: t.from,
       destination_location: t.to,
@@ -107,6 +112,8 @@ const buildTours = (domesticCatId, intlCatId) => {
       vehicle: 'Máy bay quốc tế',
       price: t.price,
       original_price: t.oldPrice,
+      // sale_price được schema tự tính từ hai trường này.
+      discount_percent: Math.round((1 - t.price / t.oldPrice) * 100),
       price_adult: t.price,
       price_child: Math.round(t.price * 0.75),
       price_baby: Math.round(t.price * 0.35),
@@ -118,7 +125,7 @@ const buildTours = (domesticCatId, intlCatId) => {
       max_adults: t.slots,
       max_children: Math.round(t.slots * 0.5),
       max_babies: Math.round(t.slots * 0.2),
-      status: 'PUBLISHED',
+      status: 'ACTIVE',
       main_image: t.img,
       gallery: [t.img, 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'],
       content_html: `<h2>Hành trình khám phá ${t.to}</h2><p>Trải nghiệm dịch vụ hàng không và khách sạn đẳng cấp quốc tế.</p>`,
@@ -143,18 +150,45 @@ const seedTourData = async () => {
     console.log('🔗 Đã kết nối MongoDB thành công');
 
     // Dọn dẹp dữ liệu cũ
+    await TourDeparture.deleteMany({});
     await Category.deleteMany({});
     await Tour.deleteMany({});
-    console.log('🧹 Đã dọn dẹp dữ liệu Danh mục và Tour cũ');
+    console.log('🧹 Đã dọn dẹp dữ liệu Đợt khởi hành, Danh mục và Tour cũ');
 
     // Tao 2 danh muc mac dinh (có code để frontend lọc theo DOMESTIC/INTERNATIONAL)
     const domesticCat = await Category.create({ name: 'Tour Trong Nước', code: 'DOMESTIC', position: 1 });
     const intlCat = await Category.create({ name: 'Tour Nước Ngoài', code: 'INTERNATIONAL', position: 2 });
     console.log('✅ Đã tạo 2 danh mục: Tour Trong Nước, Tour Nước Ngoài');
 
-    const toursToInsert = buildTours(domesticCat._id, intlCat._id);
+    const toursToInsert = buildTours();
     const createdTours = await Tour.insertMany(toursToInsert);
     console.log(`✅ Đã chèn thành công ${createdTours.length} Tour (15 Trong Nước + 15 Nước Ngoài) vào Database!`);
+
+    // Schema hiện quản lý ngày đi và sức chứa ở TourDeparture, không nằm trong Tour.
+    const templates = [...domesticTemplates, ...intlTemplates];
+    const baseDepartureDate = new Date();
+    baseDepartureDate.setHours(8, 0, 0, 0);
+    baseDepartureDate.setDate(baseDepartureDate.getDate() + 7);
+
+    const departures = createdTours.map((tour, index) => {
+      const template = templates[index];
+      const departureDate = new Date(baseDepartureDate);
+      departureDate.setDate(baseDepartureDate.getDate() + index * 3);
+
+      return {
+        product_id: tour._id,
+        departure_date: departureDate,
+        departure_location: template.from,
+        vehicle: tour.category === 'INTERNATIONAL' ? 'Máy bay quốc tế' : 'Ô tô 45 chỗ',
+        total_slots: template.slots,
+        booked_slots: template.slots - template.remain,
+        reserved_slots: 0,
+        status: 'OPEN',
+      };
+    });
+
+    await TourDeparture.insertMany(departures);
+    console.log(`✅ Đã tạo thành công ${departures.length} đợt khởi hành trong tương lai, còn chỗ đặt.`);
 
     process.exit(0);
   } catch (error) {
@@ -164,4 +198,3 @@ const seedTourData = async () => {
 };
 
 seedTourData();
-

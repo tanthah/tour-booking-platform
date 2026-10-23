@@ -112,8 +112,15 @@ function OrderDetailModal({ order, updating, onClose, onUpdateStatus }) {
           <span>Giảm giá:</span><span style={{ color: '#16a34a' }}>-{(order.discount_amount || 0).toLocaleString('vi-VN')} đ</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '17px', fontWeight: 800 }}>
-          <span>Tổng tiền:</span><span style={{ color: '#ea580c' }}>{(order.total_amount || 0).toLocaleString('vi-VN')} đ</span>
+          <span>Tổng tiền đơn:</span><span style={{ color: '#1e293b' }}>{(order.total_amount || 0).toLocaleString('vi-VN')} đ</span>
         </div>
+        {order.payment_type === 'DEPOSIT' && (
+          <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '6px', padding: '6px 10px', marginTop: '8px', fontSize: '13px' }}>
+            <span style={{ color: '#c2410c', fontWeight: 600 }}>Cọc 50%: </span>
+            <strong style={{ color: '#ea580c' }}>{(order.deposit_amount || Math.ceil((order.total_amount || 0) * 0.5)).toLocaleString('vi-VN')} đ</strong>
+            <span style={{ color: '#64748b', marginLeft: '8px' }}>(Còn lại: {((order.total_amount || 0) - (order.deposit_amount || Math.ceil((order.total_amount || 0) * 0.5))).toLocaleString('vi-VN')} đ)</span>
+          </div>
+        )}
       </div>
 
       {/* Nút hành động */}

@@ -226,12 +226,29 @@ const OrderDetailPage = () => {
                 <span>Giảm giá:</span>
                 <span className="text-success">-{(order.discount_amount || 0).toLocaleString('vi-VN')} đ</span>
               </div>
-              <div className="d-flex justify-content-between pt-2 mb-4 border-top" style={{ fontSize: '16px', fontWeight: 800 }}>
-                <span>Tổng tiền:</span>
-                <span style={{ color: '#ea580c', fontSize: '18px' }}>
+              <div className="d-flex justify-content-between pt-2 mb-3 border-top" style={{ fontSize: '16px', fontWeight: 800 }}>
+                <span>Tổng đơn:</span>
+                <span style={{ color: '#1e293b', fontSize: '18px' }}>
                   {(order.total_amount || 0).toLocaleString('vi-VN')} đ
                 </span>
               </div>
+
+              {order.payment_type === 'DEPOSIT' ? (
+                <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '10px', padding: '10px 12px', marginBottom: '16px', fontSize: '13px' }}>
+                  <div style={{ fontWeight: 700, color: '#c2410c' }}>Hình thức: Đặt cọc 50%</div>
+                  <div style={{ marginTop: '4px' }}>
+                    Thanh toán ngay: <strong style={{ color: '#ea580c', fontSize: '15px' }}>{(order.deposit_amount || Math.ceil((order.total_amount || 0) * 0.5)).toLocaleString('vi-VN')} đ</strong>
+                  </div>
+                  <div style={{ color: '#64748b', fontSize: '12px', marginTop: '2px' }}>
+                    Còn lại: {((order.total_amount || 0) - (order.deposit_amount || Math.ceil((order.total_amount || 0) * 0.5))).toLocaleString('vi-VN')} đ (trả trước khi đi)
+                  </div>
+                </div>
+              ) : (
+                <div className="d-flex justify-content-between mb-3" style={{ fontSize: '14.5px', fontWeight: 700 }}>
+                  <span>Thanh toán ngay:</span>
+                  <span style={{ color: '#ea580c' }}>{(order.total_amount || 0).toLocaleString('vi-VN')} đ</span>
+                </div>
+              )}
 
               {order.order_status === 'PENDING_PAYMENT' && (
                 <button

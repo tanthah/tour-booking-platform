@@ -11,7 +11,7 @@ import '../assets/styles/header.css';
  * 1. Topbar màu cam: Hotline, Email, Địa chỉ
  * 2. Main Navbar: Logo Tourn Go, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
  */
-const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
+const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: _onLogout, settings }) => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { cart, fetchCart } = useCart();
@@ -37,6 +37,8 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
   const cartCount = cart?.items?.length || 0;
 
   const isActive = (path) => location.pathname === path;
+  const isTourActive = location.pathname.startsWith('/tour') || location.pathname.startsWith('/tours');
+  const isPromotionActive = location.pathname === '/uu-dai' || location.pathname === '/khuyen-mai';
 
   return (
     <header className="fixed-top header-container">
@@ -79,7 +81,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
         <Container>
           {/* Logo tour go */}
           <Navbar.Brand as={Link} to="/" className="p-0">
-            <Logo height={70} logoUrl={settings?.logo_url} />
+            <Logo height={65} logoUrl={settings?.logo_url} />
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="main-navbar-nav" />
@@ -95,47 +97,72 @@ const Header = ({ user, onOpenLogin, onOpenRegister, onLogout, settings }) => {
                 Trang Chủ
               </Nav.Link>
 
-              {/* Dropdown Tour Trong Nước */}
+              {/* Dropdown Tour (Gộp Tour Trong Nước và Tour Nước Ngoài) */}
               <NavDropdown
-                title="Tour Trong Nước"
-                id="domestic-tours-dropdown"
-                className="header-nav-dropdown header-nav-link p-0"
+                title="Tour"
+                id="tours-dropdown"
+                className={`header-nav-dropdown header-nav-link p-0 ${isTourActive ? 'active' : ''}`}
               >
-                <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-bac">
-                  Tour Miền Bắc
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-trung">
-                  Tour Miền Trung
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-nam">
-                  Tour Miền Nam
-                </NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item as={Link} to="/tour-trong-nuoc">
-                  Xem tất cả Tour Trong Nước
-                </NavDropdown.Item>
+                <div className="tour-dropdown-mega p-3">
+                  <div className="d-flex flex-column flex-md-row gap-3">
+                    {/* Cột 1: Tour Trong Nước */}
+                    <div className="tour-dropdown-section">
+                      <div className="tour-dropdown-header text-uppercase fw-bold mb-2">
+                        <Link to="/tour-trong-nuoc" className="text-decoration-none" style={{ color: '#ea580c' }}>
+                          Tour Trong Nước
+                        </Link>
+                      </div>
+                      <NavDropdown.Item as={Link} to="/tour-trong-nuoc" className="tour-dropdown-subitem">
+                        Tất cả Tour Trong Nước
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-bac" className="tour-dropdown-subitem">
+                        Tour Miền Bắc
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-trung" className="tour-dropdown-subitem">
+                        Tour Miền Trung
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-trong-nuoc/mien-nam" className="tour-dropdown-subitem">
+                        Tour Miền Nam
+                      </NavDropdown.Item>
+                    </div>
+
+                    {/* Cột 2: Tour Nước Ngoài */}
+                    <div className="tour-dropdown-section border-start ps-md-3">
+                      <div className="tour-dropdown-header text-uppercase fw-bold mb-2">
+                        <Link to="/tour-nuoc-ngoai" className="text-decoration-none" style={{ color: '#ea580c' }}>
+                          Tour Nước Ngoài
+                        </Link>
+                      </div>
+                      <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai" className="tour-dropdown-subitem">
+                        Tất cả Tour Nước Ngoài
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-a" className="tour-dropdown-subitem">
+                        Tour Châu Á
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-au" className="tour-dropdown-subitem">
+                        Tour Châu Âu
+                      </NavDropdown.Item>
+                      <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-my" className="tour-dropdown-subitem">
+                        Tour Châu Mỹ
+                      </NavDropdown.Item>
+                    </div>
+                  </div>
+
+                  <NavDropdown.Divider className="my-2" />
+                  <NavDropdown.Item as={Link} to="/tours" className="text-center fw-bold py-1" style={{ color: '#ea580c' }}>
+                    Xem tất cả Tour
+                  </NavDropdown.Item>
+                </div>
               </NavDropdown>
 
-              {/* Dropdown Tour Nước Ngoài */}
-              <NavDropdown
-                title="Tour Nước Ngoài"
-                id="international-tours-dropdown"
-                className="header-nav-dropdown header-nav-link p-0"
+              {/* Menu Ưu Đãi */}
+              <Nav.Link
+                as={Link}
+                to="/uu-dai"
+                className={`header-nav-link ${isPromotionActive ? 'active' : ''}`}
               >
-                <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-a">
-                  Tour Châu Á
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-au">
-                  Tour Châu Âu
-                </NavDropdown.Item>
-                <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai/chau-my">
-                  Tour Châu Mỹ
-                </NavDropdown.Item>
-                <NavDropdown.Divider />
-                <NavDropdown.Item as={Link} to="/tour-nuoc-ngoai">
-                  Xem tất cả Tour Nước Ngoài
-                </NavDropdown.Item>
-              </NavDropdown>
+                Ưu Đãi
+              </Nav.Link>
 
               <Nav.Link
                 as={Link}

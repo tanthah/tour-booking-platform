@@ -1,20 +1,10 @@
 const mongoose = require('mongoose');
 const Order = require('./order.model');
 const Cart = require('../cart/cart.model');
-const {
-  generateOrderCode,
-  buildOrderItems,
-  reserveSlotsForOrderItems,
-  mapBookingCustomers,
-  confirmSlotsForOrder,
-  releaseSlotsForOrder,
-  expirePendingOrders,
-} = require('./order.helper');
+const couponService = require('../coupon/coupon.service');
+const { generateOrderCode, buildOrderItems, reserveSlotsForOrderItems, mapBookingCustomers, confirmSlotsForOrder, releaseSlotsForOrder, expirePendingOrders } = require('./order.helper');
 
-// Thời gian giữ chỗ: 15 phút
 const PAYMENT_TIMEOUT_MS = 15 * 60 * 1000;
-
-// Kiểm tra cluster MongoDB hiện tại có hỗ trợ Multi-Document Transaction hay không
 const supportsTransaction = () => {
   const desc = mongoose.connection?.client?.topology?.description;
   return Boolean(desc?.setName || ['ReplicaSetWithPrimary', 'Sharded'].includes(desc?.type));
@@ -22,13 +12,10 @@ const supportsTransaction = () => {
 
 /**
  * Checkout: Tạo đơn hàng từ giỏ hàng trong transaction
- * - Tính lại giá từ database snapshot, không nhận giá client
- * - Giữ chỗ tạm trên TourDeparture trong 15 phút
- * - Gắn thông tin từng khách đi tour vào đúng item
- * - Xóa các item đã checkout khỏi giỏ hàng
+ * Backend tự tính toán giá, validate coupon, giữ chỗ tour và coupon nguyên tử
  */
 const createOrderFromCart = async (userId, payload) => {
-  const { customer_info, selected_items, booking_customers, payment_method, departures = {} } = payload;
+  const { customer_info, selected_items, booking_customers, payment_method, departures = {}, payment_type = 'FULL' } = payload;
 
   const cart = await Cart.findOne({ user_id: userId, status: 'ACTIVE' });
   if (!cart || !cart.items || cart.items.length === 0) {
@@ -45,10 +32,33 @@ const createOrderFromCart = async (userId, payload) => {
   }
 
   const { orderItems, subtotal } = await buildOrderItems(cartItems, departures);
-  const discountAmount = (payload.coupon_code && payload.coupon_code.trim().toUpperCase() === 'TOURMUAHE2024')
-    ? Math.round(subtotal * 0.1)
-    : 0;
+
+  let couponData = null;
+  const couponCode = payload.coupon_code ? payload.coupon_code.trim().toUpperCase() : null;
+  if (couponCode) {
+    const result = await couponService.validateCoupon(userId, couponCode, subtotal, { orderItems });
+    couponData = { coupon: result.coupon, discountAmount: result.discountAmount };
+  }
+
+  const discountAmount = couponData ? couponData.discountAmount : 0;
   const totalAmount = Math.max(0, subtotal - discountAmount);
+
+  // Ràng buộc nghiệp vụ: Không cho phép cọc nếu có tour khởi hành trong vòng 3 ngày tới
+  if (payment_type === 'DEPOSIT') {
+    const isWithin3Days = orderItems.some((it) => {
+      if (!it.departure_date) return false;
+      const d = new Date(it.departure_date);
+      return !isNaN(d.getTime()) && (d.getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000);
+    });
+    if (isWithin3Days) {
+      const err = new Error('Tour khởi hành trong vòng 3 ngày tới, vui lòng thanh toán toàn bộ 100% để bộ phận điều hành kịp xuất vé và gửi danh sách bảo hiểm du lịch.');
+      err.statusCode = 400;
+      throw err;
+    }
+  }
+
+  // Tính số tiền đặt cọc (50%) nếu khách chọn mức DEPOSIT
+  const depositAmount = payment_type === 'DEPOSIT' ? Math.ceil(totalAmount * 0.5) : null;
 
   let orderCode = generateOrderCode();
   const existing = await Order.findOne({ order_code: orderCode });
@@ -65,6 +75,7 @@ const createOrderFromCart = async (userId, payload) => {
   }
 
   let slotsReserved = false;
+  let couponReserved = false;
   try {
     await reserveSlotsForOrderItems(orderItems, session);
     slotsReserved = true;
@@ -83,7 +94,11 @@ const createOrderFromCart = async (userId, payload) => {
       subtotal,
       discount_amount: discountAmount,
       total_amount: totalAmount,
-      payment_method: payment_method || 'CASH',
+      coupon_id: couponData ? couponData.coupon._id : null,
+      coupon_code: couponData ? couponData.coupon.code : null,
+      payment_method: payment_method || 'COUNTER',
+      payment_type,
+      deposit_amount: depositAmount,
       payment_status: 'PENDING',
       order_status: 'PENDING_PAYMENT',
       payment_expires_at: new Date(Date.now() + PAYMENT_TIMEOUT_MS),
@@ -94,6 +109,13 @@ const createOrderFromCart = async (userId, payload) => {
       session ? { session } : {}
     );
     const order = Array.isArray(createdList) ? createdList[0] : createdList;
+
+    if (couponData) {
+      await couponService.reserveCoupon(
+        couponData.coupon._id, userId, order._id, discountAmount, session
+      );
+      couponReserved = true;
+    }
 
     order.booking_customers = mapBookingCustomers(booking_customers, cartItems, order);
     await order.save(session ? { session } : {});
@@ -106,8 +128,13 @@ const createOrderFromCart = async (userId, payload) => {
   } catch (error) {
     if (session) {
       await session.abortTransaction();
-    } else if (slotsReserved) {
-      await releaseSlotsForOrder({ items: orderItems, order_status: 'PENDING_PAYMENT' });
+    } else {
+      if (slotsReserved) {
+        await releaseSlotsForOrder({ items: orderItems, order_status: 'PENDING_PAYMENT' });
+      }
+      if (couponReserved && couponData) {
+        await couponService.releaseCouponReservation(null);
+      }
     }
     throw error;
   } finally {
@@ -115,7 +142,6 @@ const createOrderFromCart = async (userId, payload) => {
   }
 };
 
-// Lấy lịch sử đơn hàng của khách hàng (phân trang, lọc)
 const getMyOrders = async (userId, queryParams) => {
   const page = parseInt(queryParams.page, 10) || 1;
   const limit = parseInt(queryParams.limit, 10) || 10;
@@ -126,22 +152,13 @@ const getMyOrders = async (userId, queryParams) => {
   if (queryParams.payment_status) filter.payment_status = queryParams.payment_status;
 
   const [orders, total] = await Promise.all([
-    Order.find(filter)
-      .select('-booking_customers.id_number')
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+    Order.find(filter).select('-booking_customers.id_number').sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
     Order.countDocuments(filter),
   ]);
 
-  return {
-    orders,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+  return { orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 };
 
-// Lấy chi tiết đơn hàng (chống IDOR)
 const getOrderDetail = async (userId, orderId, userRoles) => {
   const order = await Order.findById(orderId).lean();
   if (!order) {
@@ -159,15 +176,11 @@ const getOrderDetail = async (userId, orderId, userRoles) => {
   }
 
   if (!isStaffOrAdmin && order.booking_customers) {
-    order.booking_customers = order.booking_customers.map((c) => {
-      const { id_number, ...rest } = c;
-      return rest;
-    });
+    order.booking_customers = order.booking_customers.map(({ id_number, ...rest }) => rest);
   }
   return order;
 };
 
-// Admin: Lấy danh sách tất cả đơn hàng (phân trang, lọc, tìm kiếm)
 const getAllOrdersAdmin = async (queryParams) => {
   const page = parseInt(queryParams.page, 10) || 1;
   const limit = parseInt(queryParams.limit, 10) || 10;
@@ -185,26 +198,17 @@ const getAllOrdersAdmin = async (queryParams) => {
   }
 
   const [orders, total] = await Promise.all([
-    Order.find(filter)
-      .select('-booking_customers.id_number')
-      .sort({ created_at: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+    Order.find(filter).select('-booking_customers.id_number').sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
     Order.countDocuments(filter),
   ]);
 
-  return {
-    orders,
-    pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  };
+  return { orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 };
 
-// Admin: Cập nhật trạng thái đơn hàng và đồng bộ chỗ (Idempotent)
 const updateOrderStatus = async (orderId, statusData) => {
   const { order_status, payment_status, cancel_reason } = statusData;
 
-  // 1. Xác nhận thanh toán PAID (chỉ chạy 1 lần duy nhất)
+  // 1. Xác nhận thanh toán PAID
   if (payment_status === 'PAID') {
     const paidOrder = await Order.findOneAndUpdate(
       { _id: orderId, order_status: 'PENDING_PAYMENT', payment_status: { $ne: 'PAID' } },
@@ -213,11 +217,12 @@ const updateOrderStatus = async (orderId, statusData) => {
     );
     if (paidOrder) {
       await confirmSlotsForOrder(paidOrder);
+      await couponService.confirmCouponUsed(paidOrder._id);
       return paidOrder;
     }
   }
 
-  // 2. Admin hủy đơn CANCELLED (chỉ giải phóng chỗ 1 lần duy nhất)
+  // 2. Admin hủy đơn CANCELLED
   if (order_status === 'CANCELLED') {
     const cancelledOrder = await Order.findOneAndUpdate(
       { _id: orderId, order_status: { $ne: 'CANCELLED' } },
@@ -226,11 +231,11 @@ const updateOrderStatus = async (orderId, statusData) => {
     );
     if (cancelledOrder) {
       await releaseSlotsForOrder(cancelledOrder);
+      await couponService.releaseCouponReservation(cancelledOrder._id);
       return cancelledOrder;
     }
   }
 
-  // 3. Các cập nhật trạng thái khác nếu có
   const order = await Order.findById(orderId);
   if (!order) {
     const err = new Error('Đơn hàng không tồn tại.');
@@ -250,7 +255,6 @@ const updateOrderStatus = async (orderId, statusData) => {
   return order;
 };
 
-// Khách tự hủy đơn (chỉ khi đang PENDING_PAYMENT, Idempotent)
 const cancelOrder = async (userId, orderId, cancelReason) => {
   const updatedOrder = await Order.findOneAndUpdate(
     { _id: orderId, user_id: userId, order_status: 'PENDING_PAYMENT' },
@@ -276,6 +280,7 @@ const cancelOrder = async (userId, orderId, cancelReason) => {
   }
 
   await releaseSlotsForOrder(updatedOrder);
+  await couponService.releaseCouponReservation(updatedOrder._id);
   return updatedOrder;
 };
 

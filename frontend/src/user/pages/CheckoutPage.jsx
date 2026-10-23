@@ -30,6 +30,9 @@ const CheckoutPage = () => {
     handleToggleBookerInfo,
     paymentMethod,
     setPaymentMethod,
+    paymentType,
+    setPaymentType,
+    depositEligibility,
     subtotal,
     totalAmount,
     couponCode,
@@ -39,9 +42,11 @@ const CheckoutPage = () => {
     couponMessage,
     couponError,
     handleApplyCoupon,
+    handleRecommendCoupon,
     handleRemoveCoupon,
     handleSubmitOrder,
   } = useCheckout();
+
 
   if (loading) {
     return (
@@ -107,7 +112,14 @@ const CheckoutPage = () => {
                 ))}
               </div>
 
-              <PaymentMethodSection paymentMethod={paymentMethod} onChange={setPaymentMethod} />
+              <PaymentMethodSection
+                paymentType={paymentType}
+                onPaymentTypeChange={setPaymentType}
+                paymentMethod={paymentMethod}
+                onChange={setPaymentMethod}
+                totalAmount={totalAmount}
+                depositEligibility={depositEligibility}
+              />
             </Col>
 
             <Col lg={4}>
@@ -115,6 +127,7 @@ const CheckoutPage = () => {
                 selectedCartItems={selectedCartItems}
                 subtotal={subtotal}
                 totalAmount={totalAmount}
+                paymentType={paymentType}
                 submitting={submitting}
                 couponCode={couponCode}
                 setCouponCode={setCouponCode}
@@ -123,6 +136,7 @@ const CheckoutPage = () => {
                 couponMessage={couponMessage}
                 couponError={couponError}
                 onApplyCoupon={handleApplyCoupon}
+                onRecommendCoupon={handleRecommendCoupon}
                 onRemoveCoupon={handleRemoveCoupon}
               />
             </Col>

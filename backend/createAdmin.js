@@ -12,10 +12,10 @@ const User = require('./modules/user/user.model');
 const { MONGO_URI } = require('./config/env');
 
 // Thong tin tai khoan Admin - lay tu file .env de tranh hardcode
-const ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || 'admin@tourbooking.com';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@tourbooking.com';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Admin@123456';
 const ADMIN_FULLNAME = process.env.ADMIN_FULLNAME || 'Quan Tri Vien';
-const ADMIN_PHONE    = process.env.ADMIN_PHONE    || '0900000001';
+const ADMIN_PHONE = process.env.ADMIN_PHONE || '0900000001';
 
 const createAdmin = async () => {
   try {

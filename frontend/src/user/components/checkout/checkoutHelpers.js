@@ -111,7 +111,7 @@ export const createInitialPassengers = (filteredItems, bookerInfo) => {
 /**
  * Chuẩn bị payload gửi lên API POST /orders
  */
-export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, paymentMethod, couponCode) => {
+export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, paymentMethod, couponCode, paymentType = 'FULL') => {
   return {
     customer_info: {
       full_name: customerInfo.full_name.trim(),
@@ -131,6 +131,81 @@ export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, p
       note: p.note.trim() || undefined,
     })),
     payment_method: paymentMethod,
+    payment_type: paymentType || 'FULL',
     coupon_code: couponCode || undefined,
+  };
+};
+
+
+/**
+ * Gọi API kiểm tra và tính toán giảm giá coupon
+ */
+export const validateAndApplyCoupon = async (axiosClient, { code, subtotal, selectedCartItems }) => {
+  const tourIds = selectedCartItems.map((it) => it.tour_id?._id || it.tour_id);
+  const res = await axiosClient.post('/coupons/validate', {
+    code,
+    subtotal,
+    tour_ids: tourIds,
+    items: selectedCartItems,
+  });
+  return res?.data || res;
+};
+
+/**
+ * Gọi API gợi ý mã giảm giá tốt nhất cho giỏ hàng
+ */
+export const fetchBestCouponRecommendation = async (axiosClient, { subtotal, selectedCartItems }) => {
+  const tourIds = selectedCartItems.map((it) => it.tour_id?._id || it.tour_id);
+  const res = await axiosClient.post('/coupons/recommend', {
+    subtotal,
+    tour_ids: tourIds,
+    items: selectedCartItems,
+  });
+  return res?.data || res;
+};
+
+/**
+ * Ràng buộc nghiệp vụ thông minh: Kiểm tra điều kiện được phép đặt cọc 50%.
+ * Tour khởi hành trong vòng 3 ngày tới thì không cho phép đặt cọc, bắt buộc thanh toán 100%.
+ */
+export const checkDepositEligibility = (selectedCartItems) => {
+  if (!selectedCartItems || selectedCartItems.length === 0) {
+    return { allowed: true, daysRemaining: null, reason: '' };
+  }
+
+  let earliestDate = null;
+  selectedCartItems.forEach((it) => {
+    if (it.departure_date) {
+      const d = new Date(it.departure_date);
+      if (!isNaN(d.getTime())) {
+        if (!earliestDate || d < earliestDate) {
+          earliestDate = d;
+        }
+      }
+    }
+  });
+
+  if (!earliestDate) {
+    return { allowed: true, daysRemaining: null, reason: '' };
+  }
+
+  const now = new Date();
+  const diffMs = earliestDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 3) {
+    return {
+      allowed: false,
+      daysRemaining: diffDays,
+      earliestDate,
+      reason: 'Tour khởi hành trong vòng 3 ngày tới, vui lòng thanh toán toàn bộ 100% để bộ phận điều hành kịp xuất vé và gửi danh sách bảo hiểm du lịch.',
+    };
+  }
+
+  return {
+    allowed: true,
+    daysRemaining: diffDays,
+    earliestDate,
+    reason: '',
   };
 };

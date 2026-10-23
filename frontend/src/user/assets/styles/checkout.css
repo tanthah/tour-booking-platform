@@ -160,3 +160,94 @@
   box-shadow: none;
   transform: none;
 }
+
+/* ===== Số thứ tự bước trong tiêu đề card ===== */
+.checkout-card-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ea580c;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* ===== Payment Level Card (Mức Thanh Toán) ===== */
+.payment-level-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  background: #ffffff;
+}
+
+.payment-level-card:hover {
+  border-color: #ea580c;
+  background: #fff9f5;
+}
+
+.payment-level-card.selected {
+  border-color: #ea580c;
+  background: linear-gradient(135deg, #fff7ed 0%, #fffaf5 100%);
+  box-shadow: 0 0 0 1.5px #ea580c, 0 4px 14px rgba(234, 88, 12, 0.08);
+}
+
+.payment-level-content {
+  flex: 1;
+}
+
+.payment-level-amount-line {
+  font-size: 14px;
+  color: #374151;
+  margin-top: 4px;
+}
+
+.payment-level-note {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.payment-level-badge-confirm {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #dcfce7;
+  color: #16a34a;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+
+/* ===== Deposit info trong Summary Card ===== */
+.deposit-info-box {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+}
+
+.deposit-info-box .deposit-pay-now {
+  font-weight: 800;
+  color: #ea580c;
+  font-size: 17px;
+}
+
+.deposit-info-box .deposit-remaining {
+  color: #64748b;
+  font-size: 12.5px;
+  margin-top: 2px;
+}

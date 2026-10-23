@@ -1,6 +1,7 @@
 const Tour = require('../tour/tour.model');
 const TourDeparture = require('../tour/tourDeparture.model');
 const Order = require('./order.model');
+const couponService = require('../coupon/coupon.service');
 
 /**
  * Sinh mã đơn hàng duy nhất: ORD-YYYYMMDD-XXXX (4 ký tự hex)
@@ -265,6 +266,7 @@ const expirePendingOrders = async () => {
 
     if (updatedOrder) {
       await releaseSlotsForOrder(updatedOrder);
+      await couponService.releaseCouponReservation(updatedOrder._id);
       expiredCount++;
     }
   }

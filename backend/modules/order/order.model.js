@@ -198,7 +198,19 @@ const orderSchema = new mongoose.Schema(
     payment_method: {
       type: String,
       required: true,
-      default: 'MOMO',
+      default: 'COUNTER',
+    },
+    // Mức thanh toán: toàn bộ 100% hoặc đặt cọc 50%
+    payment_type: {
+      type: String,
+      enum: ['FULL', 'DEPOSIT'],
+      default: 'FULL',
+    },
+    // Số tiền đặt cọc thực tế (= 50% total_amount khi DEPOSIT, null khi FULL)
+    deposit_amount: {
+      type: Number,
+      default: null,
+      min: [0, 'Số tiền đặt cọc phải >= 0'],
     },
     payment_status: {
       type: String,
