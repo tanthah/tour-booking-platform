@@ -134,3 +134,30 @@ export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, p
     coupon_code: couponCode || undefined,
   };
 };
+
+/**
+ * Gọi API kiểm tra và tính toán giảm giá coupon
+ */
+export const validateAndApplyCoupon = async (axiosClient, { code, subtotal, selectedCartItems }) => {
+  const tourIds = selectedCartItems.map((it) => it.tour_id?._id || it.tour_id);
+  const res = await axiosClient.post('/coupons/validate', {
+    code,
+    subtotal,
+    tour_ids: tourIds,
+    items: selectedCartItems,
+  });
+  return res?.data || res;
+};
+
+/**
+ * Gọi API gợi ý mã giảm giá tốt nhất cho giỏ hàng
+ */
+export const fetchBestCouponRecommendation = async (axiosClient, { subtotal, selectedCartItems }) => {
+  const tourIds = selectedCartItems.map((it) => it.tour_id?._id || it.tour_id);
+  const res = await axiosClient.post('/coupons/recommend', {
+    subtotal,
+    tour_ids: tourIds,
+    items: selectedCartItems,
+  });
+  return res?.data || res;
+};

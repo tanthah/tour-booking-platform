@@ -256,7 +256,13 @@ class CouponService {
     const filter = { coupon_id: couponId };
 
     const [usages, total] = await Promise.all([
-      CouponUsage.find(filter).sort({ created_at: -1 }).skip(skip).limit(Number(limit)).lean(),
+      CouponUsage.find(filter)
+        .populate('user_id', 'full_name email phone')
+        .populate('booking_id', 'order_code total_amount order_status')
+        .sort({ created_at: -1 })
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
       CouponUsage.countDocuments(filter),
     ]);
 

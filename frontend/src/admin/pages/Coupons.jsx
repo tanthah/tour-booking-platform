@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Trash2, History, Search, RefreshCw, ToggleLeft, ToggleRight, Ticket } from 'lucide-react';
+import { Plus, Edit2, Trash2, History, Search, RefreshCw, ToggleLeft, ToggleRight, Ticket, BarChart3, FileText } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
 import CouponUsagesModal from '../components/CouponUsagesModal';
+import CouponReportModal from '../components/CouponReportModal';
 
 const API_URL = '/coupons/admin';
 
@@ -14,6 +15,8 @@ function Coupons() {
   const [filterStatus, setFilterStatus] = useState('');
   const [search, setSearch] = useState('');
   const [selectedCouponForUsage, setSelectedCouponForUsage] = useState(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [showAllUsagesModal, setShowAllUsagesModal] = useState(false);
 
   const fetchCoupons = useCallback(async (page = 1) => {
     try {
@@ -66,10 +69,20 @@ function Coupons() {
         <h1 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Ticket size={24} color="var(--primary-color)" /> Quản lý Mã giảm giá (Coupon)
         </h1>
-        <button className="btn btn-primary" onClick={() => navigate('/admin/coupons/create')}>
-          <Plus size={18} />
-          <span>Thêm Coupon</span>
-        </button>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <button className="btn btn-secondary" onClick={() => setShowReportModal(true)} title="Xem báo cáo chiến dịch">
+            <BarChart3 size={17} />
+            <span>Báo Cáo</span>
+          </button>
+          <button className="btn btn-secondary" onClick={() => setShowAllUsagesModal(true)} title="Xem toàn bộ lịch sử sử dụng">
+            <FileText size={17} />
+            <span>Lịch Sử Dùng</span>
+          </button>
+          <button className="btn btn-primary" onClick={() => navigate('/admin/coupons/create')}>
+            <Plus size={18} />
+            <span>Thêm Coupon</span>
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: '20px', padding: '16px' }}>
@@ -254,6 +267,19 @@ function Coupons() {
         <CouponUsagesModal
           coupon={selectedCouponForUsage}
           onClose={() => setSelectedCouponForUsage(null)}
+        />
+      )}
+
+      {showAllUsagesModal && (
+        <CouponUsagesModal
+          coupon={null}
+          onClose={() => setShowAllUsagesModal(false)}
+        />
+      )}
+
+      {showReportModal && (
+        <CouponReportModal
+          onClose={() => setShowReportModal(false)}
         />
       )}
     </div>

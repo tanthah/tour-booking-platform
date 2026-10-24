@@ -1,5 +1,7 @@
 const { validationResult } = require('express-validator');
 const couponService = require('./coupon.service');
+const couponReportService = require('./couponReport.service');
+const couponRecommendService = require('./couponRecommend.service');
 const ApiResponse = require('../../utils/apiResponse');
 const asyncHandler = require('../../utils/asyncHandler');
 
@@ -19,7 +21,7 @@ const handleValidation = (req, res) => {
   return true;
 };
 
-// ============ ADMIN — Quản lý Coupon ============
+// ============ ADMIN — Quản lý Coupon & Báo cáo ============
 
 /** POST /api/coupons/admin — Tạo coupon mới */
 const createCoupon = asyncHandler(async (req, res) => {
@@ -39,6 +41,26 @@ const createBatchCoupons = asyncHandler(async (req, res) => {
 const getAllCoupons = asyncHandler(async (req, res) => {
   const result = await couponService.getAllCoupons(req.query);
   ApiResponse.success(res, 200, 'Lấy danh sách mã giảm giá thành công', result);
+});
+
+/** GET /api/coupons/admin/report — Báo cáo thống kê tổng quan (Giai đoạn 5) */
+const getCouponReport = asyncHandler(async (req, res) => {
+  const report = await couponReportService.getCouponReport();
+  ApiResponse.success(res, 200, 'Lấy báo cáo thống kê coupon thành công', report);
+});
+
+/** GET /api/coupons/admin/usages/all — Toàn bộ lịch sử sử dụng có lọc (Giai đoạn 5) */
+const getAllUsages = asyncHandler(async (req, res) => {
+  const result = await couponReportService.getAllUsages(req.query);
+  ApiResponse.success(res, 200, 'Lấy lịch sử sử dụng thành công', result);
+});
+
+/** GET /api/coupons/admin/usages/export — Xuất CSV lịch sử sử dụng (Giai đoạn 5) */
+const exportUsagesCsv = asyncHandler(async (req, res) => {
+  const csvData = await couponReportService.exportUsagesToCsv(req.query);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="coupon_usages_report.csv"');
+  res.status(200).send(csvData);
 });
 
 /** GET /api/coupons/admin/:id — Chi tiết coupon */
@@ -69,18 +91,17 @@ const deleteCoupon = asyncHandler(async (req, res) => {
   ApiResponse.success(res, 200, 'Xóa mã giảm giá thành công');
 });
 
-/** GET /api/coupons/admin/:id/usages — Lịch sử sử dụng coupon */
+/** GET /api/coupons/admin/:id/usages — Lịch sử sử dụng của một coupon */
 const getCouponUsages = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
   const result = await couponService.getCouponUsages(req.params.id, req.query);
   ApiResponse.success(res, 200, 'Lấy lịch sử sử dụng thành công', result);
 });
 
-// ============ CUSTOMER — Validate Coupon ============
+// ============ CUSTOMER — Validate & Gợi ý coupon ============
 
 /**
  * POST /api/coupons/validate — Kiểm tra mã coupon và tính mức giảm
- * Frontend gửi { code, subtotal }, backend trả { valid, discountAmount, ... }
  */
 const validateCoupon = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
@@ -117,10 +138,22 @@ const validateCoupon = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    // Trả lỗi nghiệp vụ coupon dạng response chuẩn (không throw 500)
     const statusCode = error.statusCode || 400;
     ApiResponse.error(res, statusCode, error.message);
   }
+});
+
+/**
+ * POST /api/coupons/recommend — Gợi ý mã giảm giá tốt nhất cho khách hàng (Giai đoạn 6)
+ */
+const recommendBestCoupon = asyncHandler(async (req, res) => {
+  const { subtotal, tour_ids, items } = req.body;
+  const result = await couponRecommendService.recommendBestCoupon(
+    req.user._id,
+    Number(subtotal) || 0,
+    { tourIds: tour_ids, items }
+  );
+  ApiResponse.success(res, 200, 'Gợi ý mã giảm giá thành công', result);
 });
 
 /**
@@ -136,11 +169,15 @@ module.exports = {
   createCoupon,
   createBatchCoupons,
   getAllCoupons,
+  getCouponReport,
+  getAllUsages,
+  exportUsagesCsv,
   getCouponById,
   updateCoupon,
   changeStatus,
   deleteCoupon,
   getCouponUsages,
   validateCoupon,
+  recommendBestCoupon,
   getPublicCoupons,
 };

@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('./order.controller');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const requirePermission = require('../../middlewares/requirePermission');
+const { PERMISSIONS } = require('../../utils/permissionCodes');
 const {
   checkoutValidation,
   getOrderByIdValidation,
@@ -13,7 +15,7 @@ const {
 // ============ CUSTOMER ROUTES (/api/orders) ============
 
 // Tất cả route đơn hàng customer đều yêu cầu đăng nhập
-const customerAuth = [authenticate, authorize('CUSTOMER', 'ADMIN', 'STAFF')];
+const customerAuth = [authenticate];
 
 // Checkout: tạo đơn từ giỏ hàng, tính lại giá, trừ chỗ
 router.post(
@@ -31,7 +33,7 @@ router.get(
   orderController.getMyOrders
 );
 
-// Chi tiết đơn hàng (chủ đơn hoặc ADMIN/STAFF)
+// Chi tiết đơn hàng (chủ đơn hoặc người có quyền booking.view)
 router.get(
   '/:id',
   ...customerAuth,
@@ -49,12 +51,11 @@ router.patch(
 
 // ============ ADMIN/STAFF ROUTES (/api/orders/admin) ============
 
-const adminAuth = [authenticate, authorize('ADMIN', 'STAFF')];
-
 // Danh sách tất cả đơn hàng (phân trang, lọc, tìm kiếm)
 router.get(
   '/admin/list',
-  ...adminAuth,
+  authenticate,
+  requirePermission(PERMISSIONS.BOOKING_VIEW),
   listOrdersQueryValidation,
   orderController.getAllOrdersAdmin
 );
@@ -62,7 +63,8 @@ router.get(
 // Cập nhật trạng thái đơn hàng (order_status, payment_status)
 router.patch(
   '/admin/:id',
-  ...adminAuth,
+  authenticate,
+  requirePermission(PERMISSIONS.BOOKING_MANAGE),
   updateOrderStatusValidation,
   orderController.updateOrderStatus
 );

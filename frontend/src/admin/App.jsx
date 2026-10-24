@@ -8,6 +8,9 @@ import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import Coupons from './pages/Coupons';
 import CouponForm from './pages/CouponForm';
+import Users from './pages/Users';
+import Roles from './pages/Roles';
+import AuditLogs from './pages/AuditLogs';
 import './index.css';
 
 function App() {
@@ -35,6 +38,15 @@ function App() {
         <Route path="categories/create" element={<CategoryForm />} />
         <Route path="categories/edit/:id" element={<CategoryForm />} />
 
+        {/* Routes Quản lý Tài khoản & Nhân viên */}
+        <Route path="users" element={<Users />} />
+
+        {/* Routes Quản lý Vai trò & Phân quyền */}
+        <Route path="roles" element={<Roles />} />
+
+        {/* Routes Nhật ký hệ thống */}
+        <Route path="audit-logs" element={<AuditLogs />} />
+
         {/* Routes Cài đặt chung */}
         <Route path="settings" element={<Settings />} />
       </Route>
@@ -43,4 +55,3 @@ function App() {
 }
 
 export default App;
-

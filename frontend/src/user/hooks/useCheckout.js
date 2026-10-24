@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
 import { validateCustomerInfo, validateAllPassengers } from '../components/checkout/checkoutValidation';
-import { extractDobString, createInitialPassengers, buildOrderPayload, loadInitialCustomer } from '../components/checkout/checkoutHelpers';
+import { extractDobString, createInitialPassengers, buildOrderPayload, loadInitialCustomer, validateAndApplyCoupon, fetchBestCouponRecommendation } from '../components/checkout/checkoutHelpers';
 
 /**
  * Custom Hook useCheckout - Quản lý State & Logic cho Trang Đặt Tour
@@ -142,25 +142,10 @@ export const useCheckout = () => {
     setPassengers((prev) => {
       const updated = [...prev];
       if (updated[0]) {
-        updated[0] = shouldUse
-          ? {
-              ...updated[0],
-              full_name: customerInfo.full_name || '',
-              phone: customerInfo.phone || '',
-              email: customerInfo.email || '',
-              gender: customerInfo.gender || 'MALE',
-              date_of_birth: customerInfo.date_of_birth || '',
-              id_number: customerInfo.id_number || '',
-            }
-          : {
-              ...updated[0],
-              full_name: '',
-              phone: '',
-              email: '',
-              gender: 'MALE',
-              date_of_birth: '',
-              id_number: '',
-            };
+        const bookerData = shouldUse
+          ? { full_name: customerInfo.full_name || '', phone: customerInfo.phone || '', email: customerInfo.email || '', gender: customerInfo.gender || 'MALE', date_of_birth: customerInfo.date_of_birth || '', id_number: customerInfo.id_number || '' }
+          : { full_name: '', phone: '', email: '', gender: 'MALE', date_of_birth: '', id_number: '' };
+        updated[0] = { ...updated[0], ...bookerData };
       }
       return updated;
     });
@@ -178,25 +163,37 @@ export const useCheckout = () => {
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
-
     try {
-      const tourIds = selectedCartItems.map((it) => it.tour_id?._id || it.tour_id);
-      const res = await axiosClient.post('/coupons/validate', {
-        code,
-        subtotal,
-        tour_ids: tourIds,
-        items: selectedCartItems,
-      });
-      const data = res?.data || res;
+      const data = await validateAndApplyCoupon(axiosClient, { code, subtotal, selectedCartItems });
       setDiscount(data.discountAmount || 0);
       setAppliedCoupon(code);
-      const discountFormatted = (data.discountAmount || 0).toLocaleString('vi-VN');
-      setCouponMessage(`Áp dụng mã "${code}" (-${data.coupon?.discount_percent}%) thành công! Giảm ${discountFormatted} đ`);
+      setCouponMessage(`Áp dụng "${code}" (-${data.coupon?.discount_percent}%) thành công! Giảm ${(data.discountAmount || 0).toLocaleString('vi-VN')} đ`);
       setCouponError(false);
     } catch (err) {
       setDiscount(0);
       setAppliedCoupon('');
       setCouponMessage(err?.message || 'Mã giảm giá không hợp lệ hoặc đã hết hạn.');
+      setCouponError(true);
+    }
+  };
+
+  // Tự động tìm và áp dụng mã giảm giá tốt nhất cho đơn hàng
+  const handleRecommendCoupon = async () => {
+    try {
+      const data = await fetchBestCouponRecommendation(axiosClient, { subtotal, selectedCartItems });
+      if (data?.bestCoupon) {
+        const b = data.bestCoupon;
+        setCouponCode(b.code);
+        setDiscount(b.discount_amount || 0);
+        setAppliedCoupon(b.code);
+        setCouponMessage(`Đã áp dụng mã tốt nhất "${b.code}" (-${b.discount_percent}%). Giảm ${(b.discount_amount || 0).toLocaleString('vi-VN')} đ`);
+        setCouponError(false);
+      } else {
+        setCouponMessage('Chưa có mã giảm giá phù hợp cho các tour trong đơn.');
+        setCouponError(true);
+      }
+    } catch (err) {
+      setCouponMessage(err?.message || 'Không thể tìm mã giảm giá phù hợp.');
       setCouponError(true);
     }
   };
@@ -281,6 +278,7 @@ export const useCheckout = () => {
     couponMessage,
     couponError,
     handleApplyCoupon,
+    handleRecommendCoupon,
     handleRemoveCoupon,
     handleSubmitOrder,
   };

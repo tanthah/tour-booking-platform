@@ -56,8 +56,9 @@ function App() {
     window.dispatchEvent(new Event('cartUpdated'));
 
     // Chuyển hướng sang trang quản lý nếu là ADMIN hoặc STAFF
-    const isAdmin = Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('ADMIN');
-    const isStaff = Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('STAFF');
+    const roleCode = loggedInUser.role?.code?.toLowerCase() || '';
+    const isAdmin = (Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('ADMIN')) || roleCode === 'admin';
+    const isStaff = (Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('STAFF')) || roleCode.includes('staff');
 
     if (isAdmin || isStaff) {
       window.location.href = '/admin';
