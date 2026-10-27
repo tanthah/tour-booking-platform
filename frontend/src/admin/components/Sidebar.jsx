@@ -49,6 +49,26 @@ function Sidebar() {
           </NavLink>
         )}
 
+        {isAdmin && (
+          <>
+            <NavLink 
+              to="/admin/articles" 
+              className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+            >
+              <FileText size={20} />
+              <span>Quản lý Tin tức</span>
+            </NavLink>
+
+            <NavLink 
+              to="/admin/article-categories" 
+              className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+            >
+              <Grid size={20} />
+              <span>Danh mục Tin tức</span>
+            </NavLink>
+          </>
+        )}
+
         {hasPerm(['booking.view', 'booking.manage']) && (
           <NavLink 
             to="/admin/orders" 
