@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const categoryController = require('./category.controller');
-const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { authenticate } = require('../../middlewares/auth.middleware');
+const requirePermission = require('../../middlewares/requirePermission');
+const { PERMISSIONS } = require('../../utils/permissionCodes');
 const {
   createCategoryValidation,
   updateCategoryValidation,
@@ -12,22 +14,22 @@ const {
 // ============ PROTECTED ROUTES — ADMIN/STAFF quản lý Danh mục ============
 
 // Endpoint lấy danh sách danh mục đang hoạt động (dùng cho dropdown chọn danh mục)
-router.get('/active', authenticate, authorize('ADMIN', 'STAFF'), categoryController.getActiveCategories);
+router.get('/active', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), categoryController.getActiveCategories);
 
 // Endpoint lấy danh sách tất cả danh mục (có phân trang, lọc, tìm kiếm)
-router.get('/', authenticate, authorize('ADMIN', 'STAFF'), listCategoriesValidation, categoryController.getAllCategories);
+router.get('/', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), listCategoriesValidation, categoryController.getAllCategories);
 
 // Endpoint tạo danh mục mới
-router.post('/', authenticate, authorize('ADMIN', 'STAFF'), createCategoryValidation, categoryController.createCategory);
+router.post('/', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), createCategoryValidation, categoryController.createCategory);
 
 // Endpoint lấy chi tiết danh mục theo ID
-router.get('/:id', authenticate, authorize('ADMIN', 'STAFF'), categoryIdValidation, categoryController.getCategoryById);
+router.get('/:id', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), categoryIdValidation, categoryController.getCategoryById);
 
 // Endpoint cập nhật thông tin danh mục
-router.put('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateCategoryValidation, categoryController.updateCategory);
+router.put('/:id', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), updateCategoryValidation, categoryController.updateCategory);
 
 // Endpoint xóa mềm danh mục
-router.delete('/:id', authenticate, authorize('ADMIN', 'STAFF'), categoryIdValidation, categoryController.deleteCategory);
+router.delete('/:id', authenticate, requirePermission(PERMISSIONS.CATEGORY_MANAGE), categoryIdValidation, categoryController.deleteCategory);
 
 module.exports = router;
 

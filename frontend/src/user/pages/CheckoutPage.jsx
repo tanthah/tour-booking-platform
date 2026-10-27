@@ -39,6 +39,7 @@ const CheckoutPage = () => {
     couponMessage,
     couponError,
     handleApplyCoupon,
+    handleRecommendCoupon,
     handleRemoveCoupon,
     handleSubmitOrder,
   } = useCheckout();
@@ -123,6 +124,7 @@ const CheckoutPage = () => {
                 couponMessage={couponMessage}
                 couponError={couponError}
                 onApplyCoupon={handleApplyCoupon}
+                onRecommendCoupon={handleRecommendCoupon}
                 onRemoveCoupon={handleRemoveCoupon}
               />
             </Col>

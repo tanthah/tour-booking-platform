@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const departureController = require('./tourDeparture.controller');
-const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { authenticate } = require('../../middlewares/auth.middleware');
+const requirePermission = require('../../middlewares/requirePermission');
+const { PERMISSIONS } = require('../../utils/permissionCodes');
 const {
   updateDepartureValidation,
   changeDepartureStatusValidation,
@@ -16,12 +18,12 @@ router.get('/:id', departureIdValidation, departureController.getDepartureById);
 // ============ PROTECTED ROUTES — ADMIN quản lý đợt khởi hành ============
 
 // Cập nhật đợt khởi hành
-router.patch('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateDepartureValidation, departureController.updateDeparture);
+router.patch('/:id', authenticate, requirePermission(PERMISSIONS.SCHEDULE_UPDATE), updateDepartureValidation, departureController.updateDeparture);
 
 // Đổi trạng thái đợt khởi hành
-router.patch('/:id/status', authenticate, authorize('ADMIN', 'STAFF'), changeDepartureStatusValidation, departureController.changeDepartureStatus);
+router.patch('/:id/status', authenticate, requirePermission(PERMISSIONS.SCHEDULE_UPDATE), changeDepartureStatusValidation, departureController.changeDepartureStatus);
 
 // Xóa mềm đợt khởi hành
-router.delete('/:id', authenticate, authorize('ADMIN', 'STAFF'), departureIdValidation, departureController.deleteDeparture);
+router.delete('/:id', authenticate, requirePermission(PERMISSIONS.SCHEDULE_DELETE), departureIdValidation, departureController.deleteDeparture);
 
 module.exports = router;

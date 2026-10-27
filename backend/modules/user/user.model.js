@@ -57,9 +57,27 @@ const userSchema = new mongoose.Schema(
     },
     roles: {
       type: [String],
-      enum: ['CUSTOMER', 'STAFF', 'ADMIN'],
       default: ['CUSTOMER'],
     },
+    role_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Role',
+      default: null,
+    },
+    permission_overrides: [
+      {
+        permission: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        effect: {
+          type: String,
+          enum: ['ALLOW', 'DENY'],
+          required: true,
+        },
+      },
+    ],
     deleted_at: {
       type: Date,
       default: null,
@@ -73,6 +91,8 @@ const userSchema = new mongoose.Schema(
 // Tạo Index cho các trường thường xuyên truy vấn và tìm kiếm
 //userSchema.index({ email: 1 });
 userSchema.index({ phone: 1 });
+userSchema.index({ role_id: 1 });
+userSchema.index({ status: 1 });
 userSchema.index({ deleted_at: 1 });
 
 /**

@@ -19,6 +19,7 @@ const CheckoutSummaryCard = ({
   couponMessage = '',
   couponError = false,
   onApplyCoupon,
+  onRecommendCoupon,
   onRemoveCoupon,
 }) => {
   // Format ngày đi
@@ -153,9 +154,22 @@ const CheckoutSummaryCard = ({
           border: '1px solid #e2e8f0',
         }}
       >
-        <div className="d-flex align-items-center gap-2 mb-2" style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
-          <Tag size={15} color="#ea580c" />
-          <span>Mã giảm giá ưu đãi</span>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex align-items-center gap-2" style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>
+            <Tag size={15} color="#ea580c" />
+            <span>Mã giảm giá ưu đãi</span>
+          </div>
+          {onRecommendCoupon && !appliedCoupon && (
+            <button
+              type="button"
+              className="btn btn-link p-0 text-decoration-none"
+              style={{ fontSize: '12px', color: '#ea580c', fontWeight: 700, cursor: 'pointer' }}
+              onClick={onRecommendCoupon}
+              title="Tìm mã giảm giá tiết kiệm nhất cho đơn này"
+            >
+              ⚡ Gợi ý mã tốt nhất
+            </button>
+          )}
         </div>
 
         {appliedCoupon ? (
@@ -163,7 +177,7 @@ const CheckoutSummaryCard = ({
             <div>
               <span className="badge bg-success me-2">{appliedCoupon}</span>
               <span style={{ fontSize: '12.5px', color: '#16a34a', fontWeight: 600 }}>
-                Giảm 10% (-{discount.toLocaleString('vi-VN')} đ)
+                Giảm: -{discount.toLocaleString('vi-VN')} đ
               </span>
             </div>
             <button
