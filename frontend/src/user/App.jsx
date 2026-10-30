@@ -102,8 +102,6 @@ function App() {
                 <Route path="/tours" element={<TourListPage categoryType="all" />} />
                 <Route path="/uu-dai" element={<PromotionPage />} />
                 <Route path="/khuyen-mai" element={<PromotionPage />} />
-                <Route path="/tin-tuc" element={<ArticleListPage />} />
-                <Route path="/tin-tuc/:slug" element={<ArticleDetailPage />} />
                 <Route path="/tour/:id" element={<TourDetailPage />} />
                 <Route path="/tours/:id" element={<TourDetailPage />} />
                 <Route path="/gio-hang" element={<CartPage />} />

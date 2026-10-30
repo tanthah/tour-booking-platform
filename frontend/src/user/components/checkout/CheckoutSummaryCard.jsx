@@ -12,6 +12,7 @@ const CheckoutSummaryCard = ({
   subtotal,
   totalAmount,
   submitting,
+  paymentType = 'FULL',
   couponCode = '',
   setCouponCode,
   discount = 0,
@@ -21,7 +22,12 @@ const CheckoutSummaryCard = ({
   onApplyCoupon,
   onRecommendCoupon,
   onRemoveCoupon,
+  canBook = true,
 }) => {
+  const isDeposit = paymentType === 'DEPOSIT_30' || paymentType === 'DEPOSIT';
+  const depositAmount = Math.ceil((totalAmount || 0) * 0.3);
+  const remainingAmount = (totalAmount || 0) - depositAmount;
+  const amountToPay = isDeposit ? depositAmount : (totalAmount || 0);
   // Format ngày đi
   const formatDepartureDate = (dateStr) => {
     if (!dateStr) return 'Chưa xác định';
@@ -57,53 +63,37 @@ const CheckoutSummaryCard = ({
               {item.title}
             </div>
 
-            {/* Ngày khởi hành */}
-            <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: '12.5px', color: '#475569' }}>
-              <Calendar size={14} color="#ea580c" />
-              <span>
-                Ngày đi: <strong className="text-dark">{formatDepartureDate(item.departure_date)}</strong>
-              </span>
+            {/* Thông tin chuyến đi */}
+            <div className="d-flex flex-column gap-1 mb-2" style={{ fontSize: '12.5px', color: '#475569' }}>
+              <div className="d-flex align-items-center gap-2">
+                <Calendar size={14} color="#ea580c" />
+                <span>Ngày đi: <strong className="text-dark">{formatDepartureDate(item.departure_date)}</strong></span>
+              </div>
+              {item.departure_location && (
+                <div className="d-flex align-items-center gap-2">
+                  <MapPin size={14} color="#0284c7" />
+                  <span>Từ: <strong className="text-dark">{item.departure_location}</strong></span>
+                </div>
+              )}
+              {item.destination_location && (
+                <div className="d-flex align-items-center gap-2">
+                  <MapPin size={14} color="#16a34a" />
+                  <span>Đến: <strong className="text-dark">{item.destination_location}</strong></span>
+                </div>
+              )}
+              {item.duration && (
+                <div className="d-flex align-items-center gap-2">
+                  <Clock size={14} color="#8b5cf6" />
+                  <span>Thời gian: <strong className="text-dark">{item.duration}</strong></span>
+                </div>
+              )}
+              {item.vehicle && (
+                <div className="d-flex align-items-center gap-2">
+                  <Bus size={14} color="#eab308" />
+                  <span>Phương tiện: <strong className="text-dark">{item.vehicle}</strong></span>
+                </div>
+              )}
             </div>
-
-            {/* Điểm khởi hành */}
-            {item.departure_location && (
-              <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: '12.5px', color: '#475569' }}>
-                <MapPin size={14} color="#0284c7" />
-                <span>
-                  Khởi hành từ: <strong className="text-dark">{item.departure_location}</strong>
-                </span>
-              </div>
-            )}
-
-            {/* Điểm đến */}
-            {item.destination_location && (
-              <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: '12.5px', color: '#475569' }}>
-                <MapPin size={14} color="#16a34a" />
-                <span>
-                  Điểm đến: <strong className="text-dark">{item.destination_location}</strong>
-                </span>
-              </div>
-            )}
-
-            {/* Thời lượng */}
-            {item.duration && (
-              <div className="d-flex align-items-center gap-2 mb-1" style={{ fontSize: '12.5px', color: '#475569' }}>
-                <Clock size={14} color="#8b5cf6" />
-                <span>
-                  Thời gian: <strong className="text-dark">{item.duration}</strong>
-                </span>
-              </div>
-            )}
-
-            {/* Phương tiện */}
-            {item.vehicle && (
-              <div className="d-flex align-items-center gap-2 mb-2" style={{ fontSize: '12.5px', color: '#475569' }}>
-                <Bus size={14} color="#eab308" />
-                <span>
-                  Phương tiện: <strong className="text-dark">{item.vehicle}</strong>
-                </span>
-              </div>
-            )}
 
             {/* Chi tiết số lượng khách & Đơn giá */}
             <div
@@ -251,25 +241,46 @@ const CheckoutSummaryCard = ({
       )}
 
       <div
-        className="d-flex justify-content-between pt-3 mb-4"
-        style={{ borderTop: '1px solid #e2e8f0', fontSize: '16px' }}
+        className="d-flex justify-content-between pt-3 mb-2"
+        style={{ borderTop: '1px solid #e2e8f0', fontSize: '15px' }}
       >
-        <span style={{ fontWeight: 800, color: '#1e293b' }}>Tổng thanh toán:</span>
-        <span style={{ fontWeight: 900, fontSize: '20px', color: '#ea580c' }}>
-          {totalAmount.toLocaleString('vi-VN')} đ
+        <span style={{ fontWeight: 700, color: '#1e293b' }}>Tổng đơn hàng:</span>
+        <span style={{ fontWeight: 800, fontSize: '17px', color: '#1e293b' }}>
+          {(totalAmount || 0).toLocaleString('vi-VN')} đ
         </span>
       </div>
+
+      {/* Hiển thị số tiền thực tế cần thanh toán ngay */}
+      {isDeposit ? (
+        <div className="deposit-info-box mb-4">
+          <div>🧾 Mức thanh toán: <strong>Đặt cọc 30%</strong></div>
+          <div className="mt-1">Thanh toán ngay: <span className="deposit-pay-now">{depositAmount.toLocaleString('vi-VN')} đ</span></div>
+          <div className="deposit-remaining">Còn lại: {remainingAmount.toLocaleString('vi-VN')} đ — hạn thanh toán đủ trước D-16</div>
+        </div>
+      ) : (
+        <div className="d-flex justify-content-between mb-4 pt-2" style={{ fontSize: '16px' }}>
+          <span style={{ fontWeight: 800, color: '#1e293b' }}>Thanh toán ngay:</span>
+          <span style={{ fontWeight: 900, fontSize: '20px', color: '#ea580c' }}>
+            {amountToPay.toLocaleString('vi-VN')} đ
+          </span>
+        </div>
+      )}
 
       <button
         type="submit"
         className="checkout-btn-submit"
-        disabled={submitting || selectedCartItems.length === 0}
+        disabled={submitting || selectedCartItems.length === 0 || !canBook}
+        style={!canBook ? { background: '#94a3b8', cursor: 'not-allowed' } : {}}
       >
         {submitting ? (
           <span className="d-flex align-items-center justify-content-center gap-2">
             <Spinner animation="border" size="sm" />
             Đang xử lý đơn...
           </span>
+        ) : !canBook ? (
+          'Không thể đặt tour (còn dưới 5 ngày)'
+        ) : isDeposit ? (
+          `Đặt Cọc ${depositAmount.toLocaleString('vi-VN')} đ Ngay`
         ) : (
           'Xác Nhận Đặt Tour'
         )}

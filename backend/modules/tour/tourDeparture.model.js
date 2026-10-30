@@ -32,6 +32,31 @@ const tourDepartureSchema = new mongoose.Schema(
       required: [true, 'Phương tiện là bắt buộc'],
       default: 'Ô tô 45 chỗ',
     },
+    // ========== THÔNG TIN TẬP TRUNG ==========
+    meeting_point_address: {
+      type: String,
+      default: '',
+    },
+    meeting_point_map_url: {
+      type: String,
+      default: '',
+    },
+    meeting_time: {
+      type: String,
+      default: '',
+    },
+    start_time: {
+      type: String,
+      default: '',
+    },
+    end_location: {
+      type: String,
+      default: '',
+    },
+    contact_info: {
+      type: String,
+      default: '',
+    },
     // ========== SỨC CHỨA ==========
     // Tổng số chỗ ban đầu — Admin nhập khi tạo đợt
     total_slots: {

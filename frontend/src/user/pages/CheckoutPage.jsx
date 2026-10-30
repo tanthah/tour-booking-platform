@@ -30,6 +30,9 @@ const CheckoutPage = () => {
     handleToggleBookerInfo,
     paymentMethod,
     setPaymentMethod,
+    paymentType,
+    setPaymentType,
+    depositEligibility,
     subtotal,
     totalAmount,
     couponCode,
@@ -43,6 +46,7 @@ const CheckoutPage = () => {
     handleRemoveCoupon,
     handleSubmitOrder,
   } = useCheckout();
+
 
   if (loading) {
     return (
@@ -71,6 +75,12 @@ const CheckoutPage = () => {
             <span>Hoàn tất đặt</span>
           </div>
         </div>
+
+        {depositEligibility?.canBook === false && (
+          <Alert variant="danger" className="mb-4">
+            ⚠️ <strong>Không thể đặt tour:</strong> {depositEligibility.reason}
+          </Alert>
+        )}
 
         {errorMsg && (
           <Alert variant="danger" dismissible onClose={() => setErrorMsg('')}>
@@ -108,7 +118,14 @@ const CheckoutPage = () => {
                 ))}
               </div>
 
-              <PaymentMethodSection paymentMethod={paymentMethod} onChange={setPaymentMethod} />
+              <PaymentMethodSection
+                paymentType={paymentType}
+                onPaymentTypeChange={setPaymentType}
+                paymentMethod={paymentMethod}
+                onChange={setPaymentMethod}
+                totalAmount={totalAmount}
+                depositEligibility={depositEligibility}
+              />
             </Col>
 
             <Col lg={4}>
@@ -116,6 +133,7 @@ const CheckoutPage = () => {
                 selectedCartItems={selectedCartItems}
                 subtotal={subtotal}
                 totalAmount={totalAmount}
+                paymentType={paymentType}
                 submitting={submitting}
                 couponCode={couponCode}
                 setCouponCode={setCouponCode}
@@ -126,6 +144,7 @@ const CheckoutPage = () => {
                 onApplyCoupon={handleApplyCoupon}
                 onRecommendCoupon={handleRecommendCoupon}
                 onRemoveCoupon={handleRemoveCoupon}
+                canBook={depositEligibility?.canBook !== false}
               />
             </Col>
           </Row>

@@ -198,30 +198,75 @@ const orderSchema = new mongoose.Schema(
     payment_method: {
       type: String,
       required: true,
-      default: 'MOMO',
+      default: 'COUNTER',
+    },
+    // Mức thanh toán: FULL (100%) hoặc DEPOSIT_30 (cọc 30%)
+    payment_type: {
+      type: String,
+      enum: ['FULL', 'DEPOSIT_30', 'DEPOSIT'],
+      default: 'FULL',
+    },
+    deposit_amount: {
+      type: Number,
+      default: null,
+      min: [0, 'Số tiền đặt cọc phải >= 0'],
+    },
+    paid_amount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Số tiền đã trả phải >= 0'],
+    },
+    remaining_amount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Số tiền còn thiếu phải >= 0'],
+    },
+    payment_deadline: {
+      type: Date,
+      default: null,
     },
     payment_status: {
       type: String,
-      enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],
+      enum: ['PENDING', 'DEPOSIT_PAID', 'PAID', 'FAILED', 'REFUNDED'],
       default: 'PENDING',
       required: true,
     },
     // ========== TRẠNG THÁI ĐƠN ==========
     order_status: {
       type: String,
-      enum: ['PENDING_PAYMENT', 'CONFIRMED', 'CANCELLED', 'COMPLETED'],
+      enum: [
+        'PENDING_PAYMENT',
+        'DEPOSIT_CONFIRMED',
+        'CONFIRMED',
+        'AWAITING_STAFF',
+        'CANCELLED',
+        'COMPLETED',
+      ],
       default: 'PENDING_PAYMENT',
       required: true,
     },
-    // Thời điểm hết hạn giữ chỗ (15 phút sau khi tạo)
     payment_expires_at: {
       type: Date,
       default: null,
     },
-    // Lý do hủy (nếu có)
     cancel_reason: {
       type: String,
       default: null,
+    },
+    // ========== HỦY & HOÀN TIỀN ==========
+    cancel_type: {
+      type: String,
+      enum: ['CUSTOMER', 'COMPANY', 'STAFF'],
+      default: null,
+    },
+    cancel_fee_percent: {
+      type: Number,
+      default: null,
+    },
+    cancel_fee_amount: {
+      type: Number,
+      default: null,
+      min: [0, 'Phí hủy phải >= 0'],
     },
   },
   {

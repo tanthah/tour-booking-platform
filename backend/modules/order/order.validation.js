@@ -1,11 +1,6 @@
 const { body, param, query } = require('express-validator');
 
-/**
- * Validation: Checkout — Tạo đơn hàng từ giỏ hàng
- * Body gồm: customer_info, items (danh sách item_id từ giỏ), booking_customers, payment_method
- */
 const checkoutValidation = [
-  // Thông tin người đặt
   body('customer_info')
     .notEmpty().withMessage('Thông tin người đặt là bắt buộc')
     .isObject().withMessage('customer_info phải là object'),
@@ -24,13 +19,11 @@ const checkoutValidation = [
     .isString().withMessage('Ghi chú phải là chuỗi')
     .isLength({ max: 1000 }).withMessage('Ghi chú không quá 1000 ký tự'),
 
-  // Danh sách cart item IDs được chọn để checkout
   body('selected_items')
     .isArray({ min: 1 }).withMessage('Phải chọn ít nhất 1 tour để đặt'),
   body('selected_items.*')
     .isMongoId().withMessage('Cart item ID không hợp lệ'),
 
-  // Danh sách khách đi tour
   body('booking_customers')
     .isArray({ min: 1 }).withMessage('Phải có ít nhất 1 khách đi tour'),
   body('booking_customers.*.cart_item_id')
@@ -61,47 +54,43 @@ const checkoutValidation = [
     .isString().withMessage('Ghi chú phải là chuỗi')
     .isLength({ max: 500 }).withMessage('Ghi chú không quá 500 ký tự'),
 
-  // Phương thức thanh toán
   body('payment_method')
     .optional()
     .isString().withMessage('Phương thức thanh toán phải là chuỗi'),
 
-  // Mã giảm giá
+  body('payment_type')
+    .optional()
+    .isIn(['FULL', 'DEPOSIT_30', 'DEPOSIT'])
+    .withMessage('Mức thanh toán phải là FULL hoặc DEPOSIT_30'),
+
   body('coupon_code')
     .optional({ values: 'falsy' })
     .isString().withMessage('Mã giảm giá phải là chuỗi')
     .isLength({ max: 50 }).withMessage('Mã giảm giá không quá 50 ký tự'),
 ];
 
-/**
- * Validation: Xem chi tiết đơn hàng theo ID
- */
 const getOrderByIdValidation = [
   param('id')
     .notEmpty().withMessage('Order ID là bắt buộc')
     .isMongoId().withMessage('Order ID không hợp lệ'),
 ];
 
-/**
- * Validation: Admin cập nhật trạng thái đơn hàng
- */
 const updateOrderStatusValidation = [
   param('id')
     .notEmpty().withMessage('Order ID là bắt buộc')
     .isMongoId().withMessage('Order ID không hợp lệ'),
   body('order_status')
     .optional()
-    .isIn(['CONFIRMED', 'CANCELLED', 'COMPLETED'])
-    .withMessage('Trạng thái đơn phải là CONFIRMED, CANCELLED hoặc COMPLETED'),
+    .isIn(['DEPOSIT_CONFIRMED', 'CONFIRMED', 'AWAITING_STAFF', 'CANCELLED', 'COMPLETED'])
+    .withMessage('Trạng thái đơn không hợp lệ'),
   body('payment_status')
     .optional()
-    .isIn(['PAID', 'FAILED', 'REFUNDED'])
-    .withMessage('Trạng thái thanh toán phải là PAID, FAILED hoặc REFUNDED'),
+    .isIn(['PENDING', 'DEPOSIT_PAID', 'PAID', 'FAILED', 'REFUNDED'])
+    .withMessage('Trạng thái thanh toán không hợp lệ'),
   body('cancel_reason')
     .optional()
     .isString().withMessage('Lý do hủy phải là chuỗi')
     .isLength({ max: 500 }).withMessage('Lý do hủy không quá 500 ký tự'),
-  // Phải có ít nhất 1 trong 2 trạng thái để cập nhật
   body().custom((value, { req }) => {
     const { order_status, payment_status } = req.body;
     if (!order_status && !payment_status) {
@@ -111,9 +100,6 @@ const updateOrderStatusValidation = [
   }),
 ];
 
-/**
- * Validation: Khách hủy đơn của mình
- */
 const cancelOrderValidation = [
   param('id')
     .notEmpty().withMessage('Order ID là bắt buộc')
@@ -124,9 +110,19 @@ const cancelOrderValidation = [
     .isLength({ max: 500 }).withMessage('Lý do hủy không quá 500 ký tự'),
 ];
 
-/**
- * Validation: Query params lọc danh sách đơn (phân trang)
- */
+const resolveOverdueValidation = [
+  param('id')
+    .notEmpty().withMessage('Order ID là bắt buộc')
+    .isMongoId().withMessage('Order ID không hợp lệ'),
+  body('action')
+    .notEmpty().withMessage('Hành động xử lý là bắt buộc')
+    .isIn(['EXTEND', 'CANCEL', 'CONFIRM_PAID'])
+    .withMessage('Hành động phải là EXTEND, CANCEL hoặc CONFIRM_PAID'),
+  body('new_deadline')
+    .if(body('action').equals('EXTEND'))
+    .notEmpty().withMessage('Hạn thanh toán mới là bắt buộc khi gia hạn'),
+];
+
 const listOrdersQueryValidation = [
   query('page')
     .optional()
@@ -136,11 +132,11 @@ const listOrdersQueryValidation = [
     .isInt({ min: 1, max: 50 }).withMessage('Limit phải là số nguyên từ 1 đến 50'),
   query('order_status')
     .optional()
-    .isIn(['PENDING_PAYMENT', 'CONFIRMED', 'CANCELLED', 'COMPLETED'])
+    .isIn(['PENDING_PAYMENT', 'DEPOSIT_CONFIRMED', 'CONFIRMED', 'AWAITING_STAFF', 'CANCELLED', 'COMPLETED'])
     .withMessage('Trạng thái đơn không hợp lệ'),
   query('payment_status')
     .optional()
-    .isIn(['PENDING', 'PAID', 'FAILED', 'REFUNDED'])
+    .isIn(['PENDING', 'DEPOSIT_PAID', 'PAID', 'FAILED', 'REFUNDED'])
     .withMessage('Trạng thái thanh toán không hợp lệ'),
 ];
 
@@ -149,5 +145,6 @@ module.exports = {
   getOrderByIdValidation,
   updateOrderStatusValidation,
   cancelOrderValidation,
+  resolveOverdueValidation,
   listOrdersQueryValidation,
 };

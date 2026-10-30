@@ -8,12 +8,6 @@ import Orders from './pages/Orders';
 import Settings from './pages/Settings';
 import Coupons from './pages/Coupons';
 import CouponForm from './pages/CouponForm';
-import Users from './pages/Users';
-import Roles from './pages/Roles';
-import AuditLogs from './pages/AuditLogs';
-import Articles from './pages/Articles';
-import ArticleForm from './pages/ArticleForm';
-import ArticleCategories from './pages/ArticleCategories';
 import './index.css';
 
 function App() {
@@ -25,12 +19,6 @@ function App() {
 
         {/* Routes quản lý Đơn hàng */}
         <Route path="orders" element={<Orders />} />
-
-        {/* Routes quản lý Tin tức */}
-        <Route path="articles" element={<Articles />} />
-        <Route path="articles/create" element={<ArticleForm />} />
-        <Route path="articles/edit/:id" element={<ArticleForm />} />
-        <Route path="article-categories" element={<ArticleCategories />} />
 
         {/* Routes quản lý Mã giảm giá (Coupon) */}
         <Route path="coupons" element={<Coupons />} />

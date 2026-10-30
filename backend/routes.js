@@ -11,8 +11,6 @@ const cartRoutes = require('./modules/cart/cart.routes');
 const orderRoutes = require('./modules/order/order.routes');
 const settingRoutes = require('./modules/setting/setting.routes');
 const couponRoutes = require('./modules/coupon/coupon.routes');
-const adminRoutes = require('./modules/admin/admin.routes');
-const articleRoutes = require('./modules/article/article.routes');
 
 // Đăng ký các Endpoint phân hệ User & Authentication theo prefix /auth
 router.use('/auth', userRoutes);
@@ -40,11 +38,5 @@ router.use('/settings', settingRoutes);
 
 // Đăng ký các Endpoint phân hệ Mã giảm giá theo prefix /coupons
 router.use('/coupons', couponRoutes);
-
-// Đăng ký các Endpoint phân hệ Tin tức du lịch theo prefix /articles
-router.use('/articles', articleRoutes);
-
-// Đăng ký các Endpoint Quản trị phân quyền & tài khoản theo prefix /admin
-router.use('/admin', adminRoutes);
 
 module.exports = router;

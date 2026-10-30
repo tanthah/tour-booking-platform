@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
 import { validateCustomerInfo, validateAllPassengers } from '../components/checkout/checkoutValidation';
-import { extractDobString, createInitialPassengers, buildOrderPayload, loadInitialCustomer, validateAndApplyCoupon, fetchBestCouponRecommendation } from '../components/checkout/checkoutHelpers';
+import { extractDobString, createInitialPassengers, buildOrderPayload, loadInitialCustomer, validateAndApplyCoupon, fetchBestCouponRecommendation, checkDepositEligibility } from '../components/checkout/checkoutHelpers';
 
 /**
  * Custom Hook useCheckout - Quản lý State & Logic cho Trang Đặt Tour
@@ -34,7 +34,8 @@ export const useCheckout = () => {
   const [passengerErrors, setPassengerErrors] = useState({});
 
   const [passengers, setPassengers] = useState([]);
-  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [paymentMethod, setPaymentMethod] = useState('COUNTER');
+  const [paymentType, setPaymentType] = useState('FULL');
 
   // Mã giảm giá
   const [couponCode, setCouponCode] = useState('');
@@ -158,6 +159,13 @@ export const useCheckout = () => {
   };
 
   const subtotal = selectedCartItems.reduce((sum, item) => sum + (item.item_total || 0), 0);
+  const depositEligibility = checkDepositEligibility(selectedCartItems);
+
+  useEffect(() => {
+    if (!depositEligibility.allowed && (paymentType === 'DEPOSIT' || paymentType === 'DEPOSIT_30')) {
+      setPaymentType('FULL');
+    }
+  }, [depositEligibility.allowed, paymentType]);
 
   // Xử lý áp dụng mã giảm giá từ API backend
   const handleApplyCoupon = async () => {
@@ -231,7 +239,7 @@ export const useCheckout = () => {
       return;
     }
 
-    const payload = buildOrderPayload(customerInfo, selectedCartItems, passengers, paymentMethod, appliedCoupon);
+    const payload = buildOrderPayload(customerInfo, selectedCartItems, passengers, paymentMethod, appliedCoupon, paymentType);
 
     try {
       setSubmitting(true);
@@ -269,6 +277,9 @@ export const useCheckout = () => {
     handleToggleBookerInfo,
     paymentMethod,
     setPaymentMethod,
+    paymentType,
+    setPaymentType,
+    depositEligibility,
     subtotal,
     totalAmount,
     couponCode,
