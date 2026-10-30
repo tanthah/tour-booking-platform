@@ -2,6 +2,18 @@ import { NavLink } from 'react-router-dom';
 import { Compass, Map, Grid, ShoppingBag, Ticket } from 'lucide-react';
 
 function Sidebar() {
+  const user = getStoredUser();
+  const permissions = Array.isArray(user.permissions) ? user.permissions : [];
+  const isAdmin = user.role?.code === 'admin' || (Array.isArray(user.roles) && user.roles.includes('ADMIN'));
+
+  const hasPerm = (requiredPerms) => {
+    if (isAdmin) return true;
+    if (Array.isArray(requiredPerms)) {
+      return requiredPerms.some((p) => permissions.includes(p));
+    }
+    return permissions.includes(requiredPerms);
+  };
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">

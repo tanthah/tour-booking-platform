@@ -37,7 +37,7 @@ const bookingCustomerSchema = new mongoose.Schema(
       enum: ['MALE', 'FEMALE', 'OTHER'],
       default: null,
     },
-    // CCCD/CMND — dữ liệu nhạy cảm, không log ra console/file
+    // CCCD/CMND
     id_number: {
       type: String,
       default: null,

@@ -3,6 +3,8 @@ const router = express.Router();
 const orderController = require('./order.controller');
 const refundController = require('./refund.controller');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const requirePermission = require('../../middlewares/requirePermission');
+const { PERMISSIONS } = require('../../utils/permissionCodes');
 const {
   checkoutValidation,
   getOrderByIdValidation,
