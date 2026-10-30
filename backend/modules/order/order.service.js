@@ -1,19 +1,21 @@
 const mongoose = require('mongoose');
 const Order = require('./order.model');
+const OrderLog = require('./orderLog.model');
 const Cart = require('../cart/cart.model');
 const couponService = require('../coupon/coupon.service');
-const { generateOrderCode, buildOrderItems, reserveSlotsForOrderItems, mapBookingCustomers, confirmSlotsForOrder, releaseSlotsForOrder, expirePendingOrders } = require('./order.helper');
+const refundService = require('./refund.service');
+const orderAdminService = require('./orderAdmin.service');
+const { getBookingPolicy, getCancelFeePercent, calculateRefundAmount } = require('./booking.policy');
+const {
+  generateOrderCode, buildOrderItems, reserveSlotsForOrderItems,
+  mapBookingCustomers, releaseSlotsForOrder, flagOverdueOrders, expirePendingOrders,
+} = require('./order.helper');
 
-const PAYMENT_TIMEOUT_MS = 15 * 60 * 1000;
 const supportsTransaction = () => {
   const desc = mongoose.connection?.client?.topology?.description;
   return Boolean(desc?.setName || ['ReplicaSetWithPrimary', 'Sharded'].includes(desc?.type));
 };
 
-/**
- * Checkout: Tạo đơn hàng từ giỏ hàng trong transaction
- * Backend tự tính toán giá, validate coupon, giữ chỗ tour và coupon nguyên tử
- */
 const createOrderFromCart = async (userId, payload) => {
   const { customer_info, selected_items, booking_customers, payment_method, departures = {}, payment_type = 'FULL' } = payload;
 
@@ -42,23 +44,29 @@ const createOrderFromCart = async (userId, payload) => {
 
   const discountAmount = couponData ? couponData.discountAmount : 0;
   const totalAmount = Math.max(0, subtotal - discountAmount);
+  const isDeposit = payment_type === 'DEPOSIT_30' || payment_type === 'DEPOSIT';
+  let earliestDeadline = null;
 
-  // Ràng buộc nghiệp vụ: Không cho phép cọc nếu có tour khởi hành trong vòng 3 ngày tới
-  if (payment_type === 'DEPOSIT') {
-    const isWithin3Days = orderItems.some((it) => {
-      if (!it.departure_date) return false;
-      const d = new Date(it.departure_date);
-      return !isNaN(d.getTime()) && (d.getTime() - Date.now() <= 3 * 24 * 60 * 60 * 1000);
-    });
-    if (isWithin3Days) {
-      const err = new Error('Tour khởi hành trong vòng 3 ngày tới, vui lòng thanh toán toàn bộ 100% để bộ phận điều hành kịp xuất vé và gửi danh sách bảo hiểm du lịch.');
+  for (const item of orderItems) {
+    if (!item.departure_date) continue;
+    const policy = getBookingPolicy(item.departure_date);
+    if (!policy.canBook) {
+      const err = new Error(`Tour "${item.tour_name}": ${policy.reason}`);
       err.statusCode = 400;
       throw err;
     }
+    if (isDeposit && !policy.allowDeposit) {
+      const err = new Error(`Tour "${item.tour_name}": ${policy.reason}`);
+      err.statusCode = 400;
+      throw err;
+    }
+    if (policy.paymentDeadline && (!earliestDeadline || policy.paymentDeadline < earliestDeadline)) {
+      earliestDeadline = policy.paymentDeadline;
+    }
   }
 
-  // Tính số tiền đặt cọc (50%) nếu khách chọn mức DEPOSIT
-  const depositAmount = payment_type === 'DEPOSIT' ? Math.ceil(totalAmount * 0.5) : null;
+  const depositAmount = isDeposit ? Math.ceil(totalAmount * 0.3) : null;
+  const normalizedPaymentType = isDeposit ? 'DEPOSIT_30' : 'FULL';
 
   let orderCode = generateOrderCode();
   const existing = await Order.findOne({ order_code: orderCode });
@@ -97,11 +105,14 @@ const createOrderFromCart = async (userId, payload) => {
       coupon_id: couponData ? couponData.coupon._id : null,
       coupon_code: couponData ? couponData.coupon.code : null,
       payment_method: payment_method || 'COUNTER',
-      payment_type,
+      payment_type: normalizedPaymentType,
       deposit_amount: depositAmount,
+      paid_amount: 0,
+      remaining_amount: totalAmount,
+      payment_deadline: isDeposit ? earliestDeadline : null,
       payment_status: 'PENDING',
       order_status: 'PENDING_PAYMENT',
-      payment_expires_at: new Date(Date.now() + PAYMENT_TIMEOUT_MS),
+      payment_expires_at: null,
     };
 
     const createdList = await Order.create(
@@ -124,13 +135,22 @@ const createOrderFromCart = async (userId, payload) => {
     await cart.save(session ? { session } : {});
 
     if (session) await session.commitTransaction();
+
+    await OrderLog.create({
+      order_id: order._id,
+      performed_by: userId,
+      action: 'CREATED',
+      description: `Đơn hàng tạo thành công (${normalizedPaymentType === 'DEPOSIT_30' ? 'Cọc 30%' : 'Thanh toán 100%'}). Tổng tiền: ${totalAmount.toLocaleString('vi-VN')} đ.`,
+      metadata: { total_amount: totalAmount, deposit_amount: depositAmount },
+    });
+
     return order;
   } catch (error) {
     if (session) {
       await session.abortTransaction();
     } else {
       if (slotsReserved) {
-        await releaseSlotsForOrder({ items: orderItems, order_status: 'PENDING_PAYMENT' });
+        await releaseSlotsForOrder({ items: orderItems, payment_status: 'PENDING' });
       }
       if (couponReserved && couponData) {
         await couponService.releaseCouponReservation(null);
@@ -181,61 +201,7 @@ const getOrderDetail = async (userId, orderId, userRoles) => {
   return order;
 };
 
-const getAllOrdersAdmin = async (queryParams) => {
-  const page = parseInt(queryParams.page, 10) || 1;
-  const limit = parseInt(queryParams.limit, 10) || 10;
-  const skip = (page - 1) * limit;
-
-  const filter = {};
-  if (queryParams.order_status) filter.order_status = queryParams.order_status;
-  if (queryParams.payment_status) filter.payment_status = queryParams.payment_status;
-  if (queryParams.search) {
-    filter.$or = [
-      { order_code: { $regex: queryParams.search, $options: 'i' } },
-      { 'customer_info.full_name': { $regex: queryParams.search, $options: 'i' } },
-      { 'customer_info.phone': { $regex: queryParams.search, $options: 'i' } },
-    ];
-  }
-
-  const [orders, total] = await Promise.all([
-    Order.find(filter).select('-booking_customers.id_number').sort({ created_at: -1 }).skip(skip).limit(limit).lean(),
-    Order.countDocuments(filter),
-  ]);
-
-  return { orders, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-};
-
-const updateOrderStatus = async (orderId, statusData) => {
-  const { order_status, payment_status, cancel_reason } = statusData;
-
-  // 1. Xác nhận thanh toán PAID
-  if (payment_status === 'PAID') {
-    const paidOrder = await Order.findOneAndUpdate(
-      { _id: orderId, order_status: 'PENDING_PAYMENT', payment_status: { $ne: 'PAID' } },
-      { $set: { payment_status: 'PAID', order_status: 'CONFIRMED' } },
-      { new: true }
-    );
-    if (paidOrder) {
-      await confirmSlotsForOrder(paidOrder);
-      await couponService.confirmCouponUsed(paidOrder._id);
-      return paidOrder;
-    }
-  }
-
-  // 2. Admin hủy đơn CANCELLED
-  if (order_status === 'CANCELLED') {
-    const cancelledOrder = await Order.findOneAndUpdate(
-      { _id: orderId, order_status: { $ne: 'CANCELLED' } },
-      { $set: { order_status: 'CANCELLED', cancel_reason: cancel_reason || 'Admin hủy đơn' } },
-      { new: true }
-    );
-    if (cancelledOrder) {
-      await releaseSlotsForOrder(cancelledOrder);
-      await couponService.releaseCouponReservation(cancelledOrder._id);
-      return cancelledOrder;
-    }
-  }
-
+const cancelOrder = async (userId, orderId, cancelReason) => {
   const order = await Order.findById(orderId);
   if (!order) {
     const err = new Error('Đơn hàng không tồn tại.');
@@ -243,53 +209,77 @@ const updateOrderStatus = async (orderId, statusData) => {
     throw err;
   }
 
-  if (payment_status && order.payment_status !== payment_status) {
-    order.payment_status = payment_status;
-  }
-  if (order_status && order.order_status !== order_status) {
-    order.order_status = order_status;
-    if (cancel_reason) order.cancel_reason = cancel_reason;
+  if (order.user_id.toString() !== userId.toString()) {
+    const err = new Error('Bạn không có quyền hủy đơn hàng này.');
+    err.statusCode = 403;
+    throw err;
   }
 
-  await order.save();
-  return order;
-};
-
-const cancelOrder = async (userId, orderId, cancelReason) => {
-  const updatedOrder = await Order.findOneAndUpdate(
-    { _id: orderId, user_id: userId, order_status: 'PENDING_PAYMENT' },
-    { $set: { order_status: 'CANCELLED', cancel_reason: cancelReason || 'Khách hàng tự hủy' } },
-    { new: true }
-  );
-
-  if (!updatedOrder) {
-    const existing = await Order.findById(orderId);
-    if (!existing) {
-      const err = new Error('Đơn hàng không tồn tại.');
-      err.statusCode = 404;
-      throw err;
-    }
-    if (existing.user_id.toString() !== userId.toString()) {
-      const err = new Error('Bạn không có quyền hủy đơn hàng này.');
-      err.statusCode = 403;
-      throw err;
-    }
-    const err = new Error('Chỉ có thể hủy đơn đang chờ thanh toán.');
+  if (order.order_status === 'AWAITING_STAFF') {
+    const err = new Error('Đơn hàng đang chờ nhân viên xử lý, vui lòng liên hệ bộ phận hỗ trợ.');
     err.statusCode = 400;
     throw err;
   }
 
-  await releaseSlotsForOrder(updatedOrder);
-  await couponService.releaseCouponReservation(updatedOrder._id);
-  return updatedOrder;
+  if (['CANCELLED', 'COMPLETED'].includes(order.order_status)) {
+    const err = new Error('Đơn hàng đã hoàn thành hoặc đã bị hủy trước đó.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const earliestDate = order.items?.reduce((earliest, it) => {
+    if (!it.departure_date) return earliest;
+    const d = new Date(it.departure_date);
+    return !earliest || d < earliest ? d : earliest;
+  }, null);
+
+  const feePercent = earliestDate ? getCancelFeePercent(earliestDate) : 100;
+  const { cancelFeeAmount, refundAmount } = calculateRefundAmount(order.paid_amount, order.total_amount, feePercent);
+
+  order.order_status = 'CANCELLED';
+  order.cancel_type = 'CUSTOMER';
+  order.cancel_reason = cancelReason || 'Khách hàng tự hủy';
+  order.cancel_fee_percent = feePercent;
+  order.cancel_fee_amount = cancelFeeAmount;
+  await order.save();
+
+  await releaseSlotsForOrder(order);
+  await couponService.releaseCouponReservation(order._id);
+
+  let refund = null;
+  if (refundAmount > 0) {
+    refund = await refundService.createRefund(
+      order._id,
+      userId,
+      refundAmount,
+      order.payment_method,
+      `Khách tự hủy: hoàn ${refundAmount.toLocaleString('vi-VN')} đ (phí hủy ${feePercent}%)`
+    );
+  }
+
+  await OrderLog.create({
+    order_id: order._id,
+    performed_by: userId,
+    action: 'CANCEL_REQUESTED',
+    description: `Khách hủy đơn hàng. Phí hủy ${feePercent}% (${cancelFeeAmount.toLocaleString('vi-VN')} đ), Hoàn lại ${refundAmount.toLocaleString('vi-VN')} đ.`,
+    metadata: { feePercent, cancelFeeAmount, refundAmount },
+  });
+
+  return { order, refundAmount, cancelFeeAmount, refund };
 };
 
 module.exports = {
   createOrderFromCart,
   getMyOrders,
   getOrderDetail,
-  getAllOrdersAdmin,
-  updateOrderStatus,
   cancelOrder,
+  flagOverdueOrders,
   expirePendingOrders,
+  getAllOrdersAdmin: orderAdminService.getAllOrdersAdmin,
+  updateOrderStatus: orderAdminService.updateOrderStatus,
+  confirmDeposit: orderAdminService.confirmDeposit,
+  companyCancelOrder: orderAdminService.companyCancelOrder,
+  resolveOverdueOrder: orderAdminService.resolveOverdueOrder,
+  addOrderNote: orderAdminService.addOrderNote,
+  getOrderLogs: orderAdminService.getOrderLogs,
 };

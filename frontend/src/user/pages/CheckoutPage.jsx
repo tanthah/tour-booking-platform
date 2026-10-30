@@ -76,6 +76,12 @@ const CheckoutPage = () => {
           </div>
         </div>
 
+        {depositEligibility?.canBook === false && (
+          <Alert variant="danger" className="mb-4">
+            ⚠️ <strong>Không thể đặt tour:</strong> {depositEligibility.reason}
+          </Alert>
+        )}
+
         {errorMsg && (
           <Alert variant="danger" dismissible onClose={() => setErrorMsg('')}>
             {errorMsg}
@@ -138,6 +144,7 @@ const CheckoutPage = () => {
                 onApplyCoupon={handleApplyCoupon}
                 onRecommendCoupon={handleRecommendCoupon}
                 onRemoveCoupon={handleRemoveCoupon}
+                canBook={depositEligibility?.canBook !== false}
               />
             </Col>
           </Row>

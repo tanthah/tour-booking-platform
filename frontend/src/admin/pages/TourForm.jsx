@@ -166,6 +166,44 @@ function TourForm() {
               <textarea name="content_html" className="form-control" rows="6" placeholder="Nhập nội dung chi tiết..." value={formData.content_html} onChange={handleChange} />
             </div>
 
+            {/* Dịch vụ bao gồm & không bao gồm */}
+            <div className="form-row">
+              <div className="form-group form-col">
+                <label className="form-label">Dịch vụ bao gồm (mỗi dòng 1 dịch vụ)</label>
+                <textarea
+                  name="services_included"
+                  className="form-control"
+                  rows="4"
+                  placeholder="Vé máy bay khứ hồi&#10;Khách sạn 4 sao&#10;Các bữa ăn theo lịch trình"
+                  value={Array.isArray(formData.services_included) ? formData.services_included.join('\n') : (formData.services_included || '')}
+                  onChange={(e) => setField('services_included', e.target.value)}
+                />
+              </div>
+              <div className="form-group form-col">
+                <label className="form-label">Dịch vụ không bao gồm (mỗi dòng 1 dịch vụ)</label>
+                <textarea
+                  name="services_excluded"
+                  className="form-control"
+                  rows="4"
+                  placeholder="Chi phí cá nhân&#10;Tiền tip hướng dẫn viên&#10;VAT"
+                  value={Array.isArray(formData.services_excluded) ? formData.services_excluded.join('\n') : (formData.services_excluded || '')}
+                  onChange={(e) => setField('services_excluded', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Điều kiện đặc biệt (hộ chiếu, visa, lưu ý khác)</label>
+              <textarea
+                name="special_conditions"
+                className="form-control"
+                rows="3"
+                placeholder="Hộ chiếu còn hạn trên 6 tháng..."
+                value={formData.special_conditions || ''}
+                onChange={handleChange}
+              />
+            </div>
+
             {/* Lịch trình tour */}
             <div className="form-group">
               <label className="form-label">Lịch trình tour</label>

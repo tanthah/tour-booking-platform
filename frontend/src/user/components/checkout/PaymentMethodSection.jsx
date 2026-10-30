@@ -39,10 +39,11 @@ const PaymentMethodSection = ({
   paymentMethod,
   onChange,
   totalAmount,
-  depositEligibility = { allowed: true, daysRemaining: null, reason: '' },
+  depositEligibility = { canBook: true, allowed: true, daysRemaining: null, paymentDeadline: null, reason: '' },
 }) => {
   const isDepositAllowed = depositEligibility?.allowed !== false;
-  const depositAmount = Math.ceil((totalAmount || 0) * 0.5);
+  const isDepositSelected = paymentType === 'DEPOSIT_30' || paymentType === 'DEPOSIT';
+  const depositAmount = Math.ceil((totalAmount || 0) * 0.3);
   const remainingAmount = (totalAmount || 0) - depositAmount;
 
   return (
@@ -57,26 +58,26 @@ const PaymentMethodSection = ({
           Chọn hình thức thanh toán phù hợp với nhu cầu của bạn.
         </p>
 
-        {/* Cọc trước 50% */}
+        {/* Cọc trước 30% */}
         <div
-          className={`payment-level-card${paymentType === 'DEPOSIT' ? ' selected' : ''}${!isDepositAllowed ? ' disabled' : ''}`}
-          onClick={() => isDepositAllowed && onPaymentTypeChange('DEPOSIT')}
+          className={`payment-level-card${isDepositSelected ? ' selected' : ''}${!isDepositAllowed ? ' disabled' : ''}`}
+          onClick={() => isDepositAllowed && onPaymentTypeChange('DEPOSIT_30')}
           role="button"
           tabIndex={isDepositAllowed ? 0 : -1}
-          onKeyDown={(e) => isDepositAllowed && e.key === 'Enter' && onPaymentTypeChange('DEPOSIT')}
+          onKeyDown={(e) => isDepositAllowed && e.key === 'Enter' && onPaymentTypeChange('DEPOSIT_30')}
           style={!isDepositAllowed ? { opacity: 0.7, cursor: 'not-allowed', background: '#f8fafc' } : {}}
         >
           <input
             type="radio"
             name="payment_type"
             className="payment-method-radio"
-            checked={paymentType === 'DEPOSIT'}
-            onChange={() => isDepositAllowed && onPaymentTypeChange('DEPOSIT')}
+            checked={isDepositSelected}
+            onChange={() => isDepositAllowed && onPaymentTypeChange('DEPOSIT_30')}
             disabled={!isDepositAllowed}
           />
           <div className="payment-level-content">
             <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '5px' }}>
-              Đặt cọc trước 50%
+              Đặt cọc trước 30%
               {!isDepositAllowed ? (
                 <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#fee2e2', color: '#dc2626', marginLeft: '8px' }}>
                   Không áp dụng
@@ -94,12 +95,17 @@ const PaymentMethodSection = ({
               </strong>
             </div>
             <div className="payment-level-note">
-              Còn lại {remainingAmount.toLocaleString('vi-VN')} đ — thanh toán trước ngày khởi hành
+              Còn lại {remainingAmount.toLocaleString('vi-VN')} đ
+              {depositEligibility?.paymentDeadline ? (
+                <span> — hạn thanh toán đủ 100%: <strong style={{ color: '#ea580c' }}>{new Date(depositEligibility.paymentDeadline).toLocaleDateString('vi-VN')}</strong> (ngày D-16)</span>
+              ) : (
+                ' — thanh toán đủ trước D-16'
+              )}
             </div>
 
             {!isDepositAllowed && (
               <div style={{ marginTop: '10px', padding: '10px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '12.5px', color: '#b91c1c', lineHeight: 1.5 }}>
-                ⚠️ <strong>Lưu ý:</strong> {depositEligibility?.reason || 'Tour khởi hành trong vòng 3 ngày tới, vui lòng thanh toán toàn bộ 100% để bộ phận điều hành kịp xuất vé và gửi danh sách bảo hiểm du lịch.'}
+                ⚠️ <strong>Lưu ý:</strong> {depositEligibility?.reason || 'Tour khởi hành trong vòng 15 ngày tới, vui lòng thanh toán toàn bộ 100% để bộ phận điều hành kịp xuất vé và gửi danh sách bảo hiểm du lịch.'}
               </div>
             )}
           </div>

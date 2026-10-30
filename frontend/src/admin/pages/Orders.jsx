@@ -6,7 +6,9 @@ import OrderDetailModal from '../components/OrderDetailModal';
 const STATUS_OPTIONS = [
   { value: '', label: 'Tất cả trạng thái' },
   { value: 'PENDING_PAYMENT', label: 'Chờ thanh toán' },
+  { value: 'DEPOSIT_CONFIRMED', label: 'Đã cọc 30%' },
   { value: 'CONFIRMED', label: 'Đã xác nhận' },
+  { value: 'AWAITING_STAFF', label: 'Chờ xử lý (quá hạn)' },
   { value: 'COMPLETED', label: 'Hoàn thành' },
   { value: 'CANCELLED', label: 'Đã hủy' },
 ];
@@ -14,7 +16,8 @@ const STATUS_OPTIONS = [
 const PAYMENT_OPTIONS = [
   { value: '', label: 'Tất cả thanh toán' },
   { value: 'PENDING', label: 'Chưa thanh toán' },
-  { value: 'PAID', label: 'Đã thanh toán' },
+  { value: 'DEPOSIT_PAID', label: 'Đã nhận cọc' },
+  { value: 'PAID', label: 'Đã thanh toán đủ' },
   { value: 'FAILED', label: 'Thất bại' },
   { value: 'REFUNDED', label: 'Đã hoàn tiền' },
 ];
@@ -22,9 +25,11 @@ const PAYMENT_OPTIONS = [
 const statusBadge = (status) => {
   const map = {
     PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', text: 'Chờ thanh toán' },
+    DEPOSIT_CONFIRMED: { bg: '#e0f2fe', color: '#0369a1', text: 'Đã cọc 30%' },
     CONFIRMED: { bg: '#dbeafe', color: '#1e40af', text: 'Đã xác nhận' },
+    AWAITING_STAFF: { bg: '#fee2e2', color: '#b91c1c', text: '⚠️ Chờ xử lý' },
     COMPLETED: { bg: '#dcfce7', color: '#166534', text: 'Hoàn thành' },
-    CANCELLED: { bg: '#fee2e2', color: '#991b1b', text: 'Đã hủy' },
+    CANCELLED: { bg: '#f1f5f9', color: '#64748b', text: 'Đã hủy' },
   };
   const s = map[status] || { bg: '#f1f5f9', color: '#334155', text: status };
   return (
@@ -37,7 +42,8 @@ const statusBadge = (status) => {
 const paymentBadge = (status) => {
   const map = {
     PENDING: { bg: '#f1f5f9', color: '#475569', text: 'Chưa TT' },
-    PAID: { bg: '#dcfce7', color: '#166534', text: 'Đã TT' },
+    DEPOSIT_PAID: { bg: '#e0f2fe', color: '#0369a1', text: 'Đã cọc 30%' },
+    PAID: { bg: '#dcfce7', color: '#166534', text: 'Đã TT đủ' },
     FAILED: { bg: '#fee2e2', color: '#991b1b', text: 'Thất bại' },
     REFUNDED: { bg: '#e0e7ff', color: '#3730a3', text: 'Hoàn tiền' },
   };

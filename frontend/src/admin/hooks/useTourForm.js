@@ -21,6 +21,7 @@ const useTourForm = (tourId) => {
     original_price: 0, discount_percent: 0,
     main_image: '', gallery: [],
     content_html: '', itinerary: [],
+    services_included: [], services_excluded: [], special_conditions: '',
     is_hot: false, is_flash_sale: false,
   });
 
@@ -45,6 +46,9 @@ const useTourForm = (tourId) => {
             main_image: t.main_image || '', gallery: t.gallery || [],
             content_html: t.content_html || '',
             itinerary: t.itinerary || [],
+            services_included: t.services_included || [],
+            services_excluded: t.services_excluded || [],
+            special_conditions: t.special_conditions || '',
             is_hot: t.is_hot || false,
             is_flash_sale: t.is_flash_sale || false,
           });
@@ -95,10 +99,20 @@ const useTourForm = (tourId) => {
 
     try {
       setSubmitting(true);
+      const servicesInc = Array.isArray(formData.services_included)
+        ? formData.services_included
+        : (formData.services_included || '').split('\n').map((s) => s.trim()).filter(Boolean);
+      const servicesExc = Array.isArray(formData.services_excluded)
+        ? formData.services_excluded
+        : (formData.services_excluded || '').split('\n').map((s) => s.trim()).filter(Boolean);
+
       const payload = {
         ...formData,
         original_price: Number(formData.original_price) || 0,
         discount_percent: Number(formData.discount_percent) || 0,
+        services_included: servicesInc,
+        services_excluded: servicesExc,
+        special_conditions: (formData.special_conditions || '').trim(),
       };
 
       if (isEdit) {

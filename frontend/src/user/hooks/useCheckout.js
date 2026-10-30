@@ -162,7 +162,7 @@ export const useCheckout = () => {
   const depositEligibility = checkDepositEligibility(selectedCartItems);
 
   useEffect(() => {
-    if (!depositEligibility.allowed && paymentType === 'DEPOSIT') {
+    if (!depositEligibility.allowed && (paymentType === 'DEPOSIT' || paymentType === 'DEPOSIT_30')) {
       setPaymentType('FULL');
     }
   }, [depositEligibility.allowed, paymentType]);
