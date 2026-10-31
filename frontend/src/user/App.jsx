@@ -10,6 +10,8 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import OrderDetailPage from './pages/OrderDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
+import ArticleListPage from './pages/ArticleListPage';
+import ArticleDetailPage from './pages/ArticleDetailPage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
@@ -56,8 +58,9 @@ function App() {
     window.dispatchEvent(new Event('cartUpdated'));
 
     // Chuyển hướng sang trang quản lý nếu là ADMIN hoặc STAFF
-    const isAdmin = Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('ADMIN');
-    const isStaff = Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('STAFF');
+    const roleCode = loggedInUser.role?.code?.toLowerCase() || '';
+    const isAdmin = (Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('ADMIN')) || roleCode === 'admin';
+    const isStaff = (Array.isArray(loggedInUser.roles) && loggedInUser.roles.includes('STAFF')) || roleCode.includes('staff');
 
     if (isAdmin || isStaff) {
       window.location.href = '/admin';
@@ -99,6 +102,8 @@ function App() {
                 <Route path="/tours" element={<TourListPage categoryType="all" />} />
                 <Route path="/uu-dai" element={<PromotionPage />} />
                 <Route path="/khuyen-mai" element={<PromotionPage />} />
+                <Route path="/tin-tuc" element={<ArticleListPage />} />
+                <Route path="/tin-tuc/:slug" element={<ArticleDetailPage />} />
                 <Route path="/tour/:id" element={<TourDetailPage />} />
                 <Route path="/tours/:id" element={<TourDetailPage />} />
                 <Route path="/gio-hang" element={<CartPage />} />
