@@ -14,6 +14,7 @@ import AuditLogs from './pages/AuditLogs';
 import Articles from './pages/Articles';
 import ArticleForm from './pages/ArticleForm';
 import ArticleCategories from './pages/ArticleCategories';
+import ArticleReviewQueue from './pages/ArticleReviewQueue';
 import './index.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
 
         {/* Routes quản lý Tin tức */}
         <Route path="articles" element={<Articles />} />
+        <Route path="articles/review-queue" element={<ArticleReviewQueue />} />
         <Route path="articles/create" element={<ArticleForm />} />
         <Route path="articles/edit/:id" element={<ArticleForm />} />
         <Route path="article-categories" element={<ArticleCategories />} />

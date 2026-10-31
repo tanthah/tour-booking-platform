@@ -15,6 +15,35 @@ const articleService = {
 
   deleteArticle: (id) => axiosAdmin.delete(`/admin/articles/${id}`),
 
+  // ==================== QUY TRÌNH DUYỆT BÀI ====================
+  getReviewQueue: (params = {}) =>
+    axiosAdmin.get('/admin/articles/review-queue', { params }),
+
+  submitForReview: (id) =>
+    axiosAdmin.post(`/admin/articles/${id}/submit`),
+
+  approveArticle: (id, comment = '') =>
+    axiosAdmin.post(`/admin/articles/${id}/approve`, { comment }),
+
+  requestChanges: (id, comment) =>
+    axiosAdmin.post(`/admin/articles/${id}/request-changes`, { comment }),
+
+  publishArticle: (id) =>
+    axiosAdmin.post(`/admin/articles/${id}/publish`),
+
+  archiveArticle: (id) =>
+    axiosAdmin.post(`/admin/articles/${id}/archive`),
+
+  getReviewHistory: (id) =>
+    axiosAdmin.get(`/admin/articles/${id}/history`),
+
+  // ==================== PHÂN CÔNG ====================
+  assignArticle: (id, data) =>
+    axiosAdmin.post(`/admin/articles/${id}/assign`, data),
+
+  unassignArticle: (id) =>
+    axiosAdmin.delete(`/admin/articles/${id}/assign`),
+
   // ==================== DANH MỤC ====================
   getCategories: (params = {}) =>
     axiosAdmin.get('/admin/article-categories', { params }),

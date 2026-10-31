@@ -1,15 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const articleCategoryController = require('./articleCategory.controller');
-const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { authenticate } = require('../../middlewares/auth.middleware');
+const requirePermission = require('../../middlewares/requirePermission');
+const { PERMISSIONS } = require('../../utils/permissionCodes');
 const {
   createCategoryValidation,
   updateCategoryValidation,
   idParamValidation,
 } = require('./article.validation');
 
-// Tạm thời bảo vệ toàn bộ endpoints quản lý danh mục bài viết chỉ cho Admin
-router.use(authenticate, authorize('ADMIN'));
+// Bảo vệ toàn bộ endpoints quản lý danh mục bài viết bằng quyền ARTICLE_CATEGORY_MANAGE
+router.use(authenticate, requirePermission(PERMISSIONS.ARTICLE_CATEGORY_MANAGE));
 
 // Lấy danh sách tất cả danh mục (có lọc, phân trang)
 router.get('/', articleCategoryController.getAllCategories);

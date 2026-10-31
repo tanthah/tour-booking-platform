@@ -27,7 +27,7 @@ const createArticleValidation = [
     .withMessage('Loại nguồn bài viết phải là original hoặc curated'),
   body('status')
     .optional()
-    .isIn(['DRAFT', 'PUBLISHED', 'ARCHIVED'])
+    .isIn(['DRAFT', 'PENDING_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'PUBLISHED', 'ARCHIVED'])
     .withMessage('Trạng thái bài viết không hợp lệ'),
 ];
 
@@ -51,8 +51,32 @@ const updateArticleValidation = [
     .withMessage('Tóm tắt không quá 600 ký tự'),
   body('status')
     .optional()
-    .isIn(['DRAFT', 'PUBLISHED', 'ARCHIVED'])
+    .isIn(['DRAFT', 'PENDING_REVIEW', 'CHANGES_REQUESTED', 'APPROVED', 'PUBLISHED', 'ARCHIVED'])
     .withMessage('Trạng thái bài viết không hợp lệ'),
+];
+
+const requestChangesValidation = [
+  param('id').isMongoId().withMessage('ID bài viết không hợp lệ'),
+  body('comment')
+    .trim()
+    .notEmpty()
+    .withMessage('Vui lòng nhập lý do / nhận xét yêu cầu chỉnh sửa')
+    .isLength({ max: 1000 })
+    .withMessage('Nhận xét không được vượt quá 1000 ký tự'),
+];
+
+const assignValidation = [
+  param('id').isMongoId().withMessage('ID bài viết không hợp lệ'),
+  body('assigned_to')
+    .notEmpty()
+    .withMessage('Vui lòng chọn nhân viên được phân công')
+    .isMongoId()
+    .withMessage('ID nhân viên không hợp lệ'),
+  body('note')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Ghi chú phân công không vượt quá 500 ký tự'),
 ];
 
 const createCategoryValidation = [
@@ -95,6 +119,8 @@ const listArticlesValidation = [
 module.exports = {
   createArticleValidation,
   updateArticleValidation,
+  requestChangesValidation,
+  assignValidation,
   createCategoryValidation,
   updateCategoryValidation,
   idParamValidation,

@@ -41,12 +41,40 @@ const PERMISSIONS = {
 
   // Xem lịch sử Audit Log
   AUDIT_VIEW: 'audit.view',
+
+  // Quản lý Tin tức / Bài viết
+  ARTICLE_VIEW: 'article.view',
+  ARTICLE_CREATE: 'article.create',
+  ARTICLE_UPDATE: 'article.update',
+  ARTICLE_REVIEW: 'article.review',
+  ARTICLE_PUBLISH: 'article.publish',
+  ARTICLE_MANAGE: 'article.manage',
+  ARTICLE_CATEGORY_MANAGE: 'article_category.manage',
 };
 
 const ALL_PERMISSIONS = Object.values(PERMISSIONS);
 
 // Nhóm các quyền theo module để hiển thị trên UI Admin
 const PERMISSION_GROUPS = [
+  {
+    module: 'Article',
+    name: 'Tin tức / Bài viết',
+    permissions: [
+      { code: PERMISSIONS.ARTICLE_VIEW, name: 'Xem danh sách & chi tiết bài viết (quản trị)' },
+      { code: PERMISSIONS.ARTICLE_CREATE, name: 'Tạo bài viết mới' },
+      { code: PERMISSIONS.ARTICLE_UPDATE, name: 'Sửa nội dung bài viết' },
+      { code: PERMISSIONS.ARTICLE_REVIEW, name: 'Duyệt / Yêu cầu chỉnh sửa bài viết' },
+      { code: PERMISSIONS.ARTICLE_PUBLISH, name: 'Xuất bản bài viết đã duyệt' },
+      { code: PERMISSIONS.ARTICLE_MANAGE, name: 'Phân công, lưu trữ, quản lý bài nổi bật' },
+    ],
+  },
+  {
+    module: 'ArticleCategory',
+    name: 'Danh mục Tin tức',
+    permissions: [
+      { code: PERMISSIONS.ARTICLE_CATEGORY_MANAGE, name: 'Toàn quyền danh mục tin tức (Xem, tạo, sửa, trạng thái)' },
+    ],
+  },
   {
     module: 'Tour',
     name: 'Quản lý Tour',

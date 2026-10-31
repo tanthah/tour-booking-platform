@@ -64,7 +64,14 @@ const articleSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ['DRAFT', 'PUBLISHED', 'ARCHIVED'],
+      enum: [
+        'DRAFT',
+        'PENDING_REVIEW',
+        'CHANGES_REQUESTED',
+        'APPROVED',
+        'PUBLISHED',
+        'ARCHIVED',
+      ],
       default: 'DRAFT',
     },
     is_featured: {
@@ -81,9 +88,28 @@ const articleSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    assigned_to: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    submitted_at: {
+      type: Date,
+      default: null,
+    },
+    approved_at: {
+      type: Date,
+      default: null,
+    },
     published_at: {
       type: Date,
       default: null,
+    },
+    review_comment: {
+      type: String,
+      default: '',
+      trim: true,
+      maxlength: [1000, 'Ghi chú duyệt bài không quá 1000 ký tự'],
     },
     deleted_at: {
       type: Date,
@@ -96,9 +122,12 @@ const articleSchema = new mongoose.Schema(
 );
 
 articleSchema.index({ status: 1, published_at: -1 });
+articleSchema.index({ status: 1, submitted_at: -1 });
 articleSchema.index({ category_id: 1, status: 1 });
 articleSchema.index({ is_featured: 1, status: 1 });
 articleSchema.index({ view_count: -1 });
+articleSchema.index({ assigned_to: 1 });
+articleSchema.index({ created_by: 1 });
 articleSchema.index({ deleted_at: 1 });
 
 const Article = mongoose.model('Article', articleSchema);

@@ -119,6 +119,7 @@ class ArticleService {
       Article.find(filter)
         .populate('category_id', 'name slug')
         .populate('created_by', 'full_name email')
+        .populate('assigned_to', 'full_name email')
         .sort(sortOption)
         .skip(skip)
         .limit(Number(limit))
@@ -145,6 +146,7 @@ class ArticleService {
       .populate('category_id', 'name slug')
       .populate('related_tour_ids', 'title code cover_image original_price sale_price')
       .populate('created_by', 'full_name email')
+      .populate('assigned_to', 'full_name email')
       .lean();
 
     if (!article) {

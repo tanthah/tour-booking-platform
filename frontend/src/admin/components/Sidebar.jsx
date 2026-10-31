@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText } from 'lucide-react';
+import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText, Inbox } from 'lucide-react';
 
 function getStoredUser() {
   try {
@@ -49,24 +49,34 @@ function Sidebar() {
           </NavLink>
         )}
 
-        {isAdmin && (
-          <>
-            <NavLink 
-              to="/admin/articles" 
-              className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
-            >
-              <FileText size={20} />
-              <span>Quản lý Tin tức</span>
-            </NavLink>
+        {hasPerm(['article.view', 'article.create', 'article.update']) && (
+          <NavLink 
+            to="/admin/articles" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <FileText size={20} />
+            <span>Quản lý Tin tức</span>
+          </NavLink>
+        )}
 
-            <NavLink 
-              to="/admin/article-categories" 
-              className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
-            >
-              <Grid size={20} />
-              <span>Danh mục Tin tức</span>
-            </NavLink>
-          </>
+        {hasPerm('article.review') && (
+          <NavLink 
+            to="/admin/articles/review-queue" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Inbox size={20} />
+            <span>Hàng đợi duyệt bài</span>
+          </NavLink>
+        )}
+
+        {hasPerm('article_category.manage') && (
+          <NavLink 
+            to="/admin/article-categories" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Grid size={20} />
+            <span>Danh mục Tin tức</span>
+          </NavLink>
         )}
 
         {hasPerm(['booking.view', 'booking.manage']) && (
