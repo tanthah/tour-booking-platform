@@ -1,15 +1,17 @@
 const jwt = require('jsonwebtoken');
 const User = require('./user.model');
-const Role = require('../role/role.model');
 const OtpVerification = require('./otp.model');
 const { JWT_SECRET, JWT_EXPIRES_IN } = require('../../config/env');
 const { generateOTP } = require('../../utils/otpGenerator');
 const { sendWelcomeOtpEmail, sendForgotPasswordEmail } = require('../email/email.service');
-const permissionService = require('../../services/permissionService');
 
 class UserService {
-  // Đăng ký tài khoản người dùng mới (Role CUSTOMER)
+  /**
+   * Đăng ký tài khoản người dùng mới (Role CUSTOMER)
+   * Tạo User với trạng thái PENDING_VERIFICATION và gửi mã OTP xác thực qua Email
+   */
   async register({ full_name, phone, email, password }) {
+    // Kiểm tra xem Email đã tồn tại trong DB chưa
     const existingEmail = await User.findOne({ email, deleted_at: null });
     if (existingEmail) {
       const error = new Error('Email đã được sử dụng');
@@ -17,6 +19,7 @@ class UserService {
       throw error;
     }
 
+    // Kiểm tra xem Số điện thoại đã tồn tại trong DB chưa
     const existingPhone = await User.findOne({ phone, deleted_at: null });
     if (existingPhone) {
       const error = new Error('Số điện thoại đã được sử dụng');
@@ -24,25 +27,28 @@ class UserService {
       throw error;
     }
 
-    const customerRole = await Role.findOne({ code: 'customer' });
-
+    // Khởi tạo User mới với status PENDING_VERIFICATION
     const user = new User({
       full_name,
       phone,
       email,
-      password_hash: password,
+      password_hash: password, // Mật khẩu sẽ được mã hóa tự động bởi Mongoose pre-save hook
       status: 'PENDING_VERIFICATION',
       roles: ['CUSTOMER'],
-      role_id: customerRole ? customerRole._id : null,
     });
 
     await user.save();
+
+    // Sinh mã OTP 6 số và gửi email chào mừng kèm OTP
     await this._createAndSendOtp(email, 'REGISTER', full_name);
 
     return { email: user.email };
   }
 
-  // Xác thực mã OTP người dùng nhập
+  /**
+   * Xác thực mã OTP người dùng nhập
+   * Kiểm tra thời hạn, số lần thử và kích hoạt trạng thái tài khoản thành ACTIVE
+   */
   async verifyOtp({ email, otp }) {
     const otpRecord = await OtpVerification.findOne({
       email,
@@ -102,7 +108,7 @@ class UserService {
 
   // Đăng nhập người dùng và khởi tạo JWT Access Token
   async login({ email, password }) {
-    const user = await User.findOne({ email, deleted_at: null }).populate('role_id');
+    const user = await User.findOne({ email, deleted_at: null });
     if (!user) {
       const error = new Error('Email hoặc mật khẩu không đúng');
       error.statusCode = 401;
@@ -136,22 +142,9 @@ class UserService {
     // Tạo JWT Access Token
     const token = this._generateToken(user._id);
 
-    // Tính toán quyền hiệu lực trả về cho client
-    const permissions = await permissionService.getEffectivePermissions(user);
-    const userObj = user.toJSON();
-    userObj.permissions = permissions;
-
-    if (user.role_id) {
-      userObj.role = {
-        _id: user.role_id._id,
-        code: user.role_id.code,
-        name: user.role_id.name,
-      };
-    }
-
     return {
       token,
-      user: userObj,
+      user: user.toJSON(),
     };
   }
 
@@ -291,7 +284,9 @@ class UserService {
     }
   }
 
-  // Ký tạo JWT Access Token
+  /**
+   * Helper Private Method: Ký tạo JWT Access Token bằng JWT_SECRET
+   */
   _generateToken(userId) {
     return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
   }

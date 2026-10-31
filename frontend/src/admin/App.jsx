@@ -20,6 +20,7 @@ function App() {
         {/* Routes quản lý Đơn hàng */}
         <Route path="orders" element={<Orders />} />
 
+
         {/* Routes quản lý Mã giảm giá (Coupon) */}
         <Route path="coupons" element={<Coupons />} />
         <Route path="coupons/create" element={<CouponForm />} />
@@ -35,15 +36,6 @@ function App() {
         <Route path="categories/create" element={<CategoryForm />} />
         <Route path="categories/edit/:id" element={<CategoryForm />} />
 
-        {/* Routes Quản lý Tài khoản & Nhân viên */}
-        <Route path="users" element={<Users />} />
-
-        {/* Routes Quản lý Vai trò & Phân quyền */}
-        <Route path="roles" element={<Roles />} />
-
-        {/* Routes Nhật ký hệ thống */}
-        <Route path="audit-logs" element={<AuditLogs />} />
-
         {/* Routes Cài đặt chung */}
         <Route path="settings" element={<Settings />} />
       </Route>
@@ -52,3 +44,4 @@ function App() {
 }
 
 export default App;
+

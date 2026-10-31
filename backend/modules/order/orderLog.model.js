@@ -21,17 +21,31 @@ const orderLogSchema = new mongoose.Schema(
     action: {
       type: String,
       enum: [
+        // Đơn hàng
         'CREATED',               // Tạo đơn
-        'DEPOSIT_PAID',          // Thanh toán cọc 30%
-        'FULL_PAID',             // Thanh toán đủ 100%
         'STATUS_CHANGED',        // Chuyển trạng thái
-        'CANCEL_REQUESTED',      // Yêu cầu hủy
-        'CANCEL_APPROVED',       // Duyệt hủy
+
+        // Thanh toán
+        'PAYMENT_QR_CREATED',    // Tạo QR thanh toán
+        'DEPOSIT_PAID',          // Thanh toán cọc 30%
+        'REMAINING_PAID',        // Thanh toán 70% còn lại
+        'FULL_PAID',             // Đã thanh toán đủ 100%
+        'PAYMENT_FAILED',        // Thanh toán thất bại
+        'PAYMENT_EXPIRED',       // QR hết hạn
+
+        // Hủy tour
+        'CANCEL_REQUESTED',      // Khách yêu cầu hủy
+        'CANCEL_APPROVED',       // Admin duyệt hủy
+        'CANCEL_REJECTED',       // Admin từ chối hủy
         'COMPANY_CANCELLED',     // Công ty hủy tour
+
+        // Hoàn tiền
         'REFUND_CREATED',        // Tạo yêu cầu hoàn tiền
         'REFUND_PROCESSING',     // Đang xử lý hoàn tiền
         'REFUND_COMPLETED',      // Hoàn tiền thành công
         'REFUND_FAILED',         // Hoàn tiền thất bại
+
+        // Quản lý
         'OVERDUE_FLAGGED',       // Đánh dấu quá hạn
         'STAFF_NOTE',            // Ghi chú nội bộ nhân viên
       ],

@@ -244,7 +244,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
                       </span>
                     )}
                   </Link>
-                  {(user.role === 'ADMIN' || user.role === 'STAFF' || user.role?.code === 'admin' || user.role?.code?.includes('staff') || (user.roles && (user.roles.includes('ADMIN') || user.roles.includes('STAFF')))) && (
+                  {(user.role === 'ADMIN' || user.role === 'STAFF' || (user.roles && (user.roles.includes('ADMIN') || user.roles.includes('STAFF')))) && (
                     <Button
                       as={Link}
                       to="/admin"

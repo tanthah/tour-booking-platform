@@ -25,7 +25,7 @@ router.post('/recommend', authenticate, couponController.recommendBestCoupon);
 
 // ============ ADMIN ROUTES — Quản lý coupon & Báo cáo ============
 
-// Báo cáo thống kê hiệu quả 
+// Báo cáo thống kê hiệu quả chiến dịch (Giai đoạn 5)
 router.get('/admin/report', authenticate, authorize('ADMIN', 'STAFF'), couponController.getCouponReport);
 
 // Toàn bộ lịch sử sử dụng có lọc & xuất CSV (Giai đoạn 5)

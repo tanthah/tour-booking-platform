@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../config/env');
 const User = require('../modules/user/user.model');
 const ApiResponse = require('../utils/apiResponse');
-const permissionService = require('../services/permissionService');
 
 // Middleware Authentication: Xác thực JWT Access Token từ Header Authorization
 
@@ -22,10 +21,8 @@ const authenticate = async (req, res, next) => {
     // Giải mã và verify signature của JWT Token với JWT_SECRET
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Truy vấn thông tin User từ Database kèm role_id (loại trừ các tài khoản đã bị xóa mềm)
-    const user = await User.findOne({ _id: decoded.id, deleted_at: null })
-      .populate('role_id')
-      .select('-password_hash');
+    // Truy vấn thông tin User từ Database (loại trừ các tài khoản đã bị xóa mềm deleted_at)
+    const user = await User.findOne({ _id: decoded.id, deleted_at: null }).select('-password_hash');
 
     if (!user) {
       return ApiResponse.error(res, 401, 'Tài khoản không tồn tại hoặc đã bị vô hiệu hóa.');
@@ -35,10 +32,8 @@ const authenticate = async (req, res, next) => {
       return ApiResponse.error(res, 403, 'Tài khoản chưa được kích hoạt hoặc đã bị khóa.');
     }
 
-    // Tính toán quyền hiệu lực và gắn vào Object Request
+    // Gắn thông tin User đã xác thực vào Object Request để các middleware/controller tiếp theo sử dụng
     req.user = user;
-    req.user.permissions = await permissionService.getEffectivePermissions(user);
-
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -64,17 +59,9 @@ const authorize = (...roles) => {
     // Kiểm tra xem User hiện tại có sở hữu ít nhất một Role hợp lệ hay không
     let userRoles = [];
     if (req.user.roles && Array.isArray(req.user.roles) && req.user.roles.length > 0) {
-      userRoles = [...req.user.roles];
+      userRoles = req.user.roles;
     } else if (req.user.role) {
       userRoles = [req.user.role];
-    }
-
-    if (req.user.role_id && req.user.role_id.code) {
-      const codeUpper = req.user.role_id.code.toUpperCase();
-      userRoles.push(codeUpper);
-      if (codeUpper.includes('STAFF')) userRoles.push('STAFF');
-      if (codeUpper === 'ADMIN') userRoles.push('ADMIN');
-      if (codeUpper === 'CUSTOMER') userRoles.push('CUSTOMER');
     }
     
     const allowedRoles = roles.map(r => r.toUpperCase());

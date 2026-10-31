@@ -194,7 +194,7 @@ async function testEdgeCases() {
     ],
     subtotal: 2000000,
     total_amount: 2000000,
-    payment_method: 'MOMO',
+    payment_method: 'ZALOPAY',
     payment_status: 'PENDING',
     order_status: 'PENDING_PAYMENT',
     payment_expires_at: new Date(Date.now() - 1000), // Đã hết hạn
@@ -240,7 +240,7 @@ async function testEdgeCases() {
     ],
     subtotal: 1000000,
     total_amount: 1000000,
-    payment_method: 'MOMO',
+    payment_method: 'ZALOPAY',
     payment_status: 'PENDING',
     order_status: 'PENDING_PAYMENT',
     payment_expires_at: new Date(Date.now() + 15 * 60 * 1000),
