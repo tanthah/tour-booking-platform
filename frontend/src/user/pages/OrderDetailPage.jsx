@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Container, Row, Col, Spinner, Alert, Badge, Modal, Button } from 'react-bootstrap';
+import { Container, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
+import { createZaloPayPayment, getPaymentsByOrder } from '../modules/payment/paymentService';
+import ZaloPayQRModal from '../components/checkout/ZaloPayQRModal';
+import OrderCancelModal from '../components/order/OrderCancelModal';
+import OrderPaymentHistory from '../components/order/OrderPaymentHistory';
+import OrderItemsList from '../components/order/OrderItemsList';
 
 const OrderDetailPage = () => {
   const { id } = useParams();
@@ -10,22 +15,28 @@ const OrderDetailPage = () => {
 
   const [order, setOrder] = useState(null);
   const [refunds, setRefunds] = useState([]);
+  const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReasonInput, setCancelReasonInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [showZaloPayModal, setShowZaloPayModal] = useState(false);
+  const [zaloPayModalData, setZaloPayModalData] = useState(null);
 
   const fetchOrder = useCallback(async () => {
     try {
       setLoading(true);
-      const [orderRes, refundRes] = await Promise.all([
+      const [orderRes, refundRes, paymentRes] = await Promise.all([
         axiosClient.get(`/orders/${id}`),
         axiosClient.get(`/orders/${id}/refunds`).catch(() => ({ data: [] })),
+        getPaymentsByOrder(id).catch(() => []),
       ]);
       setOrder(orderRes?.data || null);
       setRefunds(refundRes?.data || []);
+      setPayments(Array.isArray(paymentRes) ? paymentRes : paymentRes?.data || []);
     } catch (err) {
       setErrorMsg(err.message || 'Không thể tải thông tin đơn hàng.');
     } finally {
@@ -39,6 +50,21 @@ const OrderDetailPage = () => {
       return () => clearTimeout(timer);
     }
   }, [id, fetchOrder]);
+
+  const handlePayZaloPay = async () => {
+    try {
+      setPaying(true);
+      setErrorMsg('');
+      const pType = order.order_status === 'DEPOSIT_CONFIRMED' ? 'remaining' : (order.deposit_amount ? 'deposit' : 'full');
+      const zpData = await createZaloPayPayment({ orderId: id, paymentType: pType });
+      setZaloPayModalData({ ...zpData, order });
+      setShowZaloPayModal(true);
+    } catch (err) {
+      setErrorMsg(err.message || 'Không thể khởi tạo giao dịch ZaloPay.');
+    } finally {
+      setPaying(false);
+    }
+  };
 
   const getCancelEstimate = () => {
     if (!order) return { feePercent: 100, feeAmount: 0, refundAmount: 0, diffDays: 0 };
@@ -90,13 +116,14 @@ const OrderDetailPage = () => {
 
   const cancelEst = getCancelEstimate();
   const canCancel = ['PENDING_PAYMENT', 'DEPOSIT_CONFIRMED', 'CONFIRMED'].includes(order.order_status);
+  const canPay = (order.order_status === 'PENDING_PAYMENT' || order.order_status === 'DEPOSIT_CONFIRMED') && (order.remaining_amount > 0 || order.paid_amount === 0);
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', padding: '36px 0 80px' }}>
       <Container>
-        {location.state?.justCreated && (
+        {(location.state?.justCreated || location.state?.justPaid) && (
           <Alert variant="success" className="mb-4 text-center py-2">
-            <strong>🎉 Đặt Tour Thành Công!</strong> Mã đơn: <strong>{order.order_code}</strong>.
+            <strong>🎉 {location.state?.justPaid ? 'Thanh Toán Thành Công!' : 'Đặt Tour Thành Công!'}</strong> Mã đơn: <strong>{order.order_code}</strong>.
           </Alert>
         )}
         {successMsg && <Alert variant="success">{successMsg}</Alert>}
@@ -107,9 +134,7 @@ const OrderDetailPage = () => {
             <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#1e293b', margin: 0 }}>
               Đơn Hàng: <span style={{ color: '#ea580c' }}>{order.order_code}</span>
             </h1>
-            <div style={{ fontSize: '13px', color: '#64748b' }}>
-              Ngày tạo: {new Date(order.created_at).toLocaleString('vi-VN')}
-            </div>
+            <div style={{ fontSize: '13px', color: '#64748b' }}>Ngày tạo: {new Date(order.created_at).toLocaleString('vi-VN')}</div>
           </div>
           <div className="d-flex gap-2 align-items-center flex-wrap">
             {order.order_status === 'PENDING_PAYMENT' && <Badge bg="warning" text="dark">Chờ thanh toán</Badge>}
@@ -118,60 +143,17 @@ const OrderDetailPage = () => {
             {order.order_status === 'AWAITING_STAFF' && <Badge bg="danger">Chờ nhân viên xử lý</Badge>}
             {order.order_status === 'COMPLETED' && <Badge bg="success">Hoàn thành</Badge>}
             {order.order_status === 'CANCELLED' && <Badge bg="secondary">Đã hủy</Badge>}
-
             {order.payment_status === 'PENDING' && <Badge bg="secondary">Chưa thanh toán</Badge>}
             {order.payment_status === 'DEPOSIT_PAID' && <Badge bg="info">Đã nhận cọc</Badge>}
             {order.payment_status === 'PAID' && <Badge bg="success">Đã thanh toán đủ</Badge>}
-            {order.payment_status === 'FAILED' && <Badge bg="danger">Thất bại</Badge>}
             {order.payment_status === 'REFUNDED' && <Badge bg="dark">Đã hoàn tiền</Badge>}
           </div>
         </div>
 
-        {order.order_status === 'CANCELLED' && (
-          <Alert variant="secondary" className="mb-3 py-2">
-            <strong>Thông tin hủy:</strong> {order.cancel_reason || 'Không có lý do'}&nbsp;
-            {order.cancel_fee_percent !== null && (
-              <span>(Phí hủy: {order.cancel_fee_percent}% — {order.cancel_fee_amount?.toLocaleString('vi-VN')} đ)</span>
-            )}
-          </Alert>
-        )}
-
         <Row className="gy-4">
           <Col lg={8}>
-            {/* 1. Danh sách Tour */}
-            <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginBottom: '16px' }}>
-                Danh Sách Tour Đặt ({order.items?.length || 0})
-              </h3>
-              {order.items?.map((item) => (
-                <div key={item._id} className="d-flex flex-wrap gap-3 pb-3 mb-3 border-bottom">
-                  {item.main_image && (
-                    <img src={item.main_image} alt={item.tour_name} style={{ width: '120px', height: '80px', objectFit: 'cover', borderRadius: '8px' }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: '220px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b' }}>{item.tour_name}</div>
-                    <div style={{ fontSize: '12.5px', color: '#64748b' }}>
-                      Mã: <strong>{item.tour_code || 'N/A'}</strong> | {item.duration || 'N/A'}
-                    </div>
-                    {item.departure_date && (
-                      <div style={{ fontSize: '12.5px', color: '#64748b' }}>
-                        Khởi hành: <strong>{new Date(item.departure_date).toLocaleDateString('vi-VN')}</strong> ({item.departure_location})
-                      </div>
-                    )}
-                    <div style={{ fontSize: '13px', color: '#ea580c', fontWeight: 600, marginTop: '4px' }}>
-                      {item.quantity_adult} lớn ({item.price_adult?.toLocaleString('vi-VN')} đ)
-                      {item.quantity_child > 0 ? `, ${item.quantity_child} trẻ (${item.price_child?.toLocaleString('vi-VN')} đ)` : ''}
-                      {item.quantity_baby > 0 ? `, ${item.quantity_baby} bé (${item.price_baby?.toLocaleString('vi-VN')} đ)` : ''}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', fontWeight: 800, color: '#0f172a', fontSize: '16px' }}>
-                    {(item.subtotal || 0).toLocaleString('vi-VN')} đ
-                  </div>
-                </div>
-              ))}
-            </div>
+            <OrderItemsList items={order.items} />
 
-            {/* 2. Danh sách Khách */}
             <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginBottom: '16px' }}>
                 Danh Sách Khách Đi Tour ({order.booking_customers?.length || 0} khách)
@@ -194,35 +176,15 @@ const OrderDetailPage = () => {
               </div>
             </div>
 
-            {/* 3. Lịch sử hoàn tiền (nếu có) */}
-            {refunds.length > 0 && (
-              <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0' }}>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginBottom: '16px' }}>
-                  Yêu Cầu Hoàn Tiền ({refunds.length})
-                </h3>
-                {refunds.map((rf) => (
-                  <div key={rf._id} className="p-3 mb-2 rounded border" style={{ background: '#f8fafc', fontSize: '13px' }}>
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <strong>Số tiền hoàn: <span style={{ color: '#ea580c', fontSize: '15px' }}>{rf.refund_amount.toLocaleString('vi-VN')} đ</span></strong>
-                      <Badge bg={rf.status === 'COMPLETED' ? 'success' : rf.status === 'PROCESSING' ? 'warning' : rf.status === 'FAILED' ? 'danger' : 'secondary'}>
-                        {rf.status === 'PENDING' ? 'Chờ duyệt' : rf.status === 'PROCESSING' ? 'Đang hoàn' : rf.status === 'COMPLETED' ? 'Thành công' : 'Thất bại'}
-                      </Badge>
-                    </div>
-                    <div style={{ color: '#64748b' }}>Phương thức: {rf.refund_method} | Tạo lúc: {new Date(rf.created_at).toLocaleString('vi-VN')}</div>
-                    {rf.transaction_id && <div>Mã giao dịch: <strong>{rf.transaction_id}</strong></div>}
-                  </div>
-                ))}
-              </div>
-            )}
+            <OrderPaymentHistory payments={payments} refunds={refunds} />
           </Col>
 
-          {/* Cột phải: Thanh toán */}
           <Col lg={4}>
             <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', marginBottom: '20px', border: '1px solid #e2e8f0' }}>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#1e293b', marginBottom: '14px' }}>Thông Tin Người Đặt</h3>
               <div style={{ fontSize: '13.5px', marginBottom: '6px' }}>Họ tên: <strong>{order.customer_info?.full_name}</strong></div>
               <div style={{ fontSize: '13.5px', marginBottom: '6px' }}>SĐT: <strong>{order.customer_info?.phone}</strong></div>
-              {order.customer_info?.email && <div style={{ fontSize: '13.5px', marginBottom: '6px' }}>Email: <strong>{order.customer_info.email}</strong></div>}
+              {order.customer_info?.email && <div style={{ fontSize: '13.5px' }}>Email: <strong>{order.customer_info.email}</strong></div>}
             </div>
 
             <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', border: '1px solid #e2e8f0' }}>
@@ -237,12 +199,28 @@ const OrderDetailPage = () => {
                 <span>Đã thanh toán:</span><strong>{(order.paid_amount || 0).toLocaleString('vi-VN')} đ</strong>
               </div>
               <div className="d-flex justify-content-between mb-2" style={{ fontSize: '13.5px', color: '#dc2626' }}>
-                <span>Còn nợ:</span><strong>{(order.remaining_amount || 0).toLocaleString('vi-VN')} đ</strong>
+                <span>Số dư còn lại:</span><strong>{(order.remaining_amount || 0).toLocaleString('vi-VN')} đ</strong>
               </div>
               {order.payment_deadline && (
-                <div className="p-2 mb-3 rounded" style={{ background: '#fff7ed', border: '1px solid #fed7aa', fontSize: '12.5px', color: '#c2410c' }}>
-                  Hạn thanh toán 100%: <strong>{new Date(order.payment_deadline).toLocaleDateString('vi-VN')}</strong> (D-16)
+                <div className="p-2 mb-3 rounded" style={{ background: '#eff6ff', border: '1px solid #bfdbfe', fontSize: '12.5px', color: '#1d4ed8' }}>
+                  Hạn thanh toán 70% đợt 2: <strong>{new Date(order.payment_deadline).toLocaleDateString('vi-VN')}</strong> (15 ngày trước khởi hành)
                 </div>
+              )}
+
+              {canPay && (
+                <button
+                  type="button"
+                  className="btn btn-primary w-100 py-2 mb-2"
+                  style={{ borderRadius: '10px', fontSize: '14px', fontWeight: 700 }}
+                  onClick={handlePayZaloPay}
+                  disabled={paying}
+                >
+                  {paying ? <Spinner size="sm" animation="border" /> : (
+                    order.order_status === 'DEPOSIT_CONFIRMED'
+                      ? `Thanh toán số dư ${(order.remaining_amount || 0).toLocaleString('vi-VN')} đ qua ZaloPay`
+                      : `Thanh toán ${(order.deposit_amount || order.total_amount).toLocaleString('vi-VN')} đ qua ZaloPay`
+                  )}
+                </button>
               )}
 
               {canCancel && (
@@ -270,25 +248,25 @@ const OrderDetailPage = () => {
         </Row>
       </Container>
 
-      {/* Modal xác nhận hủy đơn */}
-      <Modal show={showCancelModal} onHide={() => setShowCancelModal(false)} centered>
-        <Modal.Header closeButton><Modal.Title style={{ fontSize: '17px', fontWeight: 700 }}>Xác Nhận Hủy Đơn Hàng</Modal.Title></Modal.Header>
-        <Modal.Body style={{ fontSize: '14px' }}>
-          <p>Tour khởi hành sau <strong>{cancelEst.diffDays} ngày</strong>. Chính sách phí hủy áp dụng:</p>
-          <div className="p-3 rounded mb-3" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-            <div>Tỷ lệ phí hủy: <strong style={{ color: '#dc2626' }}>{cancelEst.feePercent}%</strong> ({cancelEst.feeAmount.toLocaleString('vi-VN')} đ)</div>
-            <div>Số tiền hoàn dự kiến: <strong style={{ color: '#16a34a', fontSize: '16px' }}>{cancelEst.refundAmount.toLocaleString('vi-VN')} đ</strong></div>
-          </div>
-          <div className="mb-2">
-            <label className="form-label">Lý do hủy đơn (tùy chọn):</label>
-            <input type="text" className="form-control" placeholder="Nhập lý do..." value={cancelReasonInput} onChange={(e) => setCancelReasonInput(e.target.value)} />
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCancelModal(false)}>Đóng</Button>
-          <Button variant="danger" onClick={handleConfirmCancel} disabled={cancelling}>{cancelling ? 'Đang hủy...' : 'Xác Nhận Hủy'}</Button>
-        </Modal.Footer>
-      </Modal>
+      <ZaloPayQRModal
+        show={showZaloPayModal}
+        onHide={() => setShowZaloPayModal(false)}
+        paymentData={zaloPayModalData}
+        onPaymentSuccess={() => {
+          setShowZaloPayModal(false);
+          fetchOrder();
+        }}
+      />
+
+      <OrderCancelModal
+        show={showCancelModal}
+        onHide={() => setShowCancelModal(false)}
+        cancelEst={cancelEst}
+        cancelReasonInput={cancelReasonInput}
+        setCancelReasonInput={setCancelReasonInput}
+        handleConfirmCancel={handleConfirmCancel}
+        cancelling={cancelling}
+      />
     </div>
   );
 };

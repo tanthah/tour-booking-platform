@@ -1,35 +1,21 @@
 /**
  * PaymentMethodSection — Chọn mức thanh toán & phương thức thanh toán
- * Mức thanh toán: Đặt cọc 50% trước hoặc Thanh toán toàn bộ 100%
- * Phương thức: Tại quầy, QR đa năng, Thẻ nội địa, Thẻ quốc tế, Ví MoMo
+ * Mức thanh toán: Đặt cọc 30% trước hoặc Thanh toán toàn bộ 100%
+ * Phương thức: Cổng thanh toán ZaloPay (QR động / Ví ZaloPay), Thanh toán tại quầy
  */
 
 const PAYMENT_METHODS = [
   {
+    id: 'ZALOPAY',
+    label: 'Cổng thanh toán ZaloPay (Mã QR động / Ví ZaloPay)',
+    desc: 'Quét mã QR ZaloPay động trực tiếp trên website hoặc thanh toán qua ứng dụng ZaloPay.',
+    badge: 'Khuyên dùng',
+  },
+  {
     id: 'COUNTER',
     label: 'Thanh toán tại quầy',
     desc: 'Quý khách thanh toán trực tiếp tại văn phòng công ty trước ngày khởi hành.',
-    badge: 'Phổ biến',
-  },
-  {
-    id: 'QR_CODE',
-    label: 'QR đa năng',
-    desc: 'Quét mã QR thanh toán bằng bất kỳ ứng dụng ngân hàng nào đang dùng.',
-  },
-  {
-    id: 'DOMESTIC_CARD',
-    label: 'Thẻ nội địa (ATM / Internet Banking)',
-    desc: 'Thanh toán an toàn qua thẻ ATM hoặc tài khoản ngân hàng nội địa.',
-  },
-  {
-    id: 'INTERNATIONAL_CARD',
-    label: 'Thẻ quốc tế (VISA / Mastercard)',
-    desc: 'Thanh toán bằng thẻ tín dụng quốc tế, bảo mật qua cổng 3D Secure.',
-  },
-  {
-    id: 'MOMO',
-    label: 'Ví điện tử MoMo',
-    desc: 'Quét mã QR MoMo để thanh toán tức thì và nhận xác nhận đơn ngay.',
+    badge: 'Trực tiếp',
   },
 ];
 

@@ -3,6 +3,7 @@ import PassengerItemForm from '../components/checkout/PassengerItemForm';
 import CustomerInfoSection from '../components/checkout/CustomerInfoSection';
 import PaymentMethodSection from '../components/checkout/PaymentMethodSection';
 import CheckoutSummaryCard from '../components/checkout/CheckoutSummaryCard';
+import ZaloPayQRModal from '../components/checkout/ZaloPayQRModal';
 import useCheckout from '../hooks/useCheckout';
 import '../assets/styles/checkout.css';
 
@@ -45,6 +46,10 @@ const CheckoutPage = () => {
     handleRecommendCoupon,
     handleRemoveCoupon,
     handleSubmitOrder,
+    showZaloPayModal,
+    zaloPayModalData,
+    handlePaymentSuccess,
+    handleCloseZaloPayModal,
   } = useCheckout();
 
 
@@ -149,6 +154,14 @@ const CheckoutPage = () => {
             </Col>
           </Row>
         </Form>
+
+        {/* Modal quét mã QR ZaloPay */}
+        <ZaloPayQRModal
+          show={showZaloPayModal}
+          onHide={handleCloseZaloPayModal}
+          paymentData={zaloPayModalData}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       </Container>
     </div>
   );

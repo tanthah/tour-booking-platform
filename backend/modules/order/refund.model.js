@@ -33,6 +33,32 @@ const refundSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // Liên kết giao dịch ZaloPay
+    payment_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Payment',
+      default: null,
+    },
+    provider: {
+      type: String,
+      default: 'zalopay',
+    },
+    m_refund_id: {
+      type: String,
+      default: null,
+    },
+    zp_refund_id: {
+      type: String,
+      default: null,
+    },
+    return_code: {
+      type: Number,
+      default: null,
+    },
+    return_message: {
+      type: String,
+      default: null,
+    },
     // 4 trạng thái theo tài liệu nghiệp vụ
     status: {
       type: String,
@@ -60,4 +86,3 @@ refundSchema.index({ status: 1 });
 
 const Refund = mongoose.model('Refund', refundSchema);
 module.exports = Refund;
-

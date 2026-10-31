@@ -136,7 +136,7 @@ async function runTests() {
         gender: 'FEMALE',
       },
     ],
-    payment_method: 'MOMO',
+    payment_method: 'ZALOPAY',
   };
 
   const order = await orderService.createOrderFromCart(userA._id, payload);
@@ -226,7 +226,7 @@ async function runTests() {
     ],
     subtotal: 8100000,
     total_amount: 8100000,
-    payment_method: 'MOMO',
+    payment_method: 'ZALOPAY',
     payment_status: 'PENDING',
     order_status: 'PENDING_PAYMENT',
     payment_expires_at: new Date(Date.now() + 15 * 60 * 1000),

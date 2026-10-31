@@ -123,6 +123,20 @@ function OrderDetailModal({ order, updating, onClose, onUpdateStatus }) {
     }
   };
 
+  const handleZaloPayRefund = async (refundId) => {
+    if (!window.confirm('Xác nhận thực hiện hoàn tiền tự động qua cổng ZaloPay API?')) return;
+    try {
+      setLocalUpdating(true);
+      const res = await axiosAdmin.post(`/payments/admin/refunds/${refundId}`);
+      alert(`Hoàn tiền ZaloPay thành công! Mã ZaloPay: ${res?.data?.zp_refund_id || 'Đã ghi nhận'}`);
+      fetchExtraData();
+    } catch (err) {
+      alert(err.message || 'Lỗi khi hoàn tiền qua ZaloPay');
+    } finally {
+      setLocalUpdating(false);
+    }
+  };
+
   const handleAddNote = async (e) => {
     e.preventDefault();
     if (!noteContent.trim()) return;
@@ -222,12 +236,18 @@ function OrderDetailModal({ order, updating, onClose, onUpdateStatus }) {
                 <span style={{ fontWeight: 700 }}>{rf.status}</span>
               </div>
               <div style={{ color: '#64748b', fontSize: '12px' }}>Phương thức: {rf.refund_method} | Tạo: {new Date(rf.created_at).toLocaleString('vi-VN')}</div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                {rf.status === 'PENDING' && <button className="btn btn-primary btn-sm" onClick={() => handleRefundAction(rf._id, 'process')}>Duyệt xử lý</button>}
+              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
+                {rf.status === 'PENDING' && (
+                  <>
+                    <button className="btn btn-outline-primary btn-sm" disabled={localUpdating} onClick={() => handleZaloPayRefund(rf._id)}>Hoàn tiền ZaloPay Gateway ⚡</button>
+                    <button className="btn btn-secondary btn-sm" disabled={localUpdating} onClick={() => handleRefundAction(rf._id, 'process')}>Duyệt thủ công</button>
+                  </>
+                )}
                 {rf.status === 'PROCESSING' && (
                   <>
-                    <button className="btn btn-success btn-sm" onClick={() => handleRefundAction(rf._id, 'complete')}>Hoàn tất</button>
-                    <button className="btn btn-danger btn-sm" onClick={() => handleRefundAction(rf._id, 'fail')}>Thất bại</button>
+                    <button className="btn btn-outline-primary btn-sm" disabled={localUpdating} onClick={() => handleZaloPayRefund(rf._id)}>Hoàn tiền ZaloPay Gateway ⚡</button>
+                    <button className="btn btn-success btn-sm" disabled={localUpdating} onClick={() => handleRefundAction(rf._id, 'complete')}>Hoàn tất</button>
+                    <button className="btn btn-danger btn-sm" disabled={localUpdating} onClick={() => handleRefundAction(rf._id, 'fail')}>Thất bại</button>
                   </>
                 )}
               </div>
