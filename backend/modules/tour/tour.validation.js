@@ -74,6 +74,18 @@ const createTourValidation = [
     .optional()
     .isArray().withMessage('Danh sách ảnh lịch trình phải là mảng'),
 
+  body('services_included')
+    .optional()
+    .isArray().withMessage('Dịch vụ bao gồm phải là mảng chuỗi'),
+
+  body('services_excluded')
+    .optional()
+    .isArray().withMessage('Dịch vụ không bao gồm phải là mảng chuỗi'),
+
+  body('special_conditions')
+    .optional()
+    .isString().withMessage('Điều kiện đặc biệt phải là chuỗi'),
+
   body('status')
     .optional()
     .isIn(['DRAFT', 'ACTIVE', 'INACTIVE'])
@@ -136,6 +148,18 @@ const updateTourValidation = [
   body('itinerary')
     .optional()
     .isArray().withMessage('Lịch trình phải là mảng'),
+
+  body('services_included')
+    .optional()
+    .isArray().withMessage('Dịch vụ bao gồm phải là mảng chuỗi'),
+
+  body('services_excluded')
+    .optional()
+    .isArray().withMessage('Dịch vụ không bao gồm phải là mảng chuỗi'),
+
+  body('special_conditions')
+    .optional()
+    .isString().withMessage('Điều kiện đặc biệt phải là chuỗi'),
 
   body('status')
     .optional()

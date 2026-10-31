@@ -1,6 +1,7 @@
 const Tour = require('../tour/tour.model');
 const TourDeparture = require('../tour/tourDeparture.model');
 const Order = require('./order.model');
+const OrderLog = require('./orderLog.model');
 const couponService = require('../coupon/coupon.service');
 
 /**
@@ -236,42 +237,41 @@ const releaseSlotsForOrder = async (order) => {
 };
 
 /**
- * Tự động hủy đơn hết hạn thanh toán (15 phút) bằng Atomic Conditional Update
- * Chống race condition: Chỉ tiến trình cập nhật thành công mới được giải phóng chỗ
+ * Chuyển đơn quá hạn thanh toán sang "Chờ nhân viên xử lý" (AWAITING_STAFF)
+ * Không tự động hủy, không tự động giải phóng slot (giữ chỗ chờ nhân viên quyết định)
  */
-const expirePendingOrders = async () => {
-  const candidateOrders = await Order.find({
-    order_status: 'PENDING_PAYMENT',
-    payment_status: 'PENDING',
-    payment_expires_at: { $lte: new Date() },
-  }).select('_id items');
+const flagOverdueOrders = async () => {
+  const now = new Date();
+  const overdueOrders = await Order.find({
+    order_status: { $in: ['PENDING_PAYMENT', 'DEPOSIT_CONFIRMED'] },
+    $or: [
+      { payment_deadline: { $ne: null, $lte: now } },
+      { payment_expires_at: { $ne: null, $lte: now }, payment_deadline: null },
+    ],
+  }).select('_id order_status payment_deadline payment_expires_at');
 
-  let expiredCount = 0;
-  for (const candidate of candidateOrders) {
+  let flaggedCount = 0;
+  for (const ord of overdueOrders) {
     const updatedOrder = await Order.findOneAndUpdate(
-      {
-        _id: candidate._id,
-        order_status: 'PENDING_PAYMENT',
-        payment_status: 'PENDING',
-        payment_expires_at: { $lte: new Date() },
-      },
-      {
-        $set: {
-          order_status: 'CANCELLED',
-          cancel_reason: 'Hết hạn thanh toán (15 phút)',
-        },
-      },
+      { _id: ord._id, order_status: { $in: ['PENDING_PAYMENT', 'DEPOSIT_CONFIRMED'] } },
+      { $set: { order_status: 'AWAITING_STAFF' } },
       { new: true }
     );
 
     if (updatedOrder) {
-      await releaseSlotsForOrder(updatedOrder);
-      await couponService.releaseCouponReservation(updatedOrder._id);
-      expiredCount++;
+      await OrderLog.create({
+        order_id: updatedOrder._id,
+        action: 'OVERDUE_FLAGGED',
+        description: 'Đơn hàng quá hạn thanh toán, chuyển sang Chờ nhân viên xử lý.',
+        metadata: { prev_status: ord.order_status, deadline: ord.payment_deadline || ord.payment_expires_at },
+      });
+      flaggedCount++;
     }
   }
-  return { expiredCount };
+  return { flaggedCount };
 };
+
+const expirePendingOrders = flagOverdueOrders;
 
 module.exports = {
   generateOrderCode,
@@ -280,5 +280,6 @@ module.exports = {
   mapBookingCustomers,
   confirmSlotsForOrder,
   releaseSlotsForOrder,
+  flagOverdueOrders,
   expirePendingOrders,
 };

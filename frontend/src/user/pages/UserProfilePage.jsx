@@ -1,14 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Nav, Card, Form, Button, Spinner, ToastContainer, Toast } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
 import UserOrdersList from '../modules/order/components/UserOrdersList';
 
 const UserProfilePage = ({ user, setUser }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('profile');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.tab || 'profile');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
+
+  useEffect(() => {
+    if (location.state?.tab) {
+      setActiveTab(location.state.tab);
+    }
+  }, [location.state]);
   
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',

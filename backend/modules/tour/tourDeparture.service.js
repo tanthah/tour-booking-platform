@@ -39,6 +39,12 @@ class TourDepartureService {
       departure_date: departureDate,
       departure_location: data.departure_location,
       vehicle: data.vehicle || 'Ô tô 45 chỗ',
+      meeting_point_address: data.meeting_point_address || '',
+      meeting_point_map_url: data.meeting_point_map_url || '',
+      meeting_time: data.meeting_time || '',
+      start_time: data.start_time || '',
+      end_location: data.end_location || '',
+      contact_info: data.contact_info || '',
       total_slots: data.total_slots,
       booked_slots: 0,
       reserved_slots: 0,
@@ -159,7 +165,11 @@ class TourDepartureService {
     }
 
     // Whitelist trường được phép sửa
-    const allowedFields = ['departure_date', 'departure_location', 'vehicle', 'total_slots'];
+    const allowedFields = [
+      'departure_date', 'departure_location', 'vehicle', 'total_slots',
+      'meeting_point_address', 'meeting_point_map_url', 'meeting_time',
+      'start_time', 'end_location', 'contact_info',
+    ];
     allowedFields.forEach((key) => {
       if (updateData[key] !== undefined) {
         departure[key] = updateData[key];

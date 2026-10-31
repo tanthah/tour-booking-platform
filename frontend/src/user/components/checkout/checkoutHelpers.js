@@ -111,7 +111,8 @@ export const createInitialPassengers = (filteredItems, bookerInfo) => {
 /**
  * Chuẩn bị payload gửi lên API POST /orders
  */
-export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, paymentMethod, couponCode) => {
+export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, paymentMethod, couponCode, paymentType = 'FULL') => {
+  const normalizedType = (paymentType === 'DEPOSIT' || paymentType === 'DEPOSIT_30') ? 'DEPOSIT_30' : 'FULL';
   return {
     customer_info: {
       full_name: customerInfo.full_name.trim(),
@@ -131,9 +132,11 @@ export const buildOrderPayload = (customerInfo, selectedCartItems, passengers, p
       note: p.note.trim() || undefined,
     })),
     payment_method: paymentMethod,
+    payment_type: normalizedType,
     coupon_code: couponCode || undefined,
   };
 };
+
 
 /**
  * Gọi API kiểm tra và tính toán giảm giá coupon
@@ -160,4 +163,70 @@ export const fetchBestCouponRecommendation = async (axiosClient, { subtotal, sel
     items: selectedCartItems,
   });
   return res?.data || res;
+};
+
+/**
+ * Ràng buộc nghiệp vụ thông minh: Kiểm tra điều kiện đặt cọc và khả năng đặt tour
+ * - Còn <= 5 ngày (D-5 → D-1): canBook = false, không nhận đặt mới
+ * - Còn 6-15 ngày (D-15 → D-6): canBook = true, không cho cọc, bắt buộc 100%
+ * - Còn >= 16 ngày (> D-15): canBook = true, cho phép cọc 30%, hạn thanh toán đủ là D-16
+ */
+export const checkDepositEligibility = (selectedCartItems) => {
+  if (!selectedCartItems || selectedCartItems.length === 0) {
+    return { canBook: true, allowed: true, daysRemaining: null, paymentDeadline: null, reason: '' };
+  }
+
+  let earliestDate = null;
+  selectedCartItems.forEach((it) => {
+    if (it.departure_date) {
+      const d = new Date(it.departure_date);
+      if (!isNaN(d.getTime())) {
+        if (!earliestDate || d < earliestDate) {
+          earliestDate = d;
+        }
+      }
+    }
+  });
+
+  if (!earliestDate) {
+    return { canBook: true, allowed: true, daysRemaining: null, paymentDeadline: null, reason: '' };
+  }
+
+  const now = new Date();
+  const depMidnight = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), earliestDate.getDate()).getTime();
+  const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const diffDays = Math.round((depMidnight - nowMidnight) / (24 * 60 * 60 * 1000));
+
+  if (diffDays <= 5) {
+    return {
+      canBook: false,
+      allowed: false,
+      daysRemaining: diffDays,
+      earliestDate,
+      paymentDeadline: null,
+      reason: 'Tour khởi hành trong vòng 5 ngày tới (D-5 → D-1), hệ thống không còn nhận đặt mới để chốt danh sách điều hành.',
+    };
+  }
+
+  if (diffDays <= 15) {
+    return {
+      canBook: true,
+      allowed: false,
+      daysRemaining: diffDays,
+      earliestDate,
+      paymentDeadline: null,
+      reason: 'Tour khởi hành trong vòng 6–15 ngày tới, bắt buộc thanh toán toàn bộ 100% để đảm bảo dịch vụ.',
+    };
+  }
+
+  const deadline = new Date(earliestDate.getFullYear(), earliestDate.getMonth(), earliestDate.getDate() - 16, 23, 59, 59);
+
+  return {
+    canBook: true,
+    allowed: true,
+    daysRemaining: diffDays,
+    earliestDate,
+    paymentDeadline: deadline,
+    reason: '',
+  };
 };

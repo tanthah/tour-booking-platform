@@ -3,6 +3,7 @@ import PassengerItemForm from '../components/checkout/PassengerItemForm';
 import CustomerInfoSection from '../components/checkout/CustomerInfoSection';
 import PaymentMethodSection from '../components/checkout/PaymentMethodSection';
 import CheckoutSummaryCard from '../components/checkout/CheckoutSummaryCard';
+import ZaloPayQRModal from '../components/checkout/ZaloPayQRModal';
 import useCheckout from '../hooks/useCheckout';
 import '../assets/styles/checkout.css';
 
@@ -30,6 +31,9 @@ const CheckoutPage = () => {
     handleToggleBookerInfo,
     paymentMethod,
     setPaymentMethod,
+    paymentType,
+    setPaymentType,
+    depositEligibility,
     subtotal,
     totalAmount,
     couponCode,
@@ -42,7 +46,12 @@ const CheckoutPage = () => {
     handleRecommendCoupon,
     handleRemoveCoupon,
     handleSubmitOrder,
+    showZaloPayModal,
+    zaloPayModalData,
+    handlePaymentSuccess,
+    handleCloseZaloPayModal,
   } = useCheckout();
+
 
   if (loading) {
     return (
@@ -71,6 +80,12 @@ const CheckoutPage = () => {
             <span>Hoàn tất đặt</span>
           </div>
         </div>
+
+        {depositEligibility?.canBook === false && (
+          <Alert variant="danger" className="mb-4">
+            ⚠️ <strong>Không thể đặt tour:</strong> {depositEligibility.reason}
+          </Alert>
+        )}
 
         {errorMsg && (
           <Alert variant="danger" dismissible onClose={() => setErrorMsg('')}>
@@ -108,7 +123,14 @@ const CheckoutPage = () => {
                 ))}
               </div>
 
-              <PaymentMethodSection paymentMethod={paymentMethod} onChange={setPaymentMethod} />
+              <PaymentMethodSection
+                paymentType={paymentType}
+                onPaymentTypeChange={setPaymentType}
+                paymentMethod={paymentMethod}
+                onChange={setPaymentMethod}
+                totalAmount={totalAmount}
+                depositEligibility={depositEligibility}
+              />
             </Col>
 
             <Col lg={4}>
@@ -116,6 +138,7 @@ const CheckoutPage = () => {
                 selectedCartItems={selectedCartItems}
                 subtotal={subtotal}
                 totalAmount={totalAmount}
+                paymentType={paymentType}
                 submitting={submitting}
                 couponCode={couponCode}
                 setCouponCode={setCouponCode}
@@ -126,10 +149,19 @@ const CheckoutPage = () => {
                 onApplyCoupon={handleApplyCoupon}
                 onRecommendCoupon={handleRecommendCoupon}
                 onRemoveCoupon={handleRemoveCoupon}
+                canBook={depositEligibility?.canBook !== false}
               />
             </Col>
           </Row>
         </Form>
+
+        {/* Modal quét mã QR ZaloPay */}
+        <ZaloPayQRModal
+          show={showZaloPayModal}
+          onHide={handleCloseZaloPayModal}
+          paymentData={zaloPayModalData}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       </Container>
     </div>
   );

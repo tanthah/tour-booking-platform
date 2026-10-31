@@ -111,6 +111,19 @@ const tourSchema = new mongoose.Schema(
         order: { type: Number, default: 0 },
       },
     ],
+    // ========== DỊCH VỤ ==========
+    services_included: {
+      type: [String],
+      default: [],
+    },
+    services_excluded: {
+      type: [String],
+      default: [],
+    },
+    special_conditions: {
+      type: String,
+      default: '',
+    },
     // ========== TRẠNG THÁI ==========
     status: {
       type: String,
