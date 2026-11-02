@@ -160,6 +160,22 @@ function TourForm() {
               <ImageUploader multiple={true} maxBatch={5} images={formData.gallery || []} onImagesChange={(urls) => setField('gallery', urls)} />
             </div>
 
+            {/* Điểm nổi bật của tour */}
+            <div className="form-group">
+              <label className="form-label">Điểm nổi bật của tour (mỗi dòng 1 điểm nhấn)</label>
+              <textarea
+                name="highlights"
+                className="form-control"
+                rows="4"
+                placeholder="Khám phá các danh thắng nổi tiếng tại điểm đến&#10;Thưởng thức đặc sản vùng miền phong phú&#10;Khách sạn tiêu chuẩn tiện nghi trung tâm"
+                value={Array.isArray(formData.highlights) ? formData.highlights.join('\n') : (formData.highlights || '')}
+                onChange={(e) => setField('highlights', e.target.value)}
+              />
+              <small style={{ color: '#64748b', fontSize: '0.85rem', display: 'block', marginTop: '4px' }}>
+                Mỗi dòng sẽ hiển thị thành một gạch đầu dòng trong mục Điểm nổi bật ở trang chi tiết tour.
+              </small>
+            </div>
+
             {/* Thông tin tour chi tiết (HTML) */}
             <div className="form-group">
               <label className="form-label">Nội dung chi tiết (Mô tả)</label>
@@ -200,6 +216,18 @@ function TourForm() {
                 rows="3"
                 placeholder="Hộ chiếu còn hạn trên 6 tháng..."
                 value={formData.special_conditions || ''}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Lưu ý cho khách hàng</label>
+              <textarea
+                name="notes"
+                className="form-control"
+                rows="3"
+                placeholder="Nhập các lưu ý về trang phục, chuẩn bị cá nhân, thời tiết..."
+                value={formData.notes || ''}
                 onChange={handleChange}
               />
             </div>

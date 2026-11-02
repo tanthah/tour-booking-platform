@@ -159,19 +159,19 @@
 /* 5. Booking Widget (Chuyến Đi Của Bạn) */
 .tour-booking-card {
   background: #ffffff;
-  border: 1px solid #f1f5f9;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   position: sticky;
-  top: 110px;
+  top: 90px;
 }
 
 .tour-booking-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
   color: #ea580c;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .tour-booking-mini-item {
@@ -417,3 +417,250 @@
     padding: 14px;
   }
 }
+
+/* ============================================================
+   9. Header Nền Trắng, Tab Navigation & Lịch Khởi Hành Mới
+   ============================================================ */
+
+/* 9.1 Header & Breadcrumb Nền Trắng */
+.tour-header-white {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tour-breadcrumb-clean {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.tour-breadcrumb-clean a {
+  color: #64748b;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.tour-breadcrumb-clean a:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.tour-detail-title-clean {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.35;
+  margin: 8px 0 12px;
+}
+
+/* 9.2 Tab Navigation Bar */
+.tour-tabs-container {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  position: sticky;
+  top: 80px;
+  z-index: 20;
+  margin-bottom: 24px;
+}
+
+.tour-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+.tour-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tour-tab-btn:hover {
+  color: #ea580c;
+  background-color: #fff7ed;
+}
+
+.tour-tab-btn.active {
+  color: #ffffff;
+  background-color: #ea580c;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+}
+
+.tour-tab-content-card {
+  background: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+/* 9.3 Lịch Khởi Hành Widget */
+.tour-departure-schedule {
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 16px;
+}
+
+.tour-departure-heading {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.tour-departure-list-scroll {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+
+.tour-departure-list-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.tour-departure-list-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tour-departure-item {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.tour-departure-item:hover:not(.disabled) {
+  border-color: #ea580c;
+  background: #fffaf5;
+  transform: translateY(-1px);
+}
+
+.tour-departure-item.selected {
+  border-color: #ea580c;
+  background: #fff7ed;
+  box-shadow: 0 2px 8px rgba(234, 88, 12, 0.15);
+}
+
+.tour-departure-item.disabled {
+  background: #f8fafc;
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.tour-departure-weekday {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #ea580c;
+  background: #ffedd5;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tour-departure-date {
+  font-size: 13.5px;
+  color: #1e293b;
+}
+
+.tour-departure-subinfo {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.badge-available {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #16a34a;
+  background: #dcfce7;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.badge-soldout {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* 9.4 Highlight Box & Review Card */
+.tour-highlight-box {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.tour-highlight-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #c2410c;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.tour-highlight-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tour-highlight-item {
+  font-size: 13.5px;
+  color: #7c2d12;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.tour-review-summary-card {
+  background: #fafaf9;
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.tour-review-rating-huge {
+  font-size: 48px;
+  font-weight: 900;
+  color: #ea580c;
+  line-height: 1;
+}
+

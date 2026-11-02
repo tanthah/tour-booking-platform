@@ -124,6 +124,15 @@ const tourSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    // ========== ĐIỂM NỔI BẬT & LƯU Ý ==========
+    highlights: {
+      type: [String],
+      default: [],
+    },
+    notes: {
+      type: String,
+      default: '',
+    },
     // ========== TRẠNG THÁI ==========
     status: {
       type: String,

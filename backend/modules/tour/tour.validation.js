@@ -86,6 +86,14 @@ const createTourValidation = [
     .optional()
     .isString().withMessage('Điều kiện đặc biệt phải là chuỗi'),
 
+  body('highlights')
+    .optional()
+    .isArray().withMessage('Điểm nổi bật phải là mảng chuỗi'),
+
+  body('notes')
+    .optional()
+    .isString().withMessage('Lưu ý phải là chuỗi'),
+
   body('status')
     .optional()
     .isIn(['DRAFT', 'ACTIVE', 'INACTIVE'])
@@ -160,6 +168,14 @@ const updateTourValidation = [
   body('special_conditions')
     .optional()
     .isString().withMessage('Điều kiện đặc biệt phải là chuỗi'),
+
+  body('highlights')
+    .optional()
+    .isArray().withMessage('Điểm nổi bật phải là mảng chuỗi'),
+
+  body('notes')
+    .optional()
+    .isString().withMessage('Lưu ý phải là chuỗi'),
 
   body('status')
     .optional()
