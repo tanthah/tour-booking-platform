@@ -13,6 +13,7 @@ const settingRoutes = require('./modules/setting/setting.routes');
 const couponRoutes = require('./modules/coupon/coupon.routes');
 const paymentRoutes = require('./modules/payment/payment.routes');
 const articleRoutes = require('./modules/article/article.routes');
+const reviewRoutes = require('./modules/review/review.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 
 // Đăng ký các Endpoint phân hệ User & Authentication theo prefix /auth
@@ -47,6 +48,9 @@ router.use('/payments', paymentRoutes);
 
 // Đăng ký các Endpoint phân hệ Tin tức du lịch theo prefix /articles
 router.use('/articles', articleRoutes);
+
+// Đăng ký các Endpoint phân hệ Đánh giá Tour theo prefix /reviews
+router.use('/reviews', reviewRoutes);
 
 // Đăng ký các Endpoint Quản trị phân quyền & tài khoản theo prefix /admin
 router.use('/admin', adminRoutes);

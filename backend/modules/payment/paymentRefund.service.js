@@ -91,28 +91,69 @@ async function processZaloPayRefund({ cancellationId, adminId, notes }) {
  * Quét và giải phóng các giao dịch pending đã hết hạn 15 phút
  */
 async function expirePendingPayments() {
+  const now = new Date();
+
   const expiredPayments = await Payment.find({
     status: 'pending',
-    expires_at: { $lte: new Date() },
-  });
+    expires_at: { $lte: now },
+  }).select('_id order_id app_trans_id expires_at');
 
   for (const p of expiredPayments) {
-    p.status = 'expired';
-    await p.save();
+    try {
+      // Chỉ cập nhật nếu giao dịch vẫn pending và đã hết hạn.
+      // Không dùng document.save() để tránh validate lại
+      // các trường bắt buộc của dữ liệu cũ.
+      const updatedPayment = await Payment.findOneAndUpdate(
+        {
+          _id: p._id,
+          status: 'pending',
+          expires_at: { $lte: now },
+        },
+        {
+          $set: { status: 'expired' },
+        },
+        {
+          new: true,
+          runValidators: false,
+        }
+      );
 
-    const order = await Order.findById(p.order_id);
-    if (order && order.order_status === 'PENDING_PAYMENT' && (!order.paid_amount || order.paid_amount === 0)) {
-      try {
-        await releaseSlotsForOrder(order);
-      } catch {
-        // Tiếp tục giải phóng
+      // Giao dịch đã được xử lý bởi tiến trình khác.
+      if (!updatedPayment) continue;
+
+      const order = await Order.findById(p.order_id);
+
+      if (
+        order &&
+        order.order_status === 'PENDING_PAYMENT' &&
+        (!order.paid_amount || order.paid_amount === 0)
+      ) {
+        try {
+          await releaseSlotsForOrder(order);
+        } catch {
+          // Bỏ qua lỗi giải phóng slot nếu có sự cố
+        }
+
+        const transactionId =
+          p.app_trans_id || `PAYMENT_ID:${p._id}`;
+
+        await OrderLog.create({
+          order_id: order._id,
+          action: 'PAYMENT_EXPIRED',
+          description:
+            `Giao dịch ZaloPay #${transactionId} đã hết hạn 15 phút. ` +
+            'Hệ thống giải phóng chỗ giữ tạm.',
+          metadata: {
+            app_trans_id: p.app_trans_id || null,
+            payment_id: p._id,
+          },
+        });
       }
-      await OrderLog.create({
-        order_id: order._id,
-        action: 'PAYMENT_EXPIRED',
-        description: `Giao dịch ZaloPay #${p.app_trans_id} đã hết hạn 15 phút. Hệ thống giải phóng chỗ giữ tạm.`,
-        metadata: { app_trans_id: p.app_trans_id },
-      });
+    } catch (error) {
+      console.error(
+        `[Payment Expire Error] Payment ID: ${p._id}`,
+        error
+      );
     }
   }
 }

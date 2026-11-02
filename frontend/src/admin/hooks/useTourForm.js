@@ -21,6 +21,7 @@ const useTourForm = (tourId) => {
     original_price: 0, discount_percent: 0,
     main_image: '', gallery: [],
     content_html: '', itinerary: [],
+    highlights: [], notes: '',
     services_included: [], services_excluded: [], special_conditions: '',
     is_hot: false, is_flash_sale: false,
   });
@@ -46,6 +47,8 @@ const useTourForm = (tourId) => {
             main_image: t.main_image || '', gallery: t.gallery || [],
             content_html: t.content_html || '',
             itinerary: t.itinerary || [],
+            highlights: t.highlights || [],
+            notes: t.notes || '',
             services_included: t.services_included || [],
             services_excluded: t.services_excluded || [],
             special_conditions: t.special_conditions || '',
@@ -105,11 +108,16 @@ const useTourForm = (tourId) => {
       const servicesExc = Array.isArray(formData.services_excluded)
         ? formData.services_excluded
         : (formData.services_excluded || '').split('\n').map((s) => s.trim()).filter(Boolean);
+      const highlightsArr = Array.isArray(formData.highlights)
+        ? formData.highlights
+        : (formData.highlights || '').split('\n').map((s) => s.trim()).filter(Boolean);
 
       const payload = {
         ...formData,
         original_price: Number(formData.original_price) || 0,
         discount_percent: Number(formData.discount_percent) || 0,
+        highlights: highlightsArr,
+        notes: (formData.notes || '').trim(),
         services_included: servicesInc,
         services_excluded: servicesExc,
         special_conditions: (formData.special_conditions || '').trim(),

@@ -163,6 +163,8 @@ class TourService {
       'original_price', 'discount_percent',
       'is_flash_sale', 'is_hot',
       'main_image', 'gallery', 'content_html', 'itinerary',
+      'highlights', 'notes',
+      'services_included', 'services_excluded', 'special_conditions',
       'status',
     ];
 
