@@ -12,17 +12,50 @@ const TourCard = ({ tour = {} }) => {
     tour.image ||
     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600&auto=format&fit=crop';
   
-  const priceVal = typeof tour.price === 'number' ? tour.price : 0;
-  const originalPriceVal = typeof tour.original_price === 'number' ? tour.original_price : 0;
-  
-  const priceDisplay = priceVal > 0 ? `${priceVal.toLocaleString('vi-VN')} đ` : (tour.price || 'Liên hệ');
-  const oldPriceDisplay = originalPriceVal > priceVal ? `${originalPriceVal.toLocaleString('vi-VN')} đ` : (tour.oldPrice || '');
+  // 1. Lấy giá bán hiện tại: ưu tiên sale_price từ backend, fallback sang price hoặc original_price
+  const currentPrice = typeof tour.sale_price === 'number'
+    ? tour.sale_price
+    : (typeof tour.price === 'number'
+      ? tour.price
+      : (typeof tour.original_price === 'number' ? tour.original_price : 0));
 
-  // Tính phần trăm giảm giá nếu có
-  let discountDisplay = tour.discount || '';
-  if (!discountDisplay && originalPriceVal > priceVal && originalPriceVal > 0) {
-    const percent = Math.round(((originalPriceVal - priceVal) / originalPriceVal) * 100);
-    discountDisplay = `-${percent}%`;
+  // 2. Lấy giá gốc: từ original_price hoặc oldPrice
+  const originalPrice = typeof tour.original_price === 'number'
+    ? tour.original_price
+    : (typeof tour.oldPrice === 'number' ? tour.oldPrice : 0);
+
+  // 3. Phần trăm giảm giá được cấu hình từ Tour
+  const discountPercent = typeof tour.discount_percent === 'number' ? tour.discount_percent : 0;
+
+  // 4. Chỉ coi là CÓ GIẢM GIÁ khi:
+  // - discount_percent > 0 và currentPrice < originalPrice
+  // HOẶC originalPrice > currentPrice và currentPrice > 0
+  const hasDiscount = (discountPercent > 0 && currentPrice < originalPrice) ||
+    (originalPrice > currentPrice && currentPrice > 0);
+
+  // 5. Chuỗi hiển thị giá bán chính: chữ màu đỏ nổi bật, không gạch ngang
+  const priceDisplay = currentPrice > 0
+    ? `${currentPrice.toLocaleString('vi-VN')} đ`
+    : (typeof tour.price === 'string' && tour.price ? tour.price : 'Liên hệ');
+
+  // 6. Giá cũ gạch ngang: CHỈ HIỂN THỊ KHI CÓ GIẢM GIÁ THẬT
+  const oldPriceDisplay = hasDiscount && originalPrice > 0
+    ? `${originalPrice.toLocaleString('vi-VN')} đ`
+    : '';
+
+  // 7. Huy hiệu giảm giá (⚡ GIẢM -X%): CHỈ HIỂN THỊ KHI CÓ GIẢM GIÁ THẬT
+  let discountDisplay = '';
+  if (hasDiscount) {
+    if (tour.discount) {
+      discountDisplay = tour.discount.startsWith('-') ? tour.discount : `-${tour.discount}`;
+    } else if (discountPercent > 0) {
+      discountDisplay = `-${discountPercent}%`;
+    } else if (originalPrice > 0) {
+      const percent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+      if (percent > 0) {
+        discountDisplay = `-${percent}%`;
+      }
+    }
   }
 
   const code = tour.code || '';
@@ -31,7 +64,10 @@ const TourCard = ({ tour = {} }) => {
     : (tour.departure || '');
   const duration = tour.duration || '';
   const rating = tour.rating || 5;
-  const slots = tour.remaining_slots !== undefined ? tour.remaining_slots : (tour.slots ?? 0);
+
+  // Số chỗ còn lại
+  const hasSlotsInfo = typeof tour.remaining_slots === 'number' || typeof tour.slots === 'number';
+  const slots = hasSlotsInfo ? (tour.remaining_slots ?? tour.slots) : null;
 
   const detailUrl = tourId ? `/tour/${tourId}` : '#';
 
@@ -96,7 +132,11 @@ const TourCard = ({ tour = {} }) => {
           </div>
           <div className="d-flex align-items-center gap-1">
             <span style={{ fontSize: '11px', color: '#64748b' }}>Số chỗ còn:</span>
-            <span className="tour-card-slots">{slots}</span>
+            {slots !== null ? (
+              <span className={`tour-card-slots ${slots === 0 ? 'bg-secondary' : ''}`}>{slots}</span>
+            ) : (
+              <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 700 }}>Còn chỗ</span>
+            )}
           </div>
         </div>
       </div>

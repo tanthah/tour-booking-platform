@@ -18,35 +18,39 @@ const HomePage = () => {
   const [flashSaleTours, setFlashSaleTours] = useState([]);
   const [domesticTours, setDomesticTours] = useState([]);
   const [internationalTours, setInternationalTours] = useState([]);
+  const [featuredArticles, setFeaturedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Tải danh sách tour từ Backend API
+  // Tải danh sách tour và tin tức nổi bật từ Backend API
   useEffect(() => {
-    const fetchHomeTours = async () => {
+    const fetchHomeData = async () => {
       try {
         setLoading(true);
-        const [domesticRes, intlRes] = await Promise.all([
+        const [domesticRes, intlRes, articlesRes] = await Promise.all([
           axiosClient.get('/tours/public', { params: { category: 'DOMESTIC', limit: 8 } }),
           axiosClient.get('/tours/public', { params: { category: 'INTERNATIONAL', limit: 8 } }),
+          axiosClient.get('/articles/featured', { params: { limit: 5 } }),
         ]);
 
         const domesticList = domesticRes?.data?.tours || [];
         const intlList = intlRes?.data?.tours || [];
+        const articleList = articlesRes?.data || [];
 
         setDomesticTours(domesticList);
         setInternationalTours(intlList);
+        setFeaturedArticles(articleList);
 
         // Lấy 3 tour đầu tiên làm danh sách tour nổi bật / giờ chót
         const combined = [...domesticList, ...intlList];
         setFlashSaleTours(combined.slice(0, 3));
       } catch (err) {
-        console.error('Lỗi tải dữ liệu tour trang chủ:', err);
+        console.error('Lỗi tải dữ liệu trang chủ:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchHomeTours();
+    fetchHomeData();
   }, []);
 
   const handleSearch = (e) => {
@@ -232,61 +236,120 @@ const HomePage = () => {
         </div>
       </Container>
 
-      {/* 6. Section Tin Tức Mới */}
+      {/* 6. Section Tin Tức Nổi Bật */}
       <Container className="my-5">
-        <h2 className="section-title">Tin Tức Mới</h2>
-        <Row className="gy-4">
-          <Col lg={3} md={6} xs={12} className="d-flex flex-column gap-4">
-            <div className="news-stacked-card" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1570366583862-f91883984fde?w=600&auto=format&fit=crop')`, backgroundSize: 'cover' }}>
-              <div className="news-stacked-overlay">
-                <span style={{ fontSize: '11px', opacity: 0.9 }}>23/05/2024</span>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>Homestay “cổ tích” giữa Đà Lạt mộng mơ</h5>
-              </div>
-            </div>
-            <div className="news-stacked-card" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop')`, backgroundSize: 'cover' }}>
-              <div className="news-stacked-overlay">
-                <span style={{ fontSize: '11px', opacity: 0.9 }}>23/05/2024</span>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>Đảo Phú Quý Bình Thuận hot trend năm 2024</h5>
-              </div>
-            </div>
-          </Col>
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h2 className="section-title m-0">Tin Tức Du Lịch Nổi Bật</h2>
+            <p className="text-muted mt-1 mb-0" style={{ fontSize: '14px' }}>
+              Cẩm nang, kinh nghiệm du lịch và những điểm đến hot nhất không thể bỏ qua
+            </p>
+          </div>
+          <Link to="/tin-tuc" className="text-decoration-none fw-semibold d-none d-md-inline" style={{ color: '#ea580c' }}>
+            Xem tất cả tin tức →
+          </Link>
+        </div>
 
-          <Col lg={6} md={12} xs={12}>
-            <div className="news-featured-card d-flex flex-column h-100">
-              <div style={{ height: '240px', overflow: 'hidden' }}>
-                <img
-                  src="https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop"
-                  alt="Singapore"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              </div>
-              <div style={{ padding: '20px' }}>
-                <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>23/05/2024</span>
-                <h4 style={{ fontSize: '20px', fontWeight: 800, color: '#ea580c', margin: '6px 0 10px' }}>
-                  Top 5 điểm check in độc đáo tại Singapore
-                </h4>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-                  Khám phá những điểm đến du lịch tuyệt vời nhất cùng TRAVEL với các cẩm nang hữu ích...
-                </p>
-              </div>
-            </div>
-          </Col>
+        {featuredArticles && featuredArticles.length > 0 ? (
+          <Row className="gy-4">
+            {/* Cột trái: 2 bài phụ (vị trí 1 & 2) */}
+            <Col lg={3} md={6} xs={12} className="d-flex flex-column gap-4">
+              {featuredArticles.slice(1, 3).map((art) => (
+                <Link
+                  key={art._id}
+                  to={`/tin-tuc/${art.slug}`}
+                  className="news-stacked-card text-decoration-none d-block"
+                  style={{
+                    backgroundImage: `url('${art.cover_image?.url || 'https://images.unsplash.com/photo-1570366583862-f91883984fde?w=600&auto=format&fit=crop'}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <div className="news-stacked-overlay">
+                    <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                      {new Date(art.published_at || art.created_at).toLocaleDateString('vi-VN')}
+                    </span>
+                    <h5 style={{ fontSize: '14.5px', fontWeight: 700, margin: '4px 0 0', lineHeight: 1.35, color: '#ffffff' }}>
+                      {art.title}
+                    </h5>
+                  </div>
+                </Link>
+              ))}
+            </Col>
 
-          <Col lg={3} md={6} xs={12} className="d-flex flex-column gap-4">
-            <div className="news-stacked-card" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&auto=format&fit=crop')`, backgroundSize: 'cover' }}>
-              <div className="news-stacked-overlay">
-                <span style={{ fontSize: '11px', opacity: 0.9 }}>23/05/2024</span>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>Đặc sản không thể bỏ qua khi đến với Đà Nẵng</h5>
-              </div>
-            </div>
-            <div className="news-stacked-card" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1510312305653-8ed496efae75?w=600&auto=format&fit=crop')`, backgroundSize: 'cover' }}>
-              <div className="news-stacked-overlay">
-                <span style={{ fontSize: '11px', opacity: 0.9 }}>23/05/2024</span>
-                <h5 style={{ fontSize: '15px', fontWeight: 700, margin: 0 }}>Trekking cắm trại - Cảm nhận thiên nhiên hoang sơ</h5>
-              </div>
-            </div>
-          </Col>
-        </Row>
+            {/* Cột giữa: 1 bài chính nổi bật nhất (vị trí 0) */}
+            {featuredArticles[0] && (
+              <Col lg={6} md={12} xs={12}>
+                <Link
+                  to={`/tin-tuc/${featuredArticles[0].slug}`}
+                  className="news-featured-card text-decoration-none d-flex flex-column h-100"
+                >
+                  <div style={{ height: '260px', overflow: 'hidden' }}>
+                    <img
+                      src={featuredArticles[0].cover_image?.url || 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&auto=format&fit=crop'}
+                      alt={featuredArticles[0].title}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                      className="news-featured-img"
+                    />
+                  </div>
+                  <div style={{ padding: '22px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div className="d-flex align-items-center gap-2 mb-2">
+                      {featuredArticles[0].category_id?.name && (
+                        <span className="badge" style={{ backgroundColor: '#ffedd5', color: '#ea580c', fontSize: '11.5px', fontWeight: 600 }}>
+                          {featuredArticles[0].category_id.name}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>
+                        {new Date(featuredArticles[0].published_at || featuredArticles[0].created_at).toLocaleDateString('vi-VN')}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: '19px', fontWeight: 800, color: '#ea580c', margin: '4px 0 10px', lineHeight: 1.4 }}>
+                      {featuredArticles[0].title}
+                    </h4>
+                    <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, margin: 0, flex: 1 }}>
+                      {featuredArticles[0].summary}
+                    </p>
+                  </div>
+                </Link>
+              </Col>
+            )}
+
+            {/* Cột phải: 2 bài phụ (vị trí 3 & 4) */}
+            <Col lg={3} md={6} xs={12} className="d-flex flex-column gap-4">
+              {featuredArticles.slice(3, 5).map((art) => (
+                <Link
+                  key={art._id}
+                  to={`/tin-tuc/${art.slug}`}
+                  className="news-stacked-card text-decoration-none d-block"
+                  style={{
+                    backgroundImage: `url('${art.cover_image?.url || 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?w=600&auto=format&fit=crop'}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <div className="news-stacked-overlay">
+                    <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                      {new Date(art.published_at || art.created_at).toLocaleDateString('vi-VN')}
+                    </span>
+                    <h5 style={{ fontSize: '14.5px', fontWeight: 700, margin: '4px 0 0', lineHeight: 1.35, color: '#ffffff' }}>
+                      {art.title}
+                    </h5>
+                  </div>
+                </Link>
+              ))}
+            </Col>
+          </Row>
+        ) : (
+          <div className="text-center py-5 text-muted bg-white rounded-3 border">
+            Đang cập nhật các bài viết tin tức mới nhất...
+          </div>
+        )}
+
+        <div className="text-center mt-4 d-md-none">
+          <Link to="/tin-tuc">
+            <Button className="btn-view-all">Xem tất cả tin tức</Button>
+          </Link>
+        </div>
       </Container>
     </div>
   );
