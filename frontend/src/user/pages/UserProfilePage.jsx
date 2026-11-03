@@ -1,22 +1,68 @@
 import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Nav, Card, Form, Button, Spinner, ToastContainer, Toast } from 'react-bootstrap';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { User as UserIcon, Package, Heart, LogOut, Camera } from 'lucide-react';
 import axiosClient from '../config/axiosClient';
 import UserOrdersList from '../modules/order/components/UserOrdersList';
+import '../assets/styles/tour.css';
 
 const UserProfilePage = ({ user, setUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState(location.state?.tab || 'profile');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Xác định tab ban đầu: Ưu tiên URL param ?tab=, kế đến location.state, kế đến localStorage, mặc định 'profile'
+  const getInitialTab = () => {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && ['profile', 'orders', 'wishlist'].includes(tabFromUrl)) {
+      return tabFromUrl;
+    }
+    if (location.state?.tab && ['profile', 'orders', 'wishlist'].includes(location.state.tab)) {
+      return location.state.tab;
+    }
+    const savedTab = localStorage.getItem('user_profile_active_tab');
+    if (savedTab && ['profile', 'orders', 'wishlist'].includes(savedTab)) {
+      return savedTab;
+    }
+    return 'profile';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
+  // State lưu file ảnh được chọn và URL xem trước (Chỉ lưu ở client, không gọi API ngay)
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
+  // Đồng bộ tab vào URL query và localStorage khi người dùng chọn tab
+  const handleTabSelect = (tabKey) => {
+    if (!tabKey) return;
+    setActiveTab(tabKey);
+    setSearchParams({ tab: tabKey }, { replace: true });
+    localStorage.setItem('user_profile_active_tab', tabKey);
+  };
+
+  // Lắng nghe nếu searchParams hoặc location.state thay đổi từ bên ngoài
   useEffect(() => {
-    if (location.state?.tab) {
+    const tabFromUrl = searchParams.get('tab');
+    if (tabFromUrl && tabFromUrl !== activeTab && ['profile', 'orders', 'wishlist'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+      localStorage.setItem('user_profile_active_tab', tabFromUrl);
+    } else if (location.state?.tab && location.state.tab !== activeTab) {
       setActiveTab(location.state.tab);
+      setSearchParams({ tab: location.state.tab }, { replace: true });
+      localStorage.setItem('user_profile_active_tab', location.state.tab);
     }
-  }, [location.state]);
-  
+  }, [searchParams, location.state]);
+
+  // Đảm bảo URL luôn có ?tab= tương ứng khi vừa tải trang
+  useEffect(() => {
+    if (!searchParams.get('tab')) {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, []);
+
   const [formData, setFormData] = useState({
     full_name: user?.full_name || '',
     phone: user?.phone || '',
@@ -26,12 +72,13 @@ const UserProfilePage = ({ user, setUser }) => {
     id_number: user?.id_number || '',
   });
 
+  // Tải dữ liệu hồ sơ mới nhất từ server
   useEffect(() => {
     const fetchFreshProfile = async () => {
       try {
         const res = await axiosClient.get('/auth/me');
-        if (res?.data) {
-          const freshUser = res.data;
+        const freshUser = res?.data || res;
+        if (freshUser && freshUser.email) {
           setUser(freshUser);
           localStorage.setItem('user', JSON.stringify(freshUser));
           setFormData({
@@ -49,12 +96,22 @@ const UserProfilePage = ({ user, setUser }) => {
     };
     fetchFreshProfile();
   }, [setUser]);
-  
+
+  // Dọn dẹp object URL khi đổi ảnh hoặc unmount
+  useEffect(() => {
+    return () => {
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const fileInputRef = useRef(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('user_profile_active_tab');
     setUser(null);
     window.dispatchEvent(new Event('cartUpdated'));
     navigate('/');
@@ -64,141 +121,275 @@ const UserProfilePage = ({ user, setUser }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleAvatarChange = async (e) => {
+  /**
+   * Chỉ chọn file và tạo ảnh xem trước cục bộ (Preview).
+   * TUYỆT ĐỐI KHÔNG gọi API cập nhật server ngay tại đây
+   * để tránh lỗi phiên đăng nhập khi người dùng chưa bấm "Lưu thay đổi".
+   */
+  const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    const data = new FormData();
-    data.append('avatar', file);
-
-    try {
-      setLoading(true);
-      const res = await axiosClient.patch('/auth/me', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      const updatedUser = res.data.data;
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setToast({ show: true, message: 'Cập nhật ảnh đại diện thành công', variant: 'success' });
-    } catch (error) {
-      setToast({ show: true, message: error?.response?.data?.message || 'Lỗi khi cập nhật ảnh', variant: 'danger' });
-    } finally {
-      setLoading(false);
+    if (!file.type.startsWith('image/')) {
+      setToast({ show: true, message: 'Vui lòng chọn tệp hình ảnh hợp lệ (JPG, PNG, WebP...)', variant: 'danger' });
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setToast({ show: true, message: 'Dung lượng ảnh không được vượt quá 5MB', variant: 'danger' });
+      return;
+    }
+
+    setAvatarFile(file);
+    const previewUrl = URL.createObjectURL(file);
+    setAvatarPreview(previewUrl);
+
+    setToast({
+      show: true,
+      message: 'Đã chọn ảnh mới. Hãy bấm "Lưu thay đổi" bên dưới để hoàn tất cập nhật.',
+      variant: 'info',
+    });
   };
 
+  /**
+   * Khi người dùng chủ động bấm "Lưu thay đổi":
+   * Gửi thông tin hồ sơ kèm file ảnh (nếu có) lên server.
+   * Nếu có lỗi phiên đăng nhập (401), chỉ thông báo và chuyển hướng tại thời điểm này.
+   */
   const handleSubmitProfile = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await axiosClient.patch('/auth/me', formData);
-      const updatedUser = res.data.data;
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      setToast({ show: true, message: 'Cập nhật thông tin thành công', variant: 'success' });
+      let res;
+
+      if (avatarFile) {
+        // Gửi cả ảnh và thông tin trong FormData
+        const data = new FormData();
+        data.append('avatar', avatarFile);
+        Object.keys(formData).forEach((key) => {
+          if (formData[key] !== undefined && formData[key] !== null) {
+            data.append(key, formData[key]);
+          }
+        });
+
+        res = await axiosClient.patch('/auth/me', data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+      } else {
+        // Chỉ cập nhật thông tin văn bản
+        res = await axiosClient.patch('/auth/me', formData);
+      }
+
+      const updatedUser = res?.data || res;
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
+
+      // Xóa preview tạm thời
+      if (avatarPreview) {
+        URL.revokeObjectURL(avatarPreview);
+        setAvatarPreview(null);
+      }
+      setAvatarFile(null);
+
+      setToast({ show: true, message: 'Cập nhật thông tin thành công!', variant: 'success' });
     } catch (error) {
-      setToast({ show: true, message: error?.response?.data?.message || 'Lỗi khi cập nhật thông tin', variant: 'danger' });
+      const isAuthError = error?.status === 401 || error?.statusCode === 401 || error?.response?.status === 401;
+      if (isAuthError) {
+        setToast({ show: true, message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', variant: 'danger' });
+        setTimeout(() => {
+          handleLogout();
+        }, 1500);
+      } else {
+        setToast({
+          show: true,
+          message: error?.message || error?.response?.data?.message || 'Lỗi khi cập nhật thông tin',
+          variant: 'danger',
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
+  const currentDisplayAvatar = avatarPreview || user?.avatar_url;
+
   return (
     <Container className="py-5">
       <ToastContainer position="top-end" className="p-3">
-        <Toast bg={toast.variant} show={toast.show} delay={3000} autohide onClose={() => setToast({ ...toast, show: false })}>
-          <Toast.Body className={toast.variant === 'success' ? 'text-white' : ''}>{toast.message}</Toast.Body>
+        <Toast bg={toast.variant} show={toast.show} delay={3500} autohide onClose={() => setToast({ ...toast, show: false })}>
+          <Toast.Body className={toast.variant === 'success' || toast.variant === 'danger' ? 'text-white' : ''}>
+            {toast.message}
+          </Toast.Body>
         </Toast>
       </ToastContainer>
 
       <Row>
-        {/* Sidebar */}
+        {/* ============================================================
+            1. SIDEBAR BÊN TRÁI (Tô màu cam #ea580c khi active)
+            ============================================================ */}
         <Col md={3}>
           <Card className="border-0 shadow-sm mb-4">
             <Card.Body className="text-center">
               <div className="position-relative d-inline-block mb-3">
-                {user?.avatar_url ? (
-                  <img src={user.avatar_url} alt="Avatar" className="rounded-circle" style={{ width: '120px', height: '120px', objectFit: 'cover', border: '3px solid #ea580c' }} />
+                {currentDisplayAvatar ? (
+                  <img
+                    src={currentDisplayAvatar}
+                    alt="Avatar"
+                    className="rounded-circle shadow-sm"
+                    style={{ width: '120px', height: '120px', objectFit: 'cover', border: '3px solid #ea580c' }}
+                  />
                 ) : (
-                  <div className="rounded-circle d-flex align-items-center justify-content-center text-white" style={{ width: '120px', height: '120px', backgroundColor: '#ea580c', fontSize: '48px', fontWeight: 'bold', margin: '0 auto' }}>
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center text-white shadow-sm"
+                    style={{
+                      width: '120px',
+                      height: '120px',
+                      backgroundColor: '#ea580c',
+                      fontSize: '48px',
+                      fontWeight: 'bold',
+                      margin: '0 auto',
+                    }}
+                  >
                     {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 )}
-                <Button 
-                  variant="light" 
-                  size="sm" 
-                  className="position-absolute bottom-0 end-0 rounded-circle shadow-sm"
+
+                <Button
+                  variant="light"
+                  size="sm"
+                  className="position-absolute bottom-0 end-0 rounded-circle shadow"
                   onClick={() => fileInputRef.current?.click()}
-                  style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ width: '36px', height: '36px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffffff' }}
+                  title="Chọn ảnh đại diện mới"
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                  </svg>
+                  <Camera size={18} className="text-dark" />
                 </Button>
                 <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={handleAvatarChange} />
               </div>
-              <h5 className="mb-1">{user?.full_name}</h5>
-              <p className="text-muted mb-0">{user?.email}</p>
+
+              {/* Thông báo nếu đã chọn ảnh mới nhưng chưa bấm lưu */}
+              {avatarFile && (
+                <div className="mb-2">
+                  <span className="badge bg-warning text-dark px-2 py-1" style={{ fontSize: '11px' }}>
+                    Ảnh mới (Chưa lưu)
+                  </span>
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 text-danger text-decoration-none"
+                      style={{ fontSize: '11.5px' }}
+                      onClick={() => {
+                        if (avatarPreview) URL.revokeObjectURL(avatarPreview);
+                        setAvatarPreview(null);
+                        setAvatarFile(null);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    >
+                      Hủy chọn ảnh
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <h5 className="mb-1 fw-bold text-dark">{user?.full_name}</h5>
+              <p className="text-muted mb-0" style={{ fontSize: '13.5px' }}>{user?.email}</p>
             </Card.Body>
           </Card>
 
+          {/* Menu Điều Hướng Sidebar - Nền Cam khi Active */}
           <Card className="border-0 shadow-sm">
-            <Nav variant="pills" className="flex-column p-2" activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
+            <Nav
+              variant="pills"
+              className="flex-column p-2 user-sidebar-nav"
+              activeKey={activeTab}
+              onSelect={handleTabSelect}
+            >
               <Nav.Item>
-                <Nav.Link eventKey="profile" className="text-dark" style={{ cursor: 'pointer', borderRadius: '8px', marginBottom: '4px' }}>Hồ sơ cá nhân</Nav.Link>
+                <Nav.Link
+                  eventKey="profile"
+                  className={`user-sidebar-link ${activeTab === 'profile' ? 'active' : ''}`}
+                >
+                  <UserIcon size={17} />
+                  <span>Hồ sơ cá nhân</span>
+                </Nav.Link>
               </Nav.Item>
+
               <Nav.Item>
-                <Nav.Link eventKey="orders" className="text-dark" style={{ cursor: 'pointer', borderRadius: '8px', marginBottom: '4px' }}>Đơn hàng của tôi</Nav.Link>
+                <Nav.Link
+                  eventKey="orders"
+                  className={`user-sidebar-link ${activeTab === 'orders' ? 'active' : ''}`}
+                >
+                  <Package size={17} />
+                  <span>Đơn hàng của tôi</span>
+                </Nav.Link>
               </Nav.Item>
+
               <Nav.Item>
-                <Nav.Link eventKey="wishlist" className="text-dark" style={{ cursor: 'pointer', borderRadius: '8px', marginBottom: '4px' }}>Danh sách yêu thích</Nav.Link>
+                <Nav.Link
+                  eventKey="wishlist"
+                  className={`user-sidebar-link ${activeTab === 'wishlist' ? 'active' : ''}`}
+                >
+                  <Heart size={17} />
+                  <span>Danh sách yêu thích</span>
+                </Nav.Link>
               </Nav.Item>
+
               <Nav.Item>
-                <Nav.Link className="text-danger" onClick={handleLogout} style={{ cursor: 'pointer', borderRadius: '8px' }}>Đăng xuất</Nav.Link>
+                <Nav.Link
+                  onClick={handleLogout}
+                  className="user-sidebar-link nav-link-logout"
+                >
+                  <LogOut size={17} />
+                  <span>Đăng xuất</span>
+                </Nav.Link>
               </Nav.Item>
             </Nav>
           </Card>
         </Col>
 
-        {/* Content */}
+        {/* ============================================================
+            2. VÙNG NỘI DUNG CHÍNH BÊN PHẢI
+            ============================================================ */}
         <Col md={9}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Body className="p-4">
+              {/* TAB 1: HỒ SƠ CÁ NHÂN */}
               {activeTab === 'profile' && (
                 <div>
-                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 600 }}>Thông tin cá nhân</h4>
+                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 700 }}>Thông tin cá nhân</h4>
                   <Form onSubmit={handleSubmitProfile}>
                     <Row>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Họ và tên</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Họ và tên</Form.Label>
                           <Form.Control type="text" name="full_name" value={formData.full_name} onChange={handleInputChange} required />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Email</Form.Label>
-                          <Form.Control type="email" value={user?.email || ''} disabled />
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Email</Form.Label>
+                          <Form.Control type="email" value={user?.email || ''} disabled style={{ backgroundColor: '#f8fafc' }} />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Số điện thoại</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Số điện thoại</Form.Label>
                           <Form.Control type="text" name="phone" value={formData.phone} onChange={handleInputChange} required />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Ngày sinh</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Ngày sinh</Form.Label>
                           <Form.Control type="date" name="date_of_birth" value={formData.date_of_birth} onChange={handleInputChange} />
                         </Form.Group>
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Giới tính</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Giới tính</Form.Label>
                           <Form.Select name="gender" value={formData.gender} onChange={handleInputChange}>
                             <option value="">-- Chọn giới tính --</option>
                             <option value="MALE">Nam</option>
@@ -209,7 +400,7 @@ const UserProfilePage = ({ user, setUser }) => {
                       </Col>
                       <Col md={6}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Số CCCD / Hộ chiếu</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Số CCCD / Hộ chiếu</Form.Label>
                           <Form.Control
                             type="text"
                             name="id_number"
@@ -221,26 +412,34 @@ const UserProfilePage = ({ user, setUser }) => {
                       </Col>
                       <Col md={12}>
                         <Form.Group className="mb-3">
-                          <Form.Label className="fw-semibold">Địa chỉ</Form.Label>
+                          <Form.Label className="fw-semibold" style={{ fontSize: '13.5px' }}>Địa chỉ</Form.Label>
                           <Form.Control type="text" name="address" value={formData.address} onChange={handleInputChange} />
                         </Form.Group>
                       </Col>
                     </Row>
                     <div className="text-end mt-3">
-                      <Button type="submit" style={{ backgroundColor: '#ea580c', borderColor: '#ea580c', fontWeight: 500 }} disabled={loading}>
+                      <Button
+                        type="submit"
+                        style={{ backgroundColor: '#ea580c', borderColor: '#ea580c', fontWeight: 600, padding: '9px 24px', borderRadius: '8px' }}
+                        disabled={loading}
+                      >
                         {loading ? <Spinner size="sm" animation="border" /> : 'Lưu thay đổi'}
                       </Button>
                     </div>
                   </Form>
                 </div>
               )}
+
+              {/* TAB 2: ĐƠN HÀNG CỦA TÔI */}
               {activeTab === 'orders' && (
                 <UserOrdersList />
               )}
+
+              {/* TAB 3: DANH SÁCH YÊU THÍCH */}
               {activeTab === 'wishlist' && (
                 <div>
-                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 600 }}>Danh sách yêu thích</h4>
-                  <div className="text-center py-5 text-muted bg-light rounded">
+                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 700 }}>Danh sách yêu thích</h4>
+                  <div className="text-center py-5 text-muted bg-light rounded-3">
                     Chưa có tour nào trong danh sách yêu thích
                   </div>
                 </div>
