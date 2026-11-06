@@ -3,9 +3,10 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { Card, Form, Button, Row, Col, Alert, Spinner } from 'react-bootstrap';
 import { ArrowLeft, Save, Send, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import articleService from '../modules/article/articleService';
+import { ARTICLE_STATUS_MAP } from '../modules/article/articleService';
 import ArticleEditor from '../modules/article/components/ArticleEditor';
 import ArticleSidebar from '../modules/article/components/ArticleSidebar';
-import ArticleStatusBadge from '../components/ArticleStatusBadge';
+import { StatusBadge } from '../components/common';
 import ArticleReviewActionModal from '../modules/article/components/ArticleReviewActionModal';
 import ArticleHistoryModal from '../modules/article/components/ArticleHistoryModal';
 
@@ -164,11 +165,11 @@ function ArticleForm() {
     <div className="article-form-page pb-5">
       <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div className="d-flex align-items-center gap-2">
-          <Link to="/admin/articles" className="btn btn-outline-secondary btn-sm">
-            <ArrowLeft size={16} /> Quay lại
+          <Link to="/admin/articles" className="btn btn-secondary">
+            <ArrowLeft size={16} /> <span>Quay lại danh sách</span>
           </Link>
           <h4 className="mb-0 fw-bold">{isEdit ? 'Chỉnh sửa bài viết' : 'Soạn bài viết mới'}</h4>
-          {isEdit && <ArticleStatusBadge status={formData.status} />}
+          {isEdit && <StatusBadge status={formData.status} statusMap={ARTICLE_STATUS_MAP} />}
         </div>
         <div className="d-flex gap-2">
           {isEdit && (

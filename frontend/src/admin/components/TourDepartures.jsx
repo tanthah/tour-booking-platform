@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2 } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
+import { AdminDataTable, StatusBadge, ActionButtons } from './common';
 
 const STATUS_TRANSITIONS = {
   OPEN: ['CLOSED', 'CANCELLED'],
@@ -9,7 +10,7 @@ const STATUS_TRANSITIONS = {
   CANCELLED: [],
 };
 
-const STATUS_LABELS = {
+const DEPARTURE_STATUS_MAP = {
   OPEN: { label: 'Mở bán', className: 'status-active' },
   FULL: { label: 'Hết chỗ', className: 'status-draft' },
   CLOSED: { label: 'Đóng', className: 'status-inactive' },
@@ -134,18 +135,95 @@ function TourDepartures({ productId, autoOpenAdd = false }) {
     return [editingDep.status, ...(STATUS_TRANSITIONS[editingDep.status] || [])];
   };
 
-  if (loading) return <div>Đang tải đợt khởi hành...</div>;
+  const columns = [
+    {
+      key: 'departure_date',
+      title: 'Ngày khởi hành',
+      render: (dep) => new Date(dep.departure_date).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }),
+    },
+    {
+      key: 'departure_location',
+      title: 'Điểm đi',
+    },
+    {
+      key: 'vehicle',
+      title: 'Phương tiện',
+    },
+    {
+      key: 'total_slots',
+      title: 'Tổng chỗ',
+      width: '90px',
+      align: 'center',
+    },
+    {
+      key: 'booked_slots',
+      title: 'Đã đặt',
+      width: '80px',
+      align: 'center',
+    },
+    {
+      key: 'reserved_slots',
+      title: 'Giữ tạm',
+      width: '80px',
+      align: 'center',
+    },
+    {
+      key: 'available_slots',
+      title: 'Còn lại',
+      width: '80px',
+      align: 'center',
+      render: (dep) => (
+        <span style={{ fontWeight: 600, color: dep.available_slots > 0 ? 'var(--secondary-color)' : 'var(--danger-color)' }}>
+          {dep.available_slots}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      title: 'Trạng thái',
+      width: '120px',
+      render: (dep) => <StatusBadge status={dep.status} statusMap={DEPARTURE_STATUS_MAP} />,
+    },
+    {
+      key: 'actions',
+      title: 'Thao tác',
+      width: '100px',
+      align: 'center',
+      render: (dep) => (
+        <ActionButtons
+          actions={[
+            {
+              key: 'edit',
+              icon: Edit2,
+              title: 'Chỉnh sửa đợt khởi hành',
+              onClick: () => openEditModal(dep),
+              variant: 'edit',
+            },
+            {
+              key: 'delete',
+              icon: Trash2,
+              title: dep.booked_slots > 0 ? 'Đã có khách đặt (không thể xóa)' : 'Xóa đợt khởi hành',
+              onClick: () => handleDelete(dep),
+              variant: 'delete',
+              disabled: dep.booked_slots > 0,
+              style: { opacity: dep.booked_slots > 0 ? 0.4 : 1 },
+            },
+          ]}
+        />
+      ),
+    },
+  ];
 
   return (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h3 style={{ margin: 0 }}>Danh sách đợt khởi hành ({departures.length})</h3>
         <button type="button" className="btn btn-primary" onClick={openAddModal}>
-          <Plus size={16} style={{ marginRight: '4px' }} /> Thêm đợt
+          <Plus size={18} /> <span>Thêm đợt khởi hành</span>
         </button>
       </div>
 
-      {departures.length === 0 && (
+      {departures.length === 0 && !loading && (
         <div style={{ padding: '12px 16px', background: '#fffbeb', border: '1px solid #fef3c7', borderRadius: '8px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ color: '#b45309', fontSize: '0.875rem' }}>
             ⚠️ Chuyến đi này chưa có đợt khởi hành nào. Hãy tạo ngày khởi hành để khách hàng có thể đặt chỗ!
@@ -156,45 +234,13 @@ function TourDepartures({ productId, autoOpenAdd = false }) {
         </div>
       )}
 
-      <div className="table-wrapper">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Ngày khởi hành</th><th>Điểm đi</th><th>Phương tiện</th>
-              <th>Tổng chỗ</th><th>Đã đặt</th><th>Giữ tạm</th><th>Còn lại</th>
-              <th>Trạng thái</th><th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {departures.length === 0 ? (
-              <tr><td colSpan="9" style={{ textAlign: 'center', padding: '16px' }}>Chưa có đợt khởi hành nào</td></tr>
-            ) : (
-              departures.map((dep) => {
-                const sInfo = STATUS_LABELS[dep.status] || { label: dep.status, className: '' };
-                return (
-                  <tr key={dep._id}>
-                    <td>{new Date(dep.departure_date).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' })}</td>
-                    <td>{dep.departure_location}</td><td>{dep.vehicle}</td>
-                    <td style={{ textAlign: 'center' }}>{dep.total_slots}</td>
-                    <td style={{ textAlign: 'center' }}>{dep.booked_slots}</td>
-                    <td style={{ textAlign: 'center' }}>{dep.reserved_slots}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 600, color: dep.available_slots > 0 ? 'var(--secondary-color)' : 'var(--danger-color)' }}>
-                      {dep.available_slots}
-                    </td>
-                    <td><span className={`status-badge ${sInfo.className}`}>{sInfo.label}</span></td>
-                    <td>
-                      <div className="action-btns">
-                        <button type="button" className="icon-btn" onClick={() => openEditModal(dep)} title="Sửa đợt"><Edit2 size={16} /></button>
-                        <button type="button" className="icon-btn delete" onClick={() => handleDelete(dep)} title={dep.booked_slots > 0 ? 'Đã có khách đặt' : 'Xóa đợt'} disabled={dep.booked_slots > 0} style={{ opacity: dep.booked_slots > 0 ? 0.4 : 1 }}><Trash2 size={16} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <AdminDataTable
+        columns={columns}
+        data={departures}
+        loading={loading}
+        emptyText="Chưa có đợt khởi hành nào"
+        hideStt={true}
+      />
 
       {showModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
@@ -231,7 +277,7 @@ function TourDepartures({ productId, autoOpenAdd = false }) {
                     <label className="form-label">Trạng thái đợt</label>
                     <select name="status" className="form-control" value={formData.status} onChange={handleChange}>
                       {getStatusOptions().map((st) => (
-                        <option key={st} value={st}>{STATUS_LABELS[st]?.label || st} ({st})</option>
+                        <option key={st} value={st}>{DEPARTURE_STATUS_MAP[st]?.label || st} ({st})</option>
                       ))}
                     </select>
                   </div>

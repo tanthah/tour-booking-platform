@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import useTourForm from '../hooks/useTourForm';
 import ImageUploader from '../components/ImageUploader';
 import ItineraryEditor from '../components/ItineraryEditor';
@@ -31,8 +31,8 @@ function TourForm() {
     <div>
       <div className="page-header">
         <h1 className="page-title">{isEdit ? 'Cập nhật Tour' : 'Tạo Tour'}</h1>
-        <button type="button" className="btn btn-outline" onClick={() => navigate('/admin/tours')}>
-          <ArrowLeft size={16} style={{ marginRight: '8px' }} /> Quay lại danh sách
+        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/tours')}>
+          <ArrowLeft size={16} /> <span>Quay lại danh sách</span>
         </button>
       </div>
 
@@ -240,8 +240,9 @@ function TourForm() {
 
             {/* Nút hành động */}
             <div className="form-actions" style={{ marginTop: '32px' }}>
-              <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
-                {submitting ? 'Đang xử lý...' : isEdit ? 'Cập nhật Tour' : 'Tạo Tour'}
+              <button type="submit" className="btn btn-primary btn-lg" disabled={submitting} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Save size={18} style={{ marginRight: '6px' }} />
+                <span>{submitting ? 'Đang xử lý...' : isEdit ? 'Cập nhật Tour' : 'Tạo Tour'}</span>
               </button>
             </div>
           </form>

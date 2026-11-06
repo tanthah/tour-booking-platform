@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Badge, Form, Modal, Card, Spinner, Alert } from 'react-bootstrap';
-import { Plus, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Button, Form, Modal, Alert } from 'react-bootstrap';
+import { Plus, Edit2, Trash2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import articleService from '../modules/article/articleService';
+import {
+  AdminPageHeader,
+  AdminDataTable,
+  ActionButtons,
+} from '../components/common';
 
 function ArticleCategories() {
   const [categories, setCategories] = useState([]);
@@ -18,6 +23,7 @@ function ArticleCategories() {
   const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await articleService.getCategories();
       setCategories(res.data?.categories || []);
     } catch (err) {
@@ -89,95 +95,110 @@ function ArticleCategories() {
     }
   };
 
+  const columns = [
+    {
+      key: 'name',
+      title: 'Tên danh mục',
+      render: (cat) => <span style={{ fontWeight: 600 }}>{cat.name}</span>,
+    },
+    {
+      key: 'slug',
+      title: 'Slug URL',
+      render: (cat) => <code style={{ fontSize: '13px' }}>{cat.slug}</code>,
+    },
+    {
+      key: 'description',
+      title: 'Mô tả',
+      render: (cat) => (
+        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          {cat.description || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'is_active',
+      title: 'Trạng thái',
+      width: '140px',
+      render: (cat) => (
+        <button
+          type="button"
+          onClick={() => handleToggleStatus(cat)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: cat.is_active ? '#dcfce7' : '#f1f5f9',
+            color: cat.is_active ? '#166534' : '#475569',
+            padding: '3px 8px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            fontWeight: 600,
+            border: 'none',
+            cursor: 'pointer',
+          }}
+          title="Bấm để bật/tắt hoạt động"
+        >
+          {cat.is_active ? <CheckCircle size={13} /> : <XCircle size={13} />}
+          <span>{cat.is_active ? 'Hoạt động' : 'Tạm ẩn'}</span>
+        </button>
+      ),
+    },
+    {
+      key: 'actions',
+      title: 'Thao tác',
+      width: '120px',
+      align: 'center',
+      render: (cat) => (
+        <ActionButtons
+          actions={[
+            {
+              key: 'edit',
+              icon: Edit2,
+              title: 'Chỉnh sửa danh mục',
+              onClick: () => handleOpenModal(cat),
+              variant: 'edit',
+            },
+            {
+              key: 'delete',
+              icon: Trash2,
+              title: 'Xóa danh mục',
+              onClick: () => handleDelete(cat),
+              variant: 'delete',
+            },
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
-    <div className="article-categories-page">
-      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <h4 className="fw-bold mb-0">Quản lý Danh mục Tin tức</h4>
-        <Button variant="primary" onClick={() => handleOpenModal()}>
-          <Plus size={16} className="me-1" /> Thêm danh mục
-        </Button>
-      </div>
+    <div className="article-categories-page pb-4">
+      <AdminPageHeader
+        title="Quản lý Danh mục Tin tức"
+        subtitle="Cấu hình danh mục bài viết, cẩm nang và kinh nghiệm du lịch"
+        actions={
+          <>
+            <button className="btn btn-secondary" onClick={fetchCategories} title="Làm mới danh sách">
+              <RefreshCw size={16} className={loading ? 'spinning' : ''} />
+              <span>Làm mới</span>
+            </button>
+            <button className="btn btn-primary" onClick={() => handleOpenModal()}>
+              <Plus size={18} />
+              <span>Thêm danh mục mới</span>
+            </button>
+          </>
+        }
+      />
 
-      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-3">{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')} className="mb-3">{success}</Alert>}
 
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          {loading ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" variant="primary" />
-            </div>
-          ) : (
-            <Table hover responsive className="mb-0 align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th style={{ width: '50px' }}>#</th>
-                  <th>Tên danh mục</th>
-                  <th>Slug URL</th>
-                  <th>Mô tả</th>
-                  <th style={{ width: '130px' }}>Trạng thái</th>
-                  <th style={{ width: '130px' }} className="text-end">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-4 text-muted">
-                      Chưa có danh mục tin tức nào
-                    </td>
-                  </tr>
-                ) : (
-                  categories.map((cat, index) => (
-                    <tr key={cat._id}>
-                      <td>{index + 1}</td>
-                      <td className="fw-semibold text-dark">{cat.name}</td>
-                      <td>
-                        <code>{cat.slug}</code>
-                      </td>
-                      <td className="text-muted small" style={{ maxWidth: '280px' }}>
-                        {cat.description || '—'}
-                      </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant={cat.is_active ? 'outline-success' : 'outline-secondary'}
-                          className="py-0 px-2 d-inline-flex align-items-center gap-1"
-                          onClick={() => handleToggleStatus(cat)}
-                        >
-                          {cat.is_active ? <CheckCircle size={13} /> : <XCircle size={13} />}
-                          <span style={{ fontSize: '12px' }}>
-                            {cat.is_active ? 'Hoạt động' : 'Tạm ẩn'}
-                          </span>
-                        </Button>
-                      </td>
-                      <td className="text-end">
-                        <Button
-                          size="sm"
-                          variant="outline-primary"
-                          className="me-1 p-1"
-                          onClick={() => handleOpenModal(cat)}
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={14} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline-danger"
-                          className="p-1"
-                          onClick={() => handleDelete(cat)}
-                          title="Xóa danh mục"
-                        >
-                          <Trash2 size={14} />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          )}
-        </Card.Body>
-      </Card>
+      <AdminDataTable
+        columns={columns}
+        data={categories}
+        loading={loading}
+        emptyText="Chưa có danh mục tin tức nào."
+      />
 
       {/* Modal Thêm / Sửa Danh mục */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -194,36 +215,41 @@ function ArticleCategories() {
               </Form.Label>
               <Form.Control
                 type="text"
-                placeholder="VD: Kinh nghiệm du lịch"
-                value={modalForm.name}
                 required
+                placeholder="VD: Cẩm nang du lịch, Điểm đến..."
+                value={modalForm.name}
                 onChange={(e) => setModalForm({ ...modalForm, name: e.target.value })}
+                autoFocus
               />
             </Form.Group>
+
             <Form.Group className="mb-3">
               <Form.Label className="fw-semibold">Mô tả ngắn</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                placeholder="Mô tả về chủ đề của danh mục này..."
+                placeholder="Mô tả nội dung danh mục này..."
                 value={modalForm.description}
                 onChange={(e) => setModalForm({ ...modalForm, description: e.target.value })}
               />
             </Form.Group>
-            <Form.Check
-              type="checkbox"
-              id="category_active_check"
-              label="Kích hoạt hoạt động"
-              checked={modalForm.is_active}
-              onChange={(e) => setModalForm({ ...modalForm, is_active: e.target.checked })}
-            />
+
+            <Form.Group className="mb-2">
+              <Form.Check
+                type="switch"
+                id="is-active-switch"
+                label="Kích hoạt hiển thị công khai"
+                checked={modalForm.is_active}
+                onChange={(e) => setModalForm({ ...modalForm, is_active: e.target.checked })}
+              />
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
+            <Button variant="secondary" onClick={() => setShowModal(false)} disabled={submitting}>
               Hủy
             </Button>
             <Button variant="primary" type="submit" disabled={submitting}>
-              {submitting ? 'Đang lưu...' : 'Lưu danh mục'}
+              {submitting ? 'Đang lưu...' : editingCategory ? 'Lưu thay đổi' : 'Tạo danh mục'}
             </Button>
           </Modal.Footer>
         </Form>

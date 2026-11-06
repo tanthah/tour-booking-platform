@@ -1,10 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Badge, Form, Card, Row, Col, Spinner, Alert, Pagination } from 'react-bootstrap';
+import { Badge, Alert, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import { CheckCircle, AlertTriangle, Eye, Edit, Search, Inbox, ArrowLeft } from 'lucide-react';
+import { CheckCircle, AlertTriangle, Eye, Inbox, ArrowLeft, RefreshCw } from 'lucide-react';
 import articleService from '../modules/article/articleService';
 import ArticleReviewActionModal from '../modules/article/components/ArticleReviewActionModal';
 import ArticleHistoryModal from '../modules/article/components/ArticleHistoryModal';
+import {
+  AdminPageHeader,
+  AdminFilterBar,
+  AdminDataTable,
+} from '../components/common';
 
 function ArticleReviewQueue() {
   const [articles, setArticles] = useState([]);
@@ -37,6 +42,7 @@ function ArticleReviewQueue() {
   const fetchQueue = useCallback(async () => {
     try {
       setLoading(true);
+      setError('');
       const res = await articleService.getReviewQueue({
         page,
         limit: 10,
@@ -60,217 +66,234 @@ function ArticleReviewQueue() {
     fetchQueue();
   }, [fetchQueue]);
 
+  const handleClearFilters = () => {
+    setSearch('');
+    setCategoryId('');
+    setPage(1);
+  };
+
   const handleOpenAction = (article, type) => {
     setSelectedArticle(article);
     setActionType(type);
     setShowActionModal(true);
   };
 
-  return (
-    <div className="article-review-queue-page pb-5">
-      <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-        <div className="d-flex align-items-center gap-2">
-          <Link to="/admin/articles" className="btn btn-outline-secondary btn-sm">
-            <ArrowLeft size={16} /> Danh sách bài viết
-          </Link>
-          <div>
-            <h4 className="fw-bold mb-0 d-flex align-items-center gap-2">
-              <Inbox size={22} className="text-warning" /> Hàng đợi duyệt bài
-              <Badge bg="warning" text="dark" pill className="fs-6">
-                {pagination.total}
-              </Badge>
-            </h4>
+  const columns = [
+    {
+      key: 'cover_image',
+      title: 'Ảnh',
+      width: '80px',
+      align: 'center',
+      render: (art) =>
+        art.cover_image?.url ? (
+          <img
+            src={art.cover_image.url}
+            alt=""
+            style={{ width: '60px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #e2e8f0' }}
+          />
+        ) : (
+          <div
+            style={{
+              width: '60px',
+              height: '42px',
+              backgroundColor: '#f1f5f9',
+              borderRadius: '4px',
+              fontSize: '11px',
+              color: '#94a3b8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            No img
+          </div>
+        ),
+    },
+    {
+      key: 'title_summary',
+      title: 'Tiêu đề & Tóm tắt',
+      render: (art) => (
+        <div>
+          <div style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '4px' }}>{art.title}</div>
+          <div
+            style={{
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              maxWidth: '380px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {art.summary || 'Chưa có tóm tắt'}
           </div>
         </div>
-      </div>
+      ),
+    },
+    {
+      key: 'category',
+      title: 'Danh mục',
+      width: '140px',
+      render: (art) => (
+        <span
+          style={{
+            padding: '3px 8px',
+            background: '#e0f2fe',
+            color: '#0369a1',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 500,
+          }}
+        >
+          {art.category_id?.name || 'Chung'}
+        </span>
+      ),
+    },
+    {
+      key: 'author',
+      title: 'Tác giả',
+      width: '180px',
+      render: (art) => (
+        <div>
+          <div style={{ fontWeight: 600, fontSize: '13px' }}>{art.created_by?.full_name || 'N/A'}</div>
+          <div style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>{art.created_by?.email}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'submitted_at',
+      title: 'Thời gian gửi',
+      width: '150px',
+      render: (art) => (
+        <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+          {art.submitted_at
+            ? new Date(art.submitted_at).toLocaleString('vi-VN')
+            : new Date(art.updated_at).toLocaleString('vi-VN')}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      title: 'Hành động duyệt',
+      width: '200px',
+      align: 'center',
+      render: (art) => (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px' }}>
+          <Link
+            to={`/admin/articles/edit/${art._id}`}
+            className="icon-btn view"
+            title="Xem chi tiết & Soạn thảo"
+          >
+            <Eye size={16} />
+          </Link>
+          <Button
+            size="sm"
+            variant="outline-danger"
+            className="py-1 px-2 d-inline-flex align-items-center gap-1"
+            onClick={() => handleOpenAction(art, 'REQUEST_CHANGES')}
+            title="Yêu cầu sửa"
+            style={{ fontSize: '12px' }}
+          >
+            <AlertTriangle size={13} /> Sửa
+          </Button>
+          <Button
+            size="sm"
+            variant="success"
+            className="py-1 px-2 d-inline-flex align-items-center gap-1"
+            onClick={() => handleOpenAction(art, 'APPROVE')}
+            title="Phê duyệt"
+            style={{ fontSize: '12px' }}
+          >
+            <CheckCircle size={13} /> Duyệt
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
-      {error && <Alert variant="danger" dismissible onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')}>{success}</Alert>}
+  return (
+    <div className="article-review-queue-page pb-4">
+      <AdminPageHeader
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+            <Inbox size={24} className="text-warning" /> Hàng đợi duyệt bài
+            <Badge bg="warning" text="dark" pill className="fs-6" style={{ marginLeft: '4px' }}>
+              {pagination.total}
+            </Badge>
+          </span>
+        }
+        subtitle="Xem xét nội dung bài viết, yêu cầu biên tập viên chỉnh sửa hoặc phê duyệt xuất bản"
+        actions={
+          <>
+            <Link to="/admin/articles" className="btn btn-secondary">
+              <ArrowLeft size={16} /> <span>Quay lại</span>
+            </Link>
+            <button className="btn btn-secondary" onClick={fetchQueue} title="Làm mới hàng đợi">
+              <RefreshCw size={16} className={loading ? 'spinning' : ''} /> <span>Làm mới</span>
+            </button>
+          </>
+        }
+      />
 
-      {/* Filter Card */}
-      <Card className="mb-3 shadow-sm border-0">
-        <Card.Body className="p-3">
-          <Row className="g-2">
-            <Col md={7}>
-              <div className="position-relative">
-                <Form.Control
-                  type="text"
-                  placeholder="Tìm kiếm theo tiêu đề bài viết..."
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                  }}
-                  className="pe-4"
-                />
-                <Search size={16} className="position-absolute end-0 top-50 translate-middle-y me-2 text-muted" />
-              </div>
-            </Col>
-            <Col md={5}>
-              <Form.Select
-                value={categoryId}
-                onChange={(e) => {
-                  setCategoryId(e.target.value);
-                  setPage(1);
-                }}
-              >
-                <option value="">-- Tất cả danh mục --</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>{c.name}</option>
-                ))}
-              </Form.Select>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      {error && <Alert variant="danger" dismissible onClose={() => setError('')} className="mb-3">{error}</Alert>}
+      {success && <Alert variant="success" dismissible onClose={() => setSuccess('')} className="mb-3">{success}</Alert>}
 
-      {/* Queue Table */}
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          {loading ? (
-            <div className="text-center py-5">
-              <Spinner animation="border" variant="warning" />
-              <p className="mt-2 text-muted small">Đang tải hàng đợi duyệt...</p>
-            </div>
-          ) : (
-            <Table hover responsive className="mb-0 align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th style={{ width: '80px' }}>Ảnh</th>
-                  <th>Tiêu đề & Tóm tắt</th>
-                  <th style={{ width: '150px' }}>Danh mục</th>
-                  <th style={{ width: '160px' }}>Tác giả</th>
-                  <th style={{ width: '150px' }}>Thời gian gửi</th>
-                  <th style={{ width: '200px' }} className="text-end">Hành động duyệt</th>
-                </tr>
-              </thead>
-              <tbody>
-                {articles.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-5 text-muted">
-                      🎉 Hàng đợi trống! Hiện tại không có bài viết nào cần duyệt.
-                    </td>
-                  </tr>
-                ) : (
-                  articles.map((art) => (
-                    <tr key={art._id}>
-                      <td>
-                        {art.cover_image?.url ? (
-                          <img
-                            src={art.cover_image.url}
-                            alt=""
-                            className="rounded object-fit-cover border"
-                            style={{ width: '64px', height: '48px' }}
-                          />
-                        ) : (
-                          <div
-                            className="rounded bg-light text-muted d-flex align-items-center justify-content-center border"
-                            style={{ width: '64px', height: '48px', fontSize: '11px' }}
-                          >
-                            No img
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        <div className="fw-bold text-dark mb-1">{art.title}</div>
-                        <div className="text-muted small text-truncate" style={{ maxWidth: '380px' }}>
-                          {art.summary || 'Chưa có tóm tắt'}
-                        </div>
-                      </td>
-                      <td>
-                        <Badge bg="info" className="text-dark fw-normal">
-                          {art.category_id?.name || 'Chung'}
-                        </Badge>
-                      </td>
-                      <td className="small">
-                        <div className="fw-semibold text-dark">{art.created_by?.full_name || 'N/A'}</div>
-                        <div className="text-muted">{art.created_by?.email}</div>
-                      </td>
-                      <td className="text-muted small">
-                        {art.submitted_at
-                          ? new Date(art.submitted_at).toLocaleString('vi-VN')
-                          : new Date(art.updated_at).toLocaleString('vi-VN')}
-                      </td>
-                      <td className="text-end">
-                        <div className="d-flex justify-content-end gap-1">
-                          <Link
-                            to={`/admin/articles/edit/${art._id}`}
-                            className="btn btn-sm btn-outline-secondary p-1"
-                            title="Xem chi tiết & Soạn thảo"
-                          >
-                            <Eye size={15} />
-                          </Link>
-                          <Button
-                            size="sm"
-                            variant="outline-danger"
-                            className="p-1 px-2 d-inline-flex align-items-center gap-1"
-                            onClick={() => handleOpenAction(art, 'REQUEST_CHANGES')}
-                            title="Yêu cầu sửa"
-                          >
-                            <AlertTriangle size={14} /> Sửa
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="success"
-                            className="p-1 px-2 d-inline-flex align-items-center gap-1"
-                            onClick={() => handleOpenAction(art, 'APPROVE')}
-                            title="Phê duyệt"
-                          >
-                            <CheckCircle size={14} /> Duyệt
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </Table>
-          )}
+      <AdminFilterBar
+        searchValue={search}
+        onSearchChange={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
+        searchPlaceholder="Tìm kiếm theo tiêu đề bài viết..."
+        filters={[
+          {
+            key: 'category',
+            value: categoryId,
+            onChange: (val) => {
+              setCategoryId(val);
+              setPage(1);
+            },
+            placeholder: '-- Tất cả danh mục --',
+            options: categories.map((c) => ({ value: c._id, label: c.name })),
+            width: '220px',
+          },
+        ]}
+        onClearFilters={handleClearFilters}
+      />
 
-          {pagination.totalPages > 1 && (
-            <div className="d-flex justify-content-center p-3 border-top">
-              <Pagination className="mb-0">
-                <Pagination.Prev
-                  disabled={page === 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                />
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1).map((p) => (
-                  <Pagination.Item
-                    key={p}
-                    active={p === page}
-                    onClick={() => setPage(p)}
-                  >
-                    {p}
-                  </Pagination.Item>
-                ))}
-                <Pagination.Next
-                  disabled={page === pagination.totalPages}
-                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                />
-              </Pagination>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
+      <AdminDataTable
+        columns={columns}
+        data={articles}
+        loading={loading}
+        emptyText="🎉 Hàng đợi trống! Hiện tại không có bài viết nào cần duyệt."
+        currentPage={pagination.page}
+        pageSize={pagination.limit}
+        totalItems={pagination.total}
+        totalPages={pagination.totalPages}
+        onPageChange={setPage}
+      />
 
       {/* Modal Xét duyệt */}
-      <ArticleReviewActionModal
-        show={showActionModal}
-        onHide={() => setShowActionModal(false)}
-        article={selectedArticle}
-        actionType={actionType}
-        onSuccess={(msg) => {
-          setSuccess(msg);
-          fetchQueue();
-        }}
-      />
+      {showActionModal && (
+        <ArticleReviewActionModal
+          show={showActionModal}
+          onHide={() => setShowActionModal(false)}
+          article={selectedArticle}
+          actionType={actionType}
+          onSuccess={(msg) => {
+            setSuccess(msg);
+            fetchQueue();
+          }}
+        />
+      )}
 
-      {/* Modal Lịch sử */}
-      <ArticleHistoryModal
-        show={showHistoryModal}
-        onHide={() => setShowHistoryModal(false)}
-        article={selectedArticle}
-      />
+      {showHistoryModal && (
+        <ArticleHistoryModal
+          show={showHistoryModal}
+          onHide={() => setShowHistoryModal(false)}
+          article={selectedArticle}
+        />
+      )}
     </div>
   );
 }

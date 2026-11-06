@@ -1,11 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, ShieldCheck, RefreshCw } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
+import {
+  AdminPageHeader,
+  AdminDataTable,
+  ActionButtons,
+} from '../components/common';
 
 function Roles() {
   const [roles, setRoles] = useState([]);
   const [catalog, setCatalog] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Modal tạo vai trò
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,6 +27,7 @@ function Roles() {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [resRoles, resCatalog] = await Promise.all([
         axiosAdmin.get('/admin/roles'),
         axiosAdmin.get('/admin/permissions'),
@@ -28,7 +35,7 @@ function Roles() {
       setRoles(resRoles.data || []);
       setCatalog(resCatalog.data || null);
     } catch (err) {
-      alert(err.message || 'Không thể tải danh sách vai trò');
+      setError(err.message || 'Không thể tải danh sách vai trò');
     } finally {
       setLoading(false);
     }
@@ -105,98 +112,130 @@ function Roles() {
     }
   };
 
+  const columns = [
+    {
+      key: 'name',
+      title: 'Tên vai trò',
+      render: (r) => <span style={{ fontWeight: 600 }}>{r.name}</span>,
+    },
+    {
+      key: 'code',
+      title: 'Mã (Code)',
+      width: '160px',
+      render: (r) => (
+        <code style={{ background: '#f1f5f9', padding: '3px 8px', borderRadius: '4px', fontSize: '13px' }}>
+          {r.code}
+        </code>
+      ),
+    },
+    {
+      key: 'description',
+      title: 'Mô tả',
+      render: (r) => (
+        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          {r.description || '-'}
+        </span>
+      ),
+    },
+    {
+      key: 'type',
+      title: 'Loại',
+      width: '140px',
+      render: (r) =>
+        r.is_system ? (
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#6366f1', background: '#eef2ff', padding: '3px 8px', borderRadius: '10px' }}>
+            Mặc định hệ thống
+          </span>
+        ) : (
+          <span style={{ fontSize: '11px', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '10px' }}>
+            Tùy chỉnh
+          </span>
+        ),
+    },
+    {
+      key: 'user_count',
+      title: 'Số tài khoản',
+      width: '130px',
+      render: (r) => (
+        <span>
+          <strong>{r.user_count || 0}</strong> tài khoản
+        </span>
+      ),
+    },
+    {
+      key: 'permissions_count',
+      title: 'Số quyền',
+      width: '150px',
+      render: (r) => (
+        <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
+          {r.code === 'admin' ? 'Toàn quyền (All)' : `${r.permissions?.length || 0} quyền`}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      title: 'Trạng thái',
+      width: '120px',
+      render: (r) => (
+        <span className={`status-badge ${r.is_active ? 'status-active' : 'status-inactive'}`}>
+          {r.is_active ? 'Hoạt động' : 'Tạm khóa'}
+        </span>
+      ),
+    },
+    {
+      key: 'actions',
+      title: 'Thao tác',
+      width: '120px',
+      align: 'center',
+      render: (r) => (
+        <ActionButtons
+          actions={[
+            {
+              key: 'perms',
+              icon: ShieldCheck,
+              title: r.code === 'admin' ? 'Toàn quyền (không cần sửa)' : 'Cấu hình phân quyền',
+              disabled: r.code === 'admin',
+              onClick: () => handleOpenPermissions(r),
+              variant: 'view',
+              style: { opacity: r.code === 'admin' ? 0.35 : 1 },
+            },
+            {
+              key: 'edit',
+              icon: Edit2,
+              title: 'Chỉnh sửa thông tin vai trò',
+              onClick: () => setEditRole(r),
+              variant: 'edit',
+            },
+          ]}
+        />
+      ),
+    },
+  ];
+
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1 className="page-title">Quản lý Vai trò & Phân quyền</h1>
-          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
-            Định nghĩa các chức vụ trong hệ thống và phân chia quyền hạn truy cập chi tiết
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn" onClick={fetchData}>
-            <RefreshCw size={16} /> <span>Làm mới</span>
-          </button>
-          <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-            <Plus size={18} /> <span>Tạo vai trò mới</span>
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="Quản lý Vai trò & Phân quyền"
+        subtitle="Định nghĩa các chức vụ trong hệ thống và phân chia quyền hạn truy cập chi tiết"
+        actions={
+          <>
+            <button className="btn btn-secondary" onClick={fetchData} title="Làm mới danh sách">
+              <RefreshCw size={16} className={loading ? 'spinning' : ''} /> <span>Làm mới</span>
+            </button>
+            <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
+              <Plus size={18} /> <span>Tạo vai trò mới</span>
+            </button>
+          </>
+        }
+      />
 
-      <div className="card">
-        {loading ? (
-          <p style={{ padding: '24px', textAlign: 'center' }}>Đang tải danh sách vai trò...</p>
-        ) : (
-          <div className="table-wrapper">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Tên vai trò</th>
-                  <th>Mã (Code)</th>
-                  <th>Mô tả</th>
-                  <th>Loại</th>
-                  <th>Số tài khoản</th>
-                  <th>Số quyền</th>
-                  <th>Trạng thái</th>
-                  <th style={{ textAlign: 'right' }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roles.map((r) => (
-                  <tr key={r._id}>
-                    <td style={{ fontWeight: 600 }}>{r.name}</td>
-                    <td>
-                      <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>{r.code}</code>
-                    </td>
-                    <td style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{r.description || '-'}</td>
-                    <td>
-                      {r.is_system ? (
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#6366f1', background: '#eef2ff', padding: '3px 8px', borderRadius: '10px' }}>
-                          Mặc định hệ thống
-                        </span>
-                      ) : (
-                        <span style={{ fontSize: '11px', fontWeight: 600, color: '#059669', background: '#ecfdf5', padding: '3px 8px', borderRadius: '10px' }}>
-                          Tùy chỉnh
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <strong>{r.user_count || 0}</strong> tài khoản
-                    </td>
-                    <td>
-                      <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>
-                        {r.code === 'admin' ? 'Toàn quyền (All)' : `${r.permissions?.length || 0} quyền`}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${r.is_active ? 'status-active' : 'status-inactive'}`}>
-                        {r.is_active ? 'Hoạt động' : 'Tạm khóa'}
-                      </span>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <div className="action-btns" style={{ justifyContent: 'flex-end' }}>
-                        <button
-                          className="icon-btn"
-                          title="Phân quyền"
-                          disabled={r.code === 'admin'}
-                          onClick={() => handleOpenPermissions(r)}
-                          style={{ opacity: r.code === 'admin' ? 0.4 : 1 }}
-                        >
-                          <ShieldCheck size={18} />
-                        </button>
-                        <button className="icon-btn" title="Chỉnh sửa thông tin" onClick={() => setEditRole(r)}>
-                          <Edit2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <AdminDataTable
+        columns={columns}
+        data={roles}
+        loading={loading}
+        error={error}
+        emptyText="Chưa có vai trò nào."
+      />
 
       {/* Modal Tạo vai trò */}
       {showCreateModal && (
@@ -217,7 +256,7 @@ function Roles() {
                 <textarea className="form-control" rows={3} placeholder="Mô tả nhiệm vụ của vai trò..." value={newRole.description} onChange={(e) => setNewRole({ ...newRole, description: e.target.value })} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn" onClick={() => setShowCreateModal(false)}>Hủy</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>Hủy</button>
                 <button type="submit" className="btn btn-primary">Tạo vai trò</button>
               </div>
             </form>
@@ -246,7 +285,7 @@ function Roles() {
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn" onClick={() => setEditRole(null)}>Hủy</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setEditRole(null)}>Hủy</button>
                 <button type="submit" className="btn btn-primary">Lưu thay đổi</button>
               </div>
             </form>
@@ -273,7 +312,7 @@ function Roles() {
                   <div key={group.module} style={{ marginBottom: '20px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px', marginBottom: '10px' }}>
                       <strong style={{ fontSize: '14px', color: 'var(--primary-color)' }}>{group.name}</strong>
-                      <button type="button" onClick={() => toggleGroup(group)} style={{ fontSize: '12px', color: 'var(--primary-color)', fontWeight: 500 }}>
+                      <button type="button" onClick={() => toggleGroup(group)} style={{ fontSize: '12px', color: 'var(--primary-color)', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }}>
                         {isAllSelected ? 'Bỏ chọn nhóm' : 'Chọn tất cả nhóm'}
                       </button>
                     </div>
@@ -309,7 +348,7 @@ function Roles() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button type="button" className="btn" onClick={() => setPermissionRole(null)}>Hủy</button>
+              <button type="button" className="btn btn-secondary" onClick={() => setPermissionRole(null)}>Hủy</button>
               <button type="button" className="btn btn-primary" onClick={handleSavePermissions}>Lưu phân quyền</button>
             </div>
           </div>
