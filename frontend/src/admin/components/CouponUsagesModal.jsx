@@ -1,19 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, Download, Filter } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
+import { StatusBadge, AdminDataTable } from './common';
 
-const usageStatusBadge = (status) => {
-  const map = {
-    RESERVED: { bg: '#fef3c7', color: '#92400e', text: 'Đang giữ chỗ' },
-    USED: { bg: '#dcfce7', color: '#166534', text: 'Đã thanh toán' },
-    RELEASED: { bg: '#fee2e2', color: '#991b1b', text: 'Đã giải phóng' },
-  };
-  const s = map[status] || { bg: '#f1f5f9', color: '#475569', text: status };
-  return (
-    <span style={{ background: s.bg, color: s.color, padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 600 }}>
-      {s.text}
-    </span>
-  );
+const USAGE_STATUS_MAP = {
+  RESERVED: { bg: '#fef3c7', color: '#92400e', label: 'Đang giữ chỗ' },
+  USED: { bg: '#dcfce7', color: '#166534', label: 'Đã thanh toán' },
+  RELEASED: { bg: '#fee2e2', color: '#991b1b', label: 'Đã giải phóng' },
 };
 
 function CouponUsagesModal({ coupon, onClose }) {
@@ -66,6 +59,63 @@ function CouponUsagesModal({ coupon, onClose }) {
     }
   };
 
+  const columns = [
+    {
+      key: 'coupon_code',
+      title: 'Mã Coupon',
+      hidden: Boolean(coupon),
+      render: (u) => (
+        <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>
+          {u.coupon_id?.code || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      key: 'customer',
+      title: 'Khách hàng',
+      render: (u) => (
+        <div>
+          <div style={{ fontWeight: 600 }}>{u.user_id?.full_name || 'Khách vãng lai'}</div>
+          <div style={{ fontSize: '12px', color: '#64748b' }}>{u.user_id?.phone || u.user_id?.email || ''}</div>
+        </div>
+      ),
+    },
+    {
+      key: 'order_code',
+      title: 'Mã đơn',
+      render: (u) => (
+        <span style={{ fontFamily: 'monospace', fontWeight: 600 }}>
+          {u.booking_id?.order_code || u.booking_id?._id?.slice(-8) || 'N/A'}
+        </span>
+      ),
+    },
+    {
+      key: 'discount_amount',
+      title: 'Số tiền giảm',
+      render: (u) => (
+        <span style={{ fontWeight: 700, color: '#dc2626' }}>
+          -{(u.discount_amount || 0).toLocaleString('vi-VN')} đ
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      title: 'Trạng thái',
+      width: '140px',
+      render: (u) => <StatusBadge status={u.status} statusMap={USAGE_STATUS_MAP} />,
+    },
+    {
+      key: 'created_at',
+      title: 'Thời gian',
+      width: '150px',
+      render: (u) => (
+        <span style={{ fontSize: '12px', color: '#64748b' }}>
+          {new Date(u.created_at).toLocaleString('vi-VN')}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '16px' }}>
       <div style={{ background: '#ffffff', borderRadius: '16px', maxWidth: '820px', width: '100%', maxHeight: '88vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
@@ -114,79 +164,21 @@ function CouponUsagesModal({ coupon, onClose }) {
           </button>
         </div>
 
-        {/* Bảng dữ liệu */}
-        <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>
-          {loading ? (
-            <p style={{ textAlign: 'center', color: '#64748b', padding: '24px' }}>Đang tải lịch sử...</p>
-          ) : usages.length === 0 ? (
-            <p style={{ textAlign: 'center', color: '#94a3b8', padding: '24px' }}>Chưa có lượt sử dụng nào thỏa mãn bộ lọc.</p>
-          ) : (
-            <div className="table-wrapper">
-              <table className="table">
-                <thead>
-                  <tr>
-                    {!coupon && <th>Mã Coupon</th>}
-                    <th>Khách hàng</th>
-                    <th>Mã đơn</th>
-                    <th>Số tiền giảm</th>
-                    <th>Trạng thái</th>
-                    <th>Thời gian</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {usages.map((u) => (
-                    <tr key={u._id}>
-                      {!coupon && (
-                        <td>
-                          <span style={{ fontFamily: 'monospace', fontWeight: 700, color: '#2563eb' }}>
-                            {u.coupon_id?.code || 'N/A'}
-                          </span>
-                        </td>
-                      )}
-                      <td>
-                        <div style={{ fontWeight: 600 }}>{u.user_id?.full_name || 'Khách vãng lai'}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{u.user_id?.phone || u.user_id?.email || ''}</div>
-                      </td>
-                      <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                        {u.booking_id?.order_code || u.booking_id?._id?.slice(-8) || 'N/A'}
-                      </td>
-                      <td style={{ fontWeight: 700, color: '#dc2626' }}>
-                        -{(u.discount_amount || 0).toLocaleString('vi-VN')} đ
-                      </td>
-                      <td>{usageStatusBadge(u.status)}</td>
-                      <td style={{ fontSize: '12px', color: '#64748b' }}>
-                        {new Date(u.created_at).toLocaleString('vi-VN')}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+        {/* Bảng dữ liệu dùng AdminDataTable */}
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <AdminDataTable
+            columns={columns}
+            data={usages}
+            loading={loading}
+            emptyText="Chưa có lượt sử dụng nào thỏa mãn bộ lọc."
+            hideStt={true}
+            currentPage={pagination.page}
+            pageSize={pagination.limit}
+            totalItems={pagination.total}
+            totalPages={pagination.totalPages}
+            onPageChange={(p) => fetchUsages(p)}
+          />
         </div>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '8px', background: '#f8fafc' }}>
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={pagination.page <= 1}
-              onClick={() => fetchUsages(pagination.page - 1)}
-            >
-              Trang trước
-            </button>
-            <span style={{ alignSelf: 'center', fontSize: '12.5px', color: '#64748b' }}>
-              Trang {pagination.page} / {pagination.totalPages}
-            </span>
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={pagination.page >= pagination.totalPages}
-              onClick={() => fetchUsages(pagination.page + 1)}
-            >
-              Trang sau
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

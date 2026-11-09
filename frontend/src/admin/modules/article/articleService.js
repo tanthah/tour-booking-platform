@@ -1,5 +1,14 @@
 import axiosAdmin from '../../config/axiosAdmin';
 
+export const ARTICLE_STATUS_MAP = {
+  DRAFT: { label: 'Bản nháp', bg: '#f1f5f9', color: '#475569' },
+  PENDING_REVIEW: { label: 'Chờ duyệt', bg: '#fef3c7', color: '#92400e' },
+  CHANGES_REQUESTED: { label: 'Cần chỉnh sửa', bg: '#fee2e2', color: '#991b1b' },
+  APPROVED: { label: 'Đã phê duyệt', bg: '#e0f2fe', color: '#0369a1' },
+  PUBLISHED: { label: 'Đã xuất bản', bg: '#dcfce7', color: '#166534' },
+  ARCHIVED: { label: 'Lưu trữ', bg: '#e2e8f0', color: '#334155' },
+};
+
 const articleService = {
   // ==================== BÀI VIẾT ====================
   getArticles: (params = {}) => axiosAdmin.get('/admin/articles', { params }),

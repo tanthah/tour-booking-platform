@@ -123,12 +123,10 @@ function CouponForm() {
   return (
     <div>
       <div className="page-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button className="btn btn-secondary" onClick={() => navigate('/admin/coupons')}>
-            <ArrowLeft size={18} />
-          </button>
-          <h1 className="page-title">{isEdit ? `Sửa Coupon: ${formData.code}` : 'Thêm Coupon Mới'}</h1>
-        </div>
+        <h1 className="page-title">{isEdit ? `Sửa Coupon: ${formData.code}` : 'Thêm Coupon Mới'}</h1>
+        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/coupons')}>
+          <ArrowLeft size={16} /> <span>Quay lại danh sách</span>
+        </button>
       </div>
 
       <div className="card" style={{ maxWidth: '820px', margin: '0 auto', padding: '24px' }}>

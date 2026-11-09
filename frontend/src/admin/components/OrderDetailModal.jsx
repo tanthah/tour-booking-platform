@@ -1,30 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, CheckCircle, AlertTriangle, MessageSquare, Clock } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
+import { StatusBadge } from './common';
 
-const statusBadge = (status) => {
-  const map = {
-    PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', text: 'Chờ thanh toán' },
-    DEPOSIT_CONFIRMED: { bg: '#e0f2fe', color: '#0369a1', text: 'Đã cọc 30%' },
-    CONFIRMED: { bg: '#dbeafe', color: '#1e40af', text: 'Đã xác nhận' },
-    AWAITING_STAFF: { bg: '#fee2e2', color: '#b91c1c', text: '⚠️ Chờ xử lý' },
-    COMPLETED: { bg: '#dcfce7', color: '#166534', text: 'Hoàn thành' },
-    CANCELLED: { bg: '#f1f5f9', color: '#64748b', text: 'Đã hủy' },
-  };
-  const s = map[status] || { bg: '#f1f5f9', color: '#334155', text: status };
-  return <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>{s.text}</span>;
+const ORDER_STATUS_MAP = {
+  PENDING_PAYMENT: { bg: '#fef3c7', color: '#92400e', label: 'Chờ thanh toán' },
+  DEPOSIT_CONFIRMED: { bg: '#e0f2fe', color: '#0369a1', label: 'Đã cọc 30%' },
+  CONFIRMED: { bg: '#dbeafe', color: '#1e40af', label: 'Đã xác nhận' },
+  AWAITING_STAFF: { bg: '#fee2e2', color: '#b91c1c', label: '⚠️ Chờ xử lý' },
+  COMPLETED: { bg: '#dcfce7', color: '#166534', label: 'Hoàn thành' },
+  CANCELLED: { bg: '#f1f5f9', color: '#64748b', label: 'Đã hủy' },
 };
 
-const paymentBadge = (status) => {
-  const map = {
-    PENDING: { bg: '#f1f5f9', color: '#475569', text: 'Chưa TT' },
-    DEPOSIT_PAID: { bg: '#e0f2fe', color: '#0369a1', text: 'Đã cọc 30%' },
-    PAID: { bg: '#dcfce7', color: '#166534', text: 'Đã TT đủ' },
-    FAILED: { bg: '#fee2e2', color: '#991b1b', text: 'Thất bại' },
-    REFUNDED: { bg: '#e0e7ff', color: '#3730a3', text: 'Hoàn tiền' },
-  };
-  const s = map[status] || { bg: '#f1f5f9', color: '#334155', text: status };
-  return <span style={{ background: s.bg, color: s.color, padding: '3px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }}>{s.text}</span>;
+const PAYMENT_STATUS_MAP = {
+  PENDING: { bg: '#f1f5f9', color: '#475569', label: 'Chưa TT' },
+  DEPOSIT_PAID: { bg: '#e0f2fe', color: '#0369a1', label: 'Đã cọc 30%' },
+  PAID: { bg: '#dcfce7', color: '#166534', label: 'Đã TT đủ' },
+  FAILED: { bg: '#fee2e2', color: '#991b1b', label: 'Thất bại' },
+  REFUNDED: { bg: '#e0e7ff', color: '#3730a3', label: 'Hoàn tiền' },
 };
 
 function OrderDetailModal({ order, updating, onClose, onUpdateStatus }) {
@@ -165,7 +158,7 @@ function OrderDetailModal({ order, updating, onClose, onUpdateStatus }) {
         Đơn hàng: <span style={{ color: '#ea580c' }}>{order.order_code}</span>
       </h2>
       <div style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>
-        Ngày tạo: {new Date(order.created_at).toLocaleString('vi-VN')} | TT: {statusBadge(order.order_status)} {paymentBadge(order.payment_status)}
+        Ngày tạo: {new Date(order.created_at).toLocaleString('vi-VN')} | TT: <StatusBadge status={order.order_status} statusMap={ORDER_STATUS_MAP} /> <StatusBadge status={order.payment_status} statusMap={PAYMENT_STATUS_MAP} />
       </div>
 
       <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #e2e8f0', marginBottom: '16px' }}>

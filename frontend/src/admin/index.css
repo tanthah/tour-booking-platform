@@ -180,6 +180,8 @@ ul {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .page-title {
@@ -195,30 +197,139 @@ ul {
   padding: 24px;
 }
 
-/* Nút bấm (Buttons) */
+/* Nút bấm (Buttons) — Hệ thống nút đồng bộ cho Admin */
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 16px;
   border-radius: var(--radius-md);
   font-weight: 500;
   font-size: 0.875rem;
+  line-height: 1.25rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition: all var(--transition-fast);
 }
 
-.btn-primary {
-  background-color: var(--primary-color);
-  color: white;
+/* Nút chính (Primary CTA) — Dành cho Thêm mới, Lưu, Xác nhận */
+.btn-primary,
+.btn.btn-primary,
+button.btn-primary,
+a.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
-.btn-primary:hover { background-color: var(--primary-hover); }
 
-.btn-danger {
-  background-color: var(--danger-color);
-  color: white;
+.btn-primary:hover,
+.btn.btn-primary:hover,
+button.btn-primary:hover,
+a.btn-primary:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
 }
-.btn-danger:hover { opacity: 0.9; }
 
-.btn-lg {
+.btn-primary:active,
+.btn.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn-primary:disabled,
+.btn.btn-primary:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Nút phụ / Làm mới (Secondary Action) — Nền trắng, viền mỏng thanh lịch */
+.btn-secondary,
+.btn.btn-secondary,
+button.btn-secondary,
+a.btn-secondary {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.btn-secondary:hover,
+.btn.btn-secondary:hover,
+button.btn-secondary:hover,
+a.btn-secondary:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active,
+.btn.btn-secondary:active {
+  transform: translateY(0);
+  background-color: #f1f5f9 !important;
+}
+
+.btn-secondary:hover svg,
+.btn.btn-secondary:hover svg {
+  color: var(--primary-color);
+}
+
+/* Nút Outline */
+.btn-outline,
+.btn.btn-outline,
+.btn-outline-secondary,
+.btn.btn-outline-secondary {
+  background-color: transparent !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #475569 !important;
+}
+
+.btn-outline:hover,
+.btn.btn-outline:hover,
+.btn-outline-secondary:hover,
+.btn.btn-outline-secondary:hover {
+  background-color: #f8fafc !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+
+/* Nút Nguy hiểm (Danger / Delete) */
+.btn-danger,
+.btn.btn-danger {
+  background-color: var(--danger-color) !important;
+  border-color: var(--danger-color) !important;
+  color: white !important;
+}
+
+.btn-danger:hover,
+.btn.btn-danger:hover {
+  background-color: #dc2626 !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.25);
+  transform: translateY(-1px);
+}
+
+/* Kích cỡ Button */
+.btn-sm,
+.btn.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  gap: 6px;
+}
+
+.btn-lg,
+.btn.btn-lg {
   padding: 12px 24px;
   font-size: 1rem;
 }
@@ -232,6 +343,16 @@ ul {
 
 .btn-link:hover {
   text-decoration: underline;
+}
+
+/* Hiệu ứng xoay icon khi đang làm mới (Refresh spinning) */
+@keyframes spin-refresh {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin-refresh 0.8s linear infinite;
 }
 
 /* Bảng dữ liệu (Table) */
@@ -339,16 +460,87 @@ ul {
 
 /* Action Buttons in Table */
 .action-btns {
-  display: flex;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+
 .icon-btn {
-  padding: 6px;
-  border-radius: var(--radius-md);
-  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: #ffffff;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  font-size: 0;
 }
-.icon-btn:hover { background-color: rgba(0,0,0,0.05); color: var(--primary-color); }
-.icon-btn.delete:hover { color: var(--danger-color); }
+
+.icon-btn:hover {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* Nút Xem (View) */
+.icon-btn.view:hover,
+.icon-btn[title*="Xem"]:hover,
+.icon-btn[title*="xem"]:hover {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+/* Nút Sửa (Edit) */
+.icon-btn.edit:hover,
+.icon-btn[title*="Sửa"]:hover,
+.icon-btn[title*="sửa"]:hover,
+.icon-btn[title*="Chỉnh sửa"]:hover {
+  background-color: #fffbeb;
+  color: #d97706;
+  border-color: #fde68a;
+}
+
+/* Nút Xóa (Delete) */
+.icon-btn.delete,
+.icon-btn[title*="Xóa"],
+.icon-btn[title*="xóa"] {
+  color: #64748b;
+}
+
+.icon-btn.delete:hover,
+.icon-btn[title*="Xóa"]:hover,
+.icon-btn[title*="xóa"]:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* Nút Cập nhật / Làm mới */
+.icon-btn.refresh:hover,
+.icon-btn[title*="Làm mới"]:hover,
+.icon-btn[title*="làm mới"]:hover,
+.icon-btn[title*="Cập nhật"]:hover {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+
+/* Nút Lịch khởi hành (Calendar) */
+.icon-btn.calendar:hover,
+.icon-btn[title*="Lịch"]:hover,
+.icon-btn[title*="lịch"]:hover,
+.icon-btn[title*="Khởi hành"]:hover {
+  background-color: #f5f3ff;
+  color: #7c3aed;
+  border-color: #ddd6fe;
+}
 
 /* Status Badge */
 .status-badge {

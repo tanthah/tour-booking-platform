@@ -1,5 +1,5 @@
 /**
- * Logo Component - Đại diện thương hiệu Tourn Go
+ * Logo Component - Đại diện thương hiệu TourGo
  * Được vẽ bằng SVG vector chuẩn nét cao, tông màu Cam Hoàng Hôn năng động
  */
 const Logo = ({ height = 36, logoUrl = '' }) => {
@@ -14,7 +14,7 @@ const Logo = ({ height = 36, logoUrl = '' }) => {
       }}
     >
       {logoUrl ? (
-        <img src={logoUrl} alt="Logo" style={{ height: height, objectFit: 'contain' }} />
+        <img src={logoUrl} alt="Logo TourGo" style={{ height: height, objectFit: 'contain' }} />
       ) : (
       <svg
         width={height * 1.25}
@@ -60,7 +60,7 @@ const Logo = ({ height = 36, logoUrl = '' }) => {
           lineHeight: 1,
         }}
       >
-        <span style={{ color: '#0A2E65' }}>Tourn</span>{' '}
+        <span style={{ color: '#0A2E65' }}>Tour</span>
         <span style={{ color: '#0086FF' }}>Go</span>
       </span>
     </div>

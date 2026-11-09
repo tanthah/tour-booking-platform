@@ -5,7 +5,7 @@ import Logo from './Logo';
 import '../assets/styles/footer.css';
 
 /**
- * Footer Component - Chân trang theo thương hiệu Tourn Go
+ * Footer Component - Chân trang theo thương hiệu TourGo
  * Bao gồm:
  * 1. Banner Đăng ký nhận tin tức (Newsletter) với nền Cam Hoàng Hôn và nút gửi
  * 2. Hàng điều hướng menu và icon mạng xã hội (Facebook, Twitter/X, Instagram, Youtube)
@@ -112,7 +112,7 @@ const Footer = ({ settings }) => {
         <Row className="align-items-center gy-3 text-center text-md-start">
           <Col md={4} xs={12}>
             <p className="footer-bottom-text">
-              © 2026 Tourn Go. All rights reserved.
+              © 2026 TourGo. All rights reserved.
             </p>
           </Col>
 

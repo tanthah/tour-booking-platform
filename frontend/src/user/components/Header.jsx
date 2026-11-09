@@ -6,10 +6,10 @@ import useCart from '../hooks/useCart';
 import '../assets/styles/header.css';
 
 /**
- * Header Component - Thanh điều hướng thương hiệu Tourn Go
+ * Header Component - Thanh điều hướng thương hiệu TourGo
  * Gồm 2 phần:
  * 1. Topbar màu cam: Hotline, Email, Địa chỉ
- * 2. Main Navbar: Logo Tourn Go, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
+ * 2. Main Navbar: Logo TourGo, Menu (Trang Chủ, Tour Trong Nước, Tour Nước Ngoài, Tin Tức, Liên Hệ), Giỏ hàng và Đăng nhập/Đăng ký
  */
 const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: _onLogout, settings }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -55,11 +55,11 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
             </a>
 
             {/* Email */}
-            <a href={`mailto:${settings?.email || 'contact@tourngo.com'}`} className="header-topbar-item">
+            <a href={`mailto:${settings?.email || 'contact@tourgo.com'}`} className="header-topbar-item">
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
               </svg>
-              <span>{settings?.email || 'contact@tourngo.com'}</span>
+              <span>{settings?.email || 'contact@tourgo.com'}</span>
             </a>
 
             {/* Address */}
@@ -79,7 +79,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
         className={`header-main-nav ${scrolled ? 'scrolled' : ''}`}
       >
         <Container>
-          {/* Logo tour go */}
+          {/* Logo TourGo */}
           <Navbar.Brand as={Link} to="/" className="p-0">
             <Logo height={65} logoUrl={settings?.logo_url} />
           </Navbar.Brand>

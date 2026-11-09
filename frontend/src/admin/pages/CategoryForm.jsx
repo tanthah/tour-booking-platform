@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
 import ImageUploader from '../components/ImageUploader';
 
@@ -117,7 +117,10 @@ function CategoryForm() {
   return (
     <div>
       <div className="page-header">
-        <h1 className="page-title">{isEdit ? 'Cập nhật danh mục' : 'Tạo danh mục'}</h1>
+        <h1 className="page-title">{isEdit ? 'Cập nhật danh mục' : 'Tạo danh mục mới'}</h1>
+        <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/categories')}>
+          <ArrowLeft size={16} /> <span>Quay lại danh sách</span>
+        </button>
       </div>
 
       <div className="card">
@@ -184,8 +187,9 @@ function CategoryForm() {
 
           {/* Nút hành động */}
           <div className="form-actions">
-            <button type="submit" className="btn btn-primary btn-lg" disabled={submitting}>
-              {submitting ? 'Đang xử lý...' : isEdit ? 'Cập nhật' : 'Tạo mới'}
+            <button type="submit" className="btn btn-primary btn-lg" disabled={submitting} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Save size={18} style={{ marginRight: '6px' }} />
+              <span>{submitting ? 'Đang xử lý...' : isEdit ? 'Cập nhật' : 'Tạo mới'}</span>
             </button>
           </div>
           <div style={{ textAlign: 'center', marginTop: '12px' }}>
