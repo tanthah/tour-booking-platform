@@ -2,10 +2,13 @@
   "name": "tour-booking-backend",
   "version": "1.0.0",
   "description": "Backend for Tour Booking Platform",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test:rbac": "node test/testRbacSecurity.js",
+    "test:edge": "node test/test_edge_cases.js",
+    "test:order": "node test/test_order_module.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

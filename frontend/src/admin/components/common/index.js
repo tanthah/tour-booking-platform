@@ -4,4 +4,5 @@ export { default as AdminDataTable } from './AdminDataTable';
 export { default as StatusBadge } from './StatusBadge';
 export { default as ActionButtons } from './ActionButtons';
 export { default as AdminPagination } from './AdminPagination';
+export { default as ImageUploader } from './ImageUploader';
 

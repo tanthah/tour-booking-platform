@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
-import TourCard from '../components/TourCard';
+import TourCard from '../modules/tours/components/TourCard';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
 

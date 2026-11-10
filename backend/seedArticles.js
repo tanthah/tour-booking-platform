@@ -7,10 +7,10 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const Article = require('./modules/article/article.model');
-const ArticleCategory = require('./modules/article/articleCategory.model');
-const User = require('./modules/user/user.model');
-const { MONGO_URI } = require('./config/env');
+const Article = require('./src/modules/article/article.model');
+const ArticleCategory = require('./src/modules/article/articleCategory.model');
+const User = require('./src/modules/user/user.model');
+const { MONGO_URI } = require('./src/config/env');
 
 const sampleCategories = [
   { name: 'Cẩm nang du lịch', slug: 'cam-nang-du-lich', description: 'Kinh nghiệm và mẹo hữu ích cho chuyến đi' },

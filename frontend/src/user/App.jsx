@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Header from './components/Header';
-import Footer from './components/Footer';
+import Header from './layouts/Header';
+import Footer from './layouts/Footer';
 import HomePage from './pages/HomePage';
 import TourListPage from './pages/TourListPage';
 import TourDetailPage from './pages/TourDetailPage';
@@ -15,7 +15,7 @@ import ArticleDetailPage from './pages/ArticleDetailPage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
-import ScrollToTop from './components/ScrollToTop';
+import ScrollToTop from './components/common/ScrollToTop';
 
 import AdminApp from '../admin/App';
 

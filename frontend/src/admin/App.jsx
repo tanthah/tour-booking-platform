@@ -1,20 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
-import Categories from './pages/Categories';
-import CategoryForm from './pages/CategoryForm';
-import Tours from './pages/Tours';
-import TourForm from './pages/TourForm';
-import Orders from './pages/Orders';
+import Categories from './modules/categories/pages/CategoryManagement';
+import CategoryForm from './modules/categories/pages/CategoryForm';
+import Tours from './modules/tours/pages/TourManagement';
+import TourForm from './modules/tours/pages/TourForm';
+import Orders from './modules/orders/pages/OrderManagement';
 import Settings from './pages/Settings';
-import Coupons from './pages/Coupons';
-import CouponForm from './pages/CouponForm';
+import Coupons from './modules/coupons/pages/CouponManagement';
+import CouponForm from './modules/coupons/pages/CouponForm';
 import Users from './pages/Users';
 import Roles from './pages/Roles';
 import AuditLogs from './pages/AuditLogs';
-import Articles from './pages/Articles';
-import ArticleForm from './pages/ArticleForm';
-import ArticleCategories from './pages/ArticleCategories';
-import ArticleReviewQueue from './pages/ArticleReviewQueue';
+import Articles from './modules/article/pages/ArticleManagement';
+import ArticleForm from './modules/article/pages/ArticleForm';
+import ArticleCategories from './modules/article/pages/ArticleCategories';
+import ArticleReviewQueue from './modules/article/pages/ArticleReviewQueue';
 import './index.css';
 
 function App() {

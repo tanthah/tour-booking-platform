@@ -8,8 +8,8 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
 
-const User = require('./modules/user/user.model');
-const { MONGO_URI } = require('./config/env');
+const User = require('./src/modules/user/user.model');
+const { MONGO_URI } = require('./src/config/env');
 
 // Thong tin tai khoan Admin - lay tu file .env de tranh hardcode
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@tourbooking.com';
