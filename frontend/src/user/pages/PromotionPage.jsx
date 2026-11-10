@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Button, Spinner, Badge } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import TourCard from '../components/TourCard';
-import CouponSection from '../components/coupon/CouponSection';
+import TourCard from '../modules/tours/components/TourCard';
+import CouponSection from '../modules/coupon/components/CouponSection';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
 

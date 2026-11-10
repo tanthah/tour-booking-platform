@@ -3,10 +3,10 @@ import { Container, Row, Col, Spinner, Alert, Badge } from 'react-bootstrap';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
 import { createZaloPayPayment, getPaymentsByOrder } from '../modules/payment/paymentService';
-import ZaloPayQRModal from '../components/checkout/ZaloPayQRModal';
-import OrderCancelModal from '../components/order/OrderCancelModal';
-import OrderPaymentHistory from '../components/order/OrderPaymentHistory';
-import OrderItemsList from '../components/order/OrderItemsList';
+import ZaloPayQRModal from '../modules/checkout/components/ZaloPayQRModal';
+import OrderCancelModal from '../modules/order/components/OrderCancelModal';
+import OrderPaymentHistory from '../modules/order/components/OrderPaymentHistory';
+import OrderItemsList from '../modules/order/components/OrderItemsList';
 
 const OrderDetailPage = () => {
   const { id } = useParams();

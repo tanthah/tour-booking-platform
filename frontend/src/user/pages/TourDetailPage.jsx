@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   FileText,
 } from 'lucide-react';
-import TourBookingCard from '../components/TourBookingCard';
+import TourBookingCard from '../modules/tours/components/TourBookingCard';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
 

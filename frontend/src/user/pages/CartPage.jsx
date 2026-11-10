@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Container, Spinner } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import useCart from '../hooks/useCart';
-import CartItem from '../components/CartItem';
+import CartItem from '../modules/cart/components/CartItem';
 import '../assets/styles/cart.css';
 
 /**
