@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 /**
- * TourDeparture Schema — Quản lý đợt khởi hành của Tour
- * Quan hệ: N đợt thuộc 1 Tour (product_id → Tour)
- * Giá dùng chung từ Tour; sức chứa quản lý riêng từng đợt
- * Trạng thái: OPEN → FULL / CLOSED / CANCELLED
+ * TourDeparture Schema — Quản lý lịch khởi hành của Tour
+ * Theo yêu cầu mới (v2):
+ * - Quản lý ngày giờ bắt đầu tour (start_datetime) và địa điểm tập trung (meeting_point)
+ * - Quản lý sức chứa tour (total_slots, booked_slots, reserved_slots, available_slots)
+ * - Đã loại bỏ: điểm xuất phát (departure_location), phương tiện (vehicle), điểm kết thúc (end_location), v.v.
  */
 const tourDepartureSchema = new mongoose.Schema(
   {
@@ -15,62 +16,31 @@ const tourDepartureSchema = new mongoose.Schema(
       required: [true, 'Tour ID là bắt buộc'],
       index: true,
     },
-    // Ngày giờ khởi hành (lưu UTC, hiển thị theo Asia/Ho_Chi_Minh)
-    departure_date: {
+    // Ngày giờ tour bắt đầu (thống nhất múi giờ Asia/Ho_Chi_Minh, lưu chuẩn UTC ISO Date)
+    start_datetime: {
       type: Date,
-      required: [true, 'Ngày khởi hành là bắt buộc'],
+      required: [true, 'Ngày và giờ tour bắt đầu là bắt buộc'],
     },
-    // Điểm khởi hành (VD: TP.HCM, Hà Nội)
-    departure_location: {
+    // Địa điểm tập trung của đoàn
+    meeting_point: {
       type: String,
-      required: [true, 'Điểm khởi hành là bắt buộc'],
+      required: [true, 'Địa điểm tập trung là bắt buộc'],
       trim: true,
     },
-    // Phương tiện di chuyển
-    vehicle: {
-      type: String,
-      required: [true, 'Phương tiện là bắt buộc'],
-      default: 'Ô tô 45 chỗ',
-    },
-    // ========== THÔNG TIN TẬP TRUNG ==========
-    meeting_point_address: {
-      type: String,
-      default: '',
-    },
-    meeting_point_map_url: {
-      type: String,
-      default: '',
-    },
-    meeting_time: {
-      type: String,
-      default: '',
-    },
-    start_time: {
-      type: String,
-      default: '',
-    },
-    end_location: {
-      type: String,
-      default: '',
-    },
-    contact_info: {
-      type: String,
-      default: '',
-    },
-    // ========== SỨC CHỨA ==========
-    // Tổng số chỗ ban đầu — Admin nhập khi tạo đợt
+    // ========== QUẢN LÝ SỨC CHỨA CỐ ĐỊNH ==========
+    // Tổng số khách tối đa cho đợt do admin sắp xếp
     total_slots: {
       type: Number,
       required: [true, 'Tổng số chỗ là bắt buộc'],
       min: [1, 'Tổng số chỗ phải >= 1'],
     },
-    // Số chỗ đã xác nhận — Hệ thống cập nhật từ Booking
+    // Số chỗ đã đặt (đã thanh toán hoặc xác nhận)
     booked_slots: {
       type: Number,
       default: 0,
       min: [0, 'Số chỗ đã đặt phải >= 0'],
     },
-    // Số chỗ đang giữ tạm — Dùng cho đơn chờ thanh toán
+    // Số chỗ đang giữ tạm (chờ thanh toán)
     reserved_slots: {
       type: Number,
       default: 0,
@@ -95,17 +65,30 @@ const tourDepartureSchema = new mongoose.Schema(
   }
 );
 
-// ========== VIRTUAL: Số chỗ còn lại ==========
-// Lưu ý: Virtual không dùng được trong truy vấn MongoDB filter/sort
+// ========== VIRTUALS ==========
+// Số chỗ còn lại
 tourDepartureSchema.virtual('available_slots').get(function () {
-  return this.total_slots - this.booked_slots - this.reserved_slots;
+  return (this.total_slots || 0) - (this.booked_slots || 0) - (this.reserved_slots || 0);
 });
 
-// ========== INDEX ==========
-tourDepartureSchema.index({ product_id: 1, departure_date: 1 });
+// Alias tương thích ngược
+tourDepartureSchema.virtual('tour_id').get(function () {
+  return this.product_id;
+});
+
+tourDepartureSchema.virtual('departure_date').get(function () {
+  return this.start_datetime;
+});
+
+tourDepartureSchema.virtual('meeting_point_address').get(function () {
+  return this.meeting_point;
+});
+
+// ========== INDEXES ==========
+tourDepartureSchema.index({ product_id: 1, start_datetime: 1 });
 tourDepartureSchema.index({ status: 1 });
 tourDepartureSchema.index({ deleted_at: 1 });
-tourDepartureSchema.index({ departure_date: 1 });
+tourDepartureSchema.index({ start_datetime: 1 });
 
 const TourDeparture = mongoose.model('TourDeparture', tourDepartureSchema);
 

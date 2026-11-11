@@ -15,6 +15,7 @@ import {
   MessageSquare,
   ShieldCheck,
   FileText,
+  Navigation,
 } from 'lucide-react';
 import TourBookingCard from '../modules/tours/components/TourBookingCard';
 import axiosClient from '../config/axiosClient';
@@ -156,7 +157,7 @@ const TourDetailPage = () => {
   const defaultHighlights = [
     `Khám phá trọn vẹn điểm đến tuyệt đẹp tại ${tour.destination_location}`,
     `Thời gian trải nghiệm ${tour.duration} với lộ trình tối ưu và thư giãn`,
-    `Phương tiện di chuyển tiện nghi (${selectedDeparture?.vehicle || 'Xe du lịch chất lượng cao'})`,
+    'Lịch trình hấp dẫn, trải nghiệm văn hóa và cảnh quan đặc sắc',
     'Hướng dẫn viên chuyên nghiệp, nhiệt tình đồng hành suốt chuyến đi',
     'Thưởng thức các món ăn đặc sản vùng miền hấp dẫn',
   ];
@@ -214,16 +215,10 @@ const TourDetailPage = () => {
                 Điểm đến: <strong className="text-dark">{tour.destination_location}</strong>
               </span>
             )}
-            {selectedDeparture?.vehicle && (
-              <span className="d-inline-flex align-items-center gap-1">
-                <Car size={15} className="text-primary" />
-                Phương tiện: <strong className="text-dark">{selectedDeparture.vehicle}</strong>
-              </span>
-            )}
-            {selectedDeparture?.departure_location && (
-              <span className="d-inline-flex align-items-center gap-1">
-                <Compass size={15} className="text-success" />
-                Khởi hành từ: <strong className="text-dark">{selectedDeparture.departure_location}</strong>
+            {(selectedDeparture?.meeting_point || selectedDeparture?.meeting_point_address) && (
+              <span className="d-inline-flex align-items-center gap-1" title={selectedDeparture.meeting_point || selectedDeparture.meeting_point_address}>
+                <Navigation size={15} className="text-warning" />
+                Điểm tập trung: <strong className="text-dark">{selectedDeparture.meeting_point || selectedDeparture.meeting_point_address}</strong>
               </span>
             )}
           </div>

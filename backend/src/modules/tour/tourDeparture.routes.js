@@ -15,6 +15,9 @@ router.get('/:id', departureIdValidation, departureController.getDepartureById);
 
 // ============ PROTECTED ROUTES — ADMIN quản lý đợt khởi hành ============
 
+// Lấy lịch sử thay đổi của đợt khởi hành
+router.get('/:id/change-logs', authenticate, authorize('ADMIN', 'STAFF'), departureIdValidation, departureController.getChangeLogs);
+
 // Cập nhật đợt khởi hành
 router.patch('/:id', authenticate, authorize('ADMIN', 'STAFF'), updateDepartureValidation, departureController.updateDeparture);
 

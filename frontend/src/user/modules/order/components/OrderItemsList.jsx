@@ -20,7 +20,8 @@ const OrderItemsList = ({ items = [] }) => {
             </div>
             {item.departure_date && (
               <div style={{ fontSize: '12.5px', color: '#64748b' }}>
-                Khởi hành: <strong>{new Date(item.departure_date).toLocaleDateString('vi-VN')}</strong> ({item.departure_location})
+                Khởi hành: <strong>{new Date(item.departure_date).toLocaleDateString('vi-VN')}</strong>
+                {(item.meeting_point || item.departure_location) ? ` • Điểm tập trung: ${item.meeting_point || item.departure_location}` : ''}
               </div>
             )}
             <div style={{ fontSize: '13px', color: '#ea580c', fontWeight: 600, marginTop: '4px' }}>

@@ -2,24 +2,30 @@ const { body, param, query } = require('express-validator');
 
 /**
  * Validation rules cho việc tạo đợt khởi hành mới (Create TourDeparture)
- * Admin chỉ nhập total_slots; booked_slots, reserved_slots do hệ thống quản lý
+ * Yêu cầu: start_datetime (hoặc departure_date), meeting_point (hoặc meeting_point_address), total_slots >= 1
  */
 const createDepartureValidation = [
   param('productId')
     .isMongoId().withMessage('Tour ID không hợp lệ'),
 
+  body('start_datetime')
+    .optional()
+    .isISO8601().withMessage('Ngày giờ bắt đầu tour phải đúng định dạng ISO 8601'),
+
   body('departure_date')
-    .notEmpty().withMessage('Ngày khởi hành là bắt buộc')
+    .optional()
     .isISO8601().withMessage('Ngày khởi hành phải đúng định dạng ISO 8601'),
 
-  body('departure_location')
-    .trim()
-    .notEmpty().withMessage('Điểm khởi hành là bắt buộc'),
-
-  body('vehicle')
-    .optional()
-    .trim()
-    .notEmpty().withMessage('Phương tiện không được để trống'),
+  body().custom((value, { req }) => {
+    if (!req.body.start_datetime && !req.body.departure_date) {
+      throw new Error('Ngày và giờ tour bắt đầu là bắt buộc');
+    }
+    const mp = (req.body.meeting_point || req.body.meeting_point_address || '').trim();
+    if (!mp) {
+      throw new Error('Địa điểm tập trung là bắt buộc');
+    }
+    return true;
+  }),
 
   body('total_slots')
     .notEmpty().withMessage('Tổng số chỗ là bắt buộc')
@@ -28,25 +34,34 @@ const createDepartureValidation = [
 
 /**
  * Validation rules cho việc cập nhật đợt khởi hành (Update TourDeparture)
- * Không cho sửa departure_date nếu đợt đã có Booking (kiểm tra ở service)
  */
 const updateDepartureValidation = [
   param('id')
     .isMongoId().withMessage('ID đợt khởi hành không hợp lệ'),
 
+  body('start_datetime')
+    .optional()
+    .isISO8601().withMessage('Ngày giờ bắt đầu tour phải đúng định dạng ISO 8601'),
+
   body('departure_date')
     .optional()
     .isISO8601().withMessage('Ngày khởi hành phải đúng định dạng ISO 8601'),
 
-  body('departure_location')
+  body('meeting_point')
     .optional()
-    .trim()
-    .notEmpty().withMessage('Điểm khởi hành không được để trống'),
+    .trim(),
 
-  body('vehicle')
+  body('meeting_point_address')
     .optional()
-    .trim()
-    .notEmpty().withMessage('Phương tiện không được để trống'),
+    .trim(),
+
+  body('meeting_point_change_reason')
+    .optional()
+    .trim(),
+
+  body('reason')
+    .optional()
+    .trim(),
 
   body('total_slots')
     .optional()

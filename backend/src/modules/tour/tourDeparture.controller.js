@@ -69,8 +69,18 @@ const getAllDepartures = asyncHandler(async (req, res) => {
  */
 const updateDeparture = asyncHandler(async (req, res) => {
   if (!handleValidation(req, res)) return;
-  const departure = await tourDepartureService.updateDeparture(req.params.id, req.body);
+  const departure = await tourDepartureService.updateDeparture(req.params.id, req.body, req.user);
   ApiResponse.success(res, 200, 'Cập nhật đợt khởi hành thành công', departure);
+});
+
+/**
+ * Controller: Lấy lịch sử thay đổi của đợt khởi hành (ADMIN / STAFF)
+ * HTTP Method: GET /api/departures/:id/change-logs
+ */
+const getChangeLogs = asyncHandler(async (req, res) => {
+  if (!handleValidation(req, res)) return;
+  const logs = await tourDepartureService.getChangeLogs(req.params.id);
+  ApiResponse.success(res, 200, 'Lấy lịch sử thay đổi đợt khởi hành thành công', logs);
 });
 
 /**
@@ -99,6 +109,7 @@ module.exports = {
   createDeparture,
   getAllDepartures,
   updateDeparture,
+  getChangeLogs,
   changeDepartureStatus,
   deleteDeparture,
 };

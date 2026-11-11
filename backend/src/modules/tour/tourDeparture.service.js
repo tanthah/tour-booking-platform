@@ -1,16 +1,21 @@
 const mongoose = require('mongoose');
 const TourDeparture = require('./tourDeparture.model');
 const Tour = require('./tour.model');
+const DepartureChangeLog = require('./departureChangeLog.model');
+const Order = require('../order/order.model');
+const emailService = require('../email/email.service');
 
 /**
- * TourDepartureService — Xử lý logic nghiệp vụ đợt khởi hành
- * Mỗi đợt thuộc 1 Tour, dùng chung giá từ Tour
- * Sức chứa quản lý riêng; available_slots = total_slots - booked - reserved
+ * TourDepartureService — Xử lý logic nghiệp vụ đợt/lịch khởi hành
+ * Phiên bản cập nhật:
+ * - Quản lý ngày giờ bắt đầu tour (start_datetime) và địa điểm tập trung (meeting_point).
+ * - Quản lý sức chứa (total_slots, booked_slots, reserved_slots, available_slots).
+ * - Lưu lịch sử và gửi thông báo khi thay đổi địa điểm tập trung.
  */
 class TourDepartureService {
   /**
    * Tạo đợt khởi hành mới cho Tour
-   * Điều kiện: Tour phải ACTIVE, ngày khởi hành phải trong tương lai
+   * Điều kiện: Tour phải ACTIVE, ngày bắt đầu phải trong tương lai
    */
   async createDeparture(productId, data) {
     const tour = await Tour.findOne({ _id: productId, deleted_at: null });
@@ -26,26 +31,33 @@ class TourDepartureService {
       throw error;
     }
 
-    // Kiểm tra ngày khởi hành phải trong tương lai
-    const departureDate = new Date(data.departure_date);
-    if (departureDate <= new Date()) {
-      const error = new Error('Ngày khởi hành phải là thời điểm trong tương lai');
+    // Kiểm tra ngày bắt đầu phải trong tương lai
+    const startDatetime = new Date(data.start_datetime || data.departure_date);
+    if (isNaN(startDatetime.getTime()) || startDatetime <= new Date()) {
+      const error = new Error('Ngày giờ bắt đầu tour phải là thời điểm trong tương lai');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const meetingPoint = (data.meeting_point || data.meeting_point_address || '').trim();
+    if (!meetingPoint) {
+      const error = new Error('Địa điểm tập trung là bắt buộc');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const totalSlots = Number(data.total_slots);
+    if (!totalSlots || totalSlots < 1) {
+      const error = new Error('Tổng số chỗ phải lớn hơn hoặc bằng 1');
       error.statusCode = 400;
       throw error;
     }
 
     const departure = new TourDeparture({
       product_id: productId,
-      departure_date: departureDate,
-      departure_location: data.departure_location,
-      vehicle: data.vehicle || 'Ô tô 45 chỗ',
-      meeting_point_address: data.meeting_point_address || '',
-      meeting_point_map_url: data.meeting_point_map_url || '',
-      meeting_time: data.meeting_time || '',
-      start_time: data.start_time || '',
-      end_location: data.end_location || '',
-      contact_info: data.contact_info || '',
-      total_slots: data.total_slots,
+      start_datetime: startDatetime,
+      meeting_point: meetingPoint,
+      total_slots: totalSlots,
       booked_slots: 0,
       reserved_slots: 0,
       status: 'OPEN',
@@ -56,22 +68,23 @@ class TourDepartureService {
   }
 
   /**
-   * Lấy danh sách đợt khởi hành của 1 Tour (Public — chỉ OPEN, còn chỗ)
+   * Lấy danh sách đợt khởi hành của 1 Tour (Public — chỉ OPEN, còn hạn)
    */
   async getPublicDepartures(productId) {
     const departures = await TourDeparture.find({
       product_id: productId,
       status: 'OPEN',
       deleted_at: null,
-      departure_date: { $gt: new Date() },
+      start_datetime: { $gt: new Date() },
     })
-      .sort({ departure_date: 1 })
+      .sort({ start_datetime: 1 })
       .lean();
 
-    // Thêm available_slots (virtual không có trong lean)
     return departures.map((d) => ({
       ...d,
-      available_slots: d.total_slots - d.booked_slots - d.reserved_slots,
+      available_slots: (d.total_slots || 0) - (d.booked_slots || 0) - (d.reserved_slots || 0),
+      departure_date: d.start_datetime, // Hỗ trợ tương thích ngược
+      meeting_point_address: d.meeting_point, // Hỗ trợ tương thích ngược
     }));
   }
 
@@ -88,17 +101,18 @@ class TourDepartureService {
 
     const [departures, total] = await Promise.all([
       TourDeparture.find(filter)
-        .sort({ departure_date: 1 })
+        .sort({ start_datetime: 1 })
         .skip(skip)
         .limit(Number(limit))
         .lean(),
       TourDeparture.countDocuments(filter),
     ]);
 
-    // Thêm available_slots (virtual không có trong lean)
     const result = departures.map((d) => ({
       ...d,
-      available_slots: d.total_slots - d.booked_slots - d.reserved_slots,
+      available_slots: (d.total_slots || 0) - (d.booked_slots || 0) - (d.reserved_slots || 0),
+      departure_date: d.start_datetime, // Hỗ trợ tương thích ngược
+      meeting_point_address: d.meeting_point, // Hỗ trợ tương thích ngược
     }));
 
     return {
@@ -127,15 +141,19 @@ class TourDepartureService {
       throw error;
     }
 
-    departure.available_slots = departure.total_slots - departure.booked_slots - departure.reserved_slots;
+    departure.available_slots = (departure.total_slots || 0) - (departure.booked_slots || 0) - (departure.reserved_slots || 0);
+    departure.departure_date = departure.start_datetime;
+    departure.meeting_point_address = departure.meeting_point;
     return departure;
   }
 
   /**
    * Cập nhật đợt khởi hành (Admin)
-   * Không cho sửa ngày nếu đã có booking; không cho giảm total_slots < booked + reserved
+   * - Không cho sửa ngày nếu đã có booking
+   * - Không cho giảm total_slots < booked + reserved
+   * - Nếu đổi meeting_point: bắt buộc nhập lý do và lưu lịch sử DepartureChangeLog
    */
-  async updateDeparture(departureId, updateData) {
+  async updateDeparture(departureId, updateData, adminUser = null) {
     const departure = await TourDeparture.findOne({ _id: departureId, deleted_at: null });
     if (!departure) {
       const error = new Error('Đợt khởi hành không tồn tại');
@@ -143,44 +161,164 @@ class TourDepartureService {
       throw error;
     }
 
-    // Không cho sửa ngày khởi hành nếu đã có booking
-    if (updateData.departure_date && departure.booked_slots > 0) {
-      const error = new Error(
-        'Không thể sửa ngày khởi hành khi đã có booking. Hãy hủy đợt này và tạo đợt mới'
-      );
-      error.statusCode = 400;
-      throw error;
+    // Không cho sửa ngày giờ nếu đã có booking
+    const newDatetimeInput = updateData.start_datetime || updateData.departure_date;
+    if (newDatetimeInput) {
+      const newDatetime = new Date(newDatetimeInput);
+      const currentDatetime = new Date(departure.start_datetime || departure.departure_date);
+      if (newDatetime.getTime() !== currentDatetime.getTime() && departure.booked_slots > 0) {
+        const error = new Error(
+          'Không thể sửa ngày giờ bắt đầu tour khi đã có booking. Hãy hủy đợt này và tạo đợt mới'
+        );
+        error.statusCode = 400;
+        throw error;
+      }
+      departure.start_datetime = newDatetime;
     }
 
     // Không cho giảm total_slots xuống thấp hơn booked + reserved
     if (updateData.total_slots !== undefined) {
       const minSlots = departure.booked_slots + departure.reserved_slots;
-      if (updateData.total_slots < minSlots) {
+      if (Number(updateData.total_slots) < minSlots) {
         const error = new Error(
           `Tổng số chỗ không được nhỏ hơn ${minSlots} (đã đặt: ${departure.booked_slots}, giữ tạm: ${departure.reserved_slots})`
         );
         error.statusCode = 400;
         throw error;
       }
+      departure.total_slots = Number(updateData.total_slots);
     }
 
-    // Whitelist trường được phép sửa
-    const allowedFields = [
-      'departure_date', 'departure_location', 'vehicle', 'total_slots',
-      'meeting_point_address', 'meeting_point_map_url', 'meeting_time',
-      'start_time', 'end_location', 'contact_info',
-    ];
-    allowedFields.forEach((key) => {
-      if (updateData[key] !== undefined) {
-        departure[key] = updateData[key];
+    // Kiểm tra thay đổi địa điểm tập trung (meeting_point)
+    const newMeetingPointInput = updateData.meeting_point !== undefined 
+      ? updateData.meeting_point 
+      : updateData.meeting_point_address;
+
+    if (newMeetingPointInput !== undefined) {
+      const oldMeetingPoint = (departure.meeting_point || departure.meeting_point_address || '').trim();
+      const newMeetingPoint = (newMeetingPointInput || '').trim();
+
+      if (newMeetingPoint !== oldMeetingPoint) {
+        const changeReason = (updateData.meeting_point_change_reason || updateData.reason || '').trim();
+        if (!changeReason) {
+          const error = new Error('Bắt buộc phải nhập lý do khi thay đổi địa điểm tập trung');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        // Lưu bản ghi lịch sử DepartureChangeLog
+        const changeLog = new DepartureChangeLog({
+          departure_id: departure._id,
+          field: 'meeting_point',
+          old_value: oldMeetingPoint || '(Chưa cấu hình)',
+          new_value: newMeetingPoint,
+          reason: changeReason,
+          changed_by: adminUser?._id || null,
+          changed_at: new Date(),
+        });
+        await changeLog.save();
+
+        departure.meeting_point = newMeetingPoint;
+
+        // Gửi email thông báo bất đồng bộ (fire-and-forget), không làm block request
+        this._notifyCustomersAboutMeetingPointChange(
+          departure,
+          oldMeetingPoint || '(Chưa cấu hình)',
+          newMeetingPoint,
+          changeReason
+        ).catch((err) =>
+          console.error('[TourDepartureService] Gửi email thông báo thất bại:', err?.message)
+        );
       }
-    });
+    }
 
     await departure.save();
 
     const result = departure.toObject();
-    result.available_slots = departure.total_slots - departure.booked_slots - departure.reserved_slots;
+    result.available_slots = (departure.total_slots || 0) - (departure.booked_slots || 0) - (departure.reserved_slots || 0);
+    result.departure_date = departure.start_datetime;
+    result.meeting_point_address = departure.meeting_point;
     return result;
+  }
+
+  /**
+   * Lấy danh sách lịch sử thay đổi của đợt khởi hành
+   */
+  async getChangeLogs(departureId) {
+    const logs = await DepartureChangeLog.find({ departure_id: departureId })
+      .sort({ changed_at: -1 })
+      .populate('changed_by', 'full_name email')
+      .lean();
+    return logs;
+  }
+
+  /**
+   * Helper gửi email thông báo cho khách hàng có booking hợp lệ khi đổi địa điểm tập trung
+   * @private
+   */
+  async _notifyCustomersAboutMeetingPointChange(departure, oldMeetingPoint, newMeetingPoint, reason) {
+    try {
+      const tour = await Tour.findById(departure.product_id).select('title').lean();
+      const tourTitle = tour?.title || 'Tour du lịch';
+
+      // Tìm tất cả đơn hàng hợp lệ có chứa đợt khởi hành này
+      const activeOrders = await Order.find({
+        'items.departure_id': departure._id,
+        order_status: { $in: ['PENDING_PAYMENT', 'DEPOSIT_CONFIRMED', 'CONFIRMED'] },
+      }).lean();
+
+      if (!activeOrders || activeOrders.length === 0) return;
+
+      const dateStr = (departure.start_datetime || departure.departure_date)
+        ? new Date(departure.start_datetime || departure.departure_date).toLocaleDateString('vi-VN', {
+            weekday: 'long',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : '';
+
+      // Thu thập danh sách email duy nhất (không trùng lặp)
+      const recipientsMap = new Map();
+
+      for (const order of activeOrders) {
+        if (order.customer_info?.email) {
+          recipientsMap.set(order.customer_info.email.toLowerCase().trim(), {
+            email: order.customer_info.email.trim(),
+            name: order.customer_info.full_name || 'Quý khách',
+          });
+        }
+
+        if (Array.isArray(order.booking_customers)) {
+          for (const cust of order.booking_customers) {
+            if (cust.email) {
+              const custEmail = cust.email.toLowerCase().trim();
+              if (!recipientsMap.has(custEmail)) {
+                recipientsMap.set(custEmail, {
+                  email: cust.email.trim(),
+                  name: cust.full_name || 'Quý khách',
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Gửi email cho từng khách hàng
+      for (const recipient of recipientsMap.values()) {
+        await emailService.sendMeetingPointChangeEmail(recipient.email, recipient.name, {
+          tourTitle,
+          departureDate: dateStr,
+          oldMeetingPoint,
+          newMeetingPoint,
+          reason,
+        });
+      }
+    } catch (error) {
+      console.error('[TourDepartureService._notifyCustomersAboutMeetingPointChange] Lỗi:', error);
+    }
   }
 
   /**

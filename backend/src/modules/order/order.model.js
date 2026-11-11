@@ -89,6 +89,10 @@ const orderItemSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    meeting_point: {
+      type: String,
+      default: '',
+    },
     duration: {
       type: String,
       default: '',
