@@ -1,5 +1,5 @@
 import { Form, Button } from 'react-bootstrap';
-import { Heart, Calendar, Clock, MapPin, Car, CheckCircle2 } from 'lucide-react';
+import { Heart, Calendar, Clock, MapPin, CheckCircle2 } from 'lucide-react';
 
 /**
  * TourBookingCard Component - Khối đặt tour và chọn số lượng hành khách
@@ -58,10 +58,12 @@ const TourBookingCard = ({
             {departures.map((dep) => {
               const isSelected = selectedDeparture?._id === dep._id;
               const isAvailable = (dep.available_slots ?? (dep.total_slots - dep.booked_slots - dep.reserved_slots)) > 0 && dep.status === 'OPEN';
-              const depDate = new Date(dep.departure_date);
+              const depDate = new Date(dep.start_datetime || dep.departure_date);
               const dayOfWeek = depDate.toLocaleDateString('vi-VN', { weekday: 'short' });
               const dateStr = depDate.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+              const timeStr = depDate.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
               const currentSlots = dep.available_slots ?? (dep.total_slots - dep.booked_slots - dep.reserved_slots);
+              const meetingPoint = dep.meeting_point || dep.meeting_point_address;
 
               return (
                 <div
@@ -76,13 +78,17 @@ const TourBookingCard = ({
                       <div className="d-flex align-items-center gap-1">
                         <span className="tour-departure-weekday">{dayOfWeek}</span>
                         <strong className="tour-departure-date">{dateStr}</strong>
+                        <span className="text-muted ms-1" style={{ fontSize: '11.5px' }}>({timeStr})</span>
                         {isSelected && (
                           <CheckCircle2 size={14} className="text-success ms-1" />
                         )}
                       </div>
                       <div className="tour-departure-subinfo">
-                        <span>{dep.departure_location}</span>
-                        {dep.vehicle && <span> • {dep.vehicle}</span>}
+                        {meetingPoint && (
+                          <div style={{ fontSize: '11.5px', color: '#64748b', marginTop: '2px' }} title={meetingPoint}>
+                            📍 Tập trung: {meetingPoint.length > 35 ? meetingPoint.slice(0, 35) + '...' : meetingPoint}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="text-end">
@@ -137,16 +143,28 @@ const TourBookingCard = ({
           <>
             <div className="d-flex justify-content-between py-1">
               <span className="text-muted d-flex align-items-center gap-1">
-                <Car size={13} /> Phương tiện:
+                <Clock size={13} /> Thời gian bắt đầu:
               </span>
-              <strong className="text-dark">{selectedDeparture.vehicle || 'Ô tô'}</strong>
+              <strong className="text-dark">
+                {new Date(selectedDeparture.start_datetime || selectedDeparture.departure_date).toLocaleString('vi-VN', {
+                  dateStyle: 'short',
+                  timeStyle: 'short',
+                })}
+              </strong>
             </div>
-            <div className="d-flex justify-content-between py-1">
-              <span className="text-muted d-flex align-items-center gap-1">
-                <Calendar size={13} /> Khởi hành từ:
-              </span>
-              <strong className="text-dark">{selectedDeparture.departure_location}</strong>
-            </div>
+            {(selectedDeparture.meeting_point || selectedDeparture.meeting_point_address) && (
+              <div className="py-2 border-top mt-1" style={{ fontSize: '12px' }}>
+                <div className="text-muted d-flex align-items-center gap-1 mb-1">
+                  <MapPin size={13} className="text-danger" /> <strong>Địa điểm tập trung:</strong>
+                </div>
+                <div className="text-dark ps-3 fw-medium">
+                  {selectedDeparture.meeting_point || selectedDeparture.meeting_point_address}
+                </div>
+                <div className="text-muted ps-3 mt-1" style={{ fontSize: '11px', fontStyle: 'italic' }}>
+                  * Khách tự túc di chuyển đến địa điểm tập trung đúng giờ.
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

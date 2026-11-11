@@ -56,9 +56,11 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
         <div className="cart-item-meta">
           Ngày Khởi Hành: <strong>{formatDate(item.departure_date)}</strong>
         </div>
-        <div className="cart-item-meta">
-          Khởi Hành Tại: <strong>{item.departure_location}</strong>
-        </div>
+        {(item.meeting_point || item.departure_location) && (
+          <div className="cart-item-meta">
+            Điểm Tập Trung: <strong>{item.meeting_point || item.departure_location}</strong>
+          </div>
+        )}
         {/* Cảnh báo tour đã qua ngày khởi hành */}
         {item.is_departure_passed && (
           <div className="cart-item-warning">

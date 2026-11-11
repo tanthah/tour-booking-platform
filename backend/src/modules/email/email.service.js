@@ -76,6 +76,72 @@ const buildForgotPasswordTemplate = (otp) => {
   `;
 };
 
+/**
+ * Template email thông báo thay đổi địa điểm tập trung chuyến đi
+ */
+const buildMeetingPointChangeTemplate = (customerName, data) => {
+  const {
+    tourTitle = 'Chuyến đi của bạn',
+    departureDate = '',
+    oldMeetingPoint = '(Chưa xác định)',
+    newMeetingPoint = '',
+    reason = '',
+    meetingTime = '',
+    contactInfo = '',
+  } = data;
+
+  return `
+    <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px;">
+      <div style="background:linear-gradient(135deg,#e11d48 0%,#ea580c 100%);padding:36px 30px;border-radius:16px 16px 0 0;text-align:center;">
+        <h1 style="color:#fff;margin:0;font-size:24px;letter-spacing:-0.5px;">📢 THÔNG BÁO THAY ĐỔI ĐỊA ĐIỂM TẬP TRUNG</h1>
+        <p style="color:rgba(255,255,255,0.9);margin:8px 0 0;font-size:14px;">Tour Booking Platform</p>
+      </div>
+      <div style="background:#fff;padding:36px 32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,0.10);">
+        <p style="color:#1e293b;font-size:16px;margin:0 0 16px;">
+          Kính gửi Quý khách <strong>${customerName || 'Quý khách'}</strong>,
+        </p>
+        <p style="color:#475569;line-height:1.7;margin:0 0 20px;">
+          Ban tổ chức xin trân trọng thông báo về việc <strong>cập nhật địa điểm tập trung</strong> cho chuyến đi của Quý khách như sau:
+        </p>
+
+        <div style="background:#f8fafc;border-left:4px solid #ea580c;padding:16px 20px;border-radius:8px;margin-bottom:20px;">
+          <p style="margin:4px 0;color:#334155;"><strong>Tour:</strong> ${tourTitle}</p>
+          ${departureDate ? `<p style="margin:4px 0;color:#334155;"><strong>Ngày khởi hành:</strong> ${departureDate}</p>` : ''}
+          ${meetingTime ? `<p style="margin:4px 0;color:#334155;"><strong>Giờ tập trung:</strong> ${meetingTime}</p>` : ''}
+        </div>
+
+        <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:10px;padding:16px 20px;margin-bottom:16px;">
+          <p style="margin:0 0 8px;color:#9f1239;font-size:13px;font-weight:600;text-transform:uppercase;">Địa điểm tập trung cũ</p>
+          <p style="margin:0;color:#881337;font-size:15px;text-decoration:line-through;">${oldMeetingPoint}</p>
+        </div>
+
+        <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px 20px;margin-bottom:20px;">
+          <p style="margin:0 0 8px;color:#166534;font-size:13px;font-weight:700;text-transform:uppercase;">🎯 ĐỊA ĐIỂM TẬP TRUNG MỚI (CHÍNH THỨC)</p>
+          <p style="margin:0;color:#14532d;font-size:16px;font-weight:700;">${newMeetingPoint}</p>
+        </div>
+
+        <div style="background:#f8fafc;border-radius:8px;padding:14px 18px;margin-bottom:20px;">
+          <p style="margin:0 0 4px;color:#64748b;font-size:13px;font-weight:600;">Lý do điều chỉnh:</p>
+          <p style="margin:0;color:#334155;font-style:italic;line-height:1.6;">"${reason}"</p>
+        </div>
+
+        ${contactInfo ? `
+        <p style="color:#475569;font-size:14px;line-height:1.6;margin:0 0 20px;">
+          📞 Mọi thắc mắc hoặc cần hỗ trợ thêm, Quý khách vui lòng liên hệ: <strong>${contactInfo}</strong>
+        </p>
+        ` : ''}
+
+        <p style="color:#64748b;font-size:13px;line-height:1.6;margin:0;">
+          Rất mong nhận được sự thông cảm từ Quý khách vì sự thay đổi bất tiện này. Chúc Quý khách có một chuyến đi an toàn và trọn vẹn!
+        </p>
+      </div>
+      <p style="text-align:center;color:#cbd5e1;font-size:12px;margin-top:20px;">
+        © 2026 Tour Booking Platform · Mọi quyền được bảo lưu.
+      </p>
+    </div>
+  `;
+};
+
 // ============================================================
 //  EMAIL SERVICE FUNCTIONS - Các hàm gửi email theo mục đích
 // ============================================================
@@ -103,7 +169,20 @@ const sendForgotPasswordEmail = async (to, otp) => {
   await sendMail(to, subject, html);
 };
 
+/**
+ * Gửi email thông báo thay đổi địa điểm tập trung chuyến đi
+ * @param {string} to - Email người nhận
+ * @param {string} customerName - Tên khách hàng
+ * @param {object} data - Thông tin tour, địa điểm cũ, mới, lý do
+ */
+const sendMeetingPointChangeEmail = async (to, customerName, data) => {
+  const subject = `📢 Thông báo cập nhật địa điểm tập trung tour ${data.tourTitle || ''} - Tour Booking Platform`;
+  const html = buildMeetingPointChangeTemplate(customerName, data);
+  await sendMail(to, subject, html);
+};
+
 module.exports = {
   sendWelcomeOtpEmail,
   sendForgotPasswordEmail,
+  sendMeetingPointChangeEmail,
 };

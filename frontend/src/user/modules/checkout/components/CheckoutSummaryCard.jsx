@@ -69,10 +69,10 @@ const CheckoutSummaryCard = ({
                 <Calendar size={14} color="#ea580c" />
                 <span>Ngày đi: <strong className="text-dark">{formatDepartureDate(item.departure_date)}</strong></span>
               </div>
-              {item.departure_location && (
+              {(item.meeting_point || item.departure_location) && (
                 <div className="d-flex align-items-center gap-2">
                   <MapPin size={14} color="#0284c7" />
-                  <span>Từ: <strong className="text-dark">{item.departure_location}</strong></span>
+                  <span>Điểm tập trung: <strong className="text-dark">{item.meeting_point || item.departure_location}</strong></span>
                 </div>
               )}
               {item.destination_location && (
@@ -85,12 +85,6 @@ const CheckoutSummaryCard = ({
                 <div className="d-flex align-items-center gap-2">
                   <Clock size={14} color="#8b5cf6" />
                   <span>Thời gian: <strong className="text-dark">{item.duration}</strong></span>
-                </div>
-              )}
-              {item.vehicle && (
-                <div className="d-flex align-items-center gap-2">
-                  <Bus size={14} color="#eab308" />
-                  <span>Phương tiện: <strong className="text-dark">{item.vehicle}</strong></span>
                 </div>
               )}
             </div>
