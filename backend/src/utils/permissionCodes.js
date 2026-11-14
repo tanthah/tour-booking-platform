@@ -50,6 +50,12 @@ const PERMISSIONS = {
   ARTICLE_PUBLISH: 'article.publish',
   ARTICLE_MANAGE: 'article.manage',
   ARTICLE_CATEGORY_MANAGE: 'article_category.manage',
+
+  // Quản lý Hành trình Tour (Tour Journey Tracking)
+  JOURNEY_VIEW: 'journey.view',
+  JOURNEY_MANAGE: 'journey.manage',
+  JOURNEY_ADMIN: 'journey.admin',
+  JOURNEY_ASSIGN_GUIDE: 'journey.assign_guide',
 };
 
 const ALL_PERMISSIONS = Object.values(PERMISSIONS);
@@ -152,6 +158,16 @@ const PERMISSION_GROUPS = [
     name: 'Nhật ký hệ thống (Audit Log)',
     permissions: [
       { code: PERMISSIONS.AUDIT_VIEW, name: 'Xem lịch sử thay đổi quyền & trạng thái' },
+    ],
+  },
+  {
+    module: 'Journey',
+    name: 'Hành trình Tour (Tour Journey)',
+    permissions: [
+      { code: PERMISSIONS.JOURNEY_VIEW, name: 'Xem hành trình tour được phân công' },
+      { code: PERMISSIONS.JOURNEY_MANAGE, name: 'Bắt đầu, kết thúc, cập nhật điểm & điều chỉnh lịch trình được phân công' },
+      { code: PERMISSIONS.JOURNEY_ADMIN, name: 'Giám sát & can thiệp tất cả hành trình' },
+      { code: PERMISSIONS.JOURNEY_ASSIGN_GUIDE, name: 'Phân công nhân viên hướng dẫn cho hành trình' },
     ],
   },
 ];

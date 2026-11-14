@@ -7,6 +7,7 @@ const adminAuditRoutes = require('./adminAudit.routes');
 const adminRoleController = require('./adminRole.controller');
 const articleAdminRoutes = require('../article/articleAdmin.routes');
 const articleCategoryAdminRoutes = require('../article/articleCategoryAdmin.routes');
+const journeyAdminRoutes = require('../journey/journeyAdmin.routes');
 const { authenticate } = require('../../middlewares/auth.middleware');
 const requirePermission = require('../../middlewares/requirePermission');
 const { PERMISSIONS } = require('../../utils/permissionCodes');
@@ -33,5 +34,8 @@ router.use('/articles', articleAdminRoutes);
 
 // Quản lý Danh mục Tin tức: /api/admin/article-categories
 router.use('/article-categories', articleCategoryAdminRoutes);
+
+// Quản lý Hành trình Tour (Admin): /api/admin/journeys
+router.use('/journeys', journeyAdminRoutes);
 
 module.exports = router;
