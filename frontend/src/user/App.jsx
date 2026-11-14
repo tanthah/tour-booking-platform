@@ -12,6 +12,8 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ArticleListPage from './pages/ArticleListPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
+import MyJourneys from './modules/journey/pages/MyJourneys';
+import JourneyDetail from './modules/journey/pages/JourneyDetail';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
@@ -109,6 +111,8 @@ function App() {
                 <Route path="/gio-hang" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/don-hang/:id" element={<OrderDetailPage />} />
+                <Route path="/my-journeys" element={user ? <MyJourneys /> : <HomePage />} />
+                <Route path="/journey/:journeyId" element={user ? <JourneyDetail /> : <HomePage />} />
                 <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
               </Routes>
             </div>

@@ -15,6 +15,8 @@ import Articles from './modules/article/pages/ArticleManagement';
 import ArticleForm from './modules/article/pages/ArticleForm';
 import ArticleCategories from './modules/article/pages/ArticleCategories';
 import ArticleReviewQueue from './modules/article/pages/ArticleReviewQueue';
+import JourneyList from './modules/journey/pages/JourneyList';
+import JourneyManage from './modules/journey/pages/JourneyManage';
 import './index.css';
 
 function App() {
@@ -26,6 +28,11 @@ function App() {
 
         {/* Routes quản lý Đơn hàng */}
         <Route path="orders" element={<Orders />} />
+
+        {/* Routes Hành trình Tour (Admin giám sát & Staff điều hành) */}
+        <Route path="journeys" element={<JourneyList />} />
+        <Route path="my-journeys" element={<JourneyList mode="staff" />} />
+        <Route path="journeys/:journeyId" element={<JourneyManage />} />
 
         {/* Routes quản lý Tin tức */}
         <Route path="articles" element={<Articles />} />
