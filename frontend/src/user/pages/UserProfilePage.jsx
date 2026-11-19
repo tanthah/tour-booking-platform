@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Nav, Card, Form, Button, Spinner, ToastContainer, Toast } from 'react-bootstrap';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { User as UserIcon, Package, Heart, LogOut, Camera } from 'lucide-react';
+import { User as UserIcon, Package, Heart, LogOut, Camera, Sparkles } from 'lucide-react';
 import axiosClient from '../config/axiosClient';
 import UserOrdersList from '../modules/order/components/UserOrdersList';
+import MySouvenirCardsList from '../modules/souvenir/components/MySouvenirCardsList';
 import '../assets/styles/tour.css';
 
 const UserProfilePage = ({ user, setUser }) => {
@@ -14,14 +15,14 @@ const UserProfilePage = ({ user, setUser }) => {
   // Xác định tab ban đầu: Ưu tiên URL param ?tab=, kế đến location.state, kế đến localStorage, mặc định 'profile'
   const getInitialTab = () => {
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && ['profile', 'orders', 'wishlist'].includes(tabFromUrl)) {
+    if (tabFromUrl && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(tabFromUrl)) {
       return tabFromUrl;
     }
-    if (location.state?.tab && ['profile', 'orders', 'wishlist'].includes(location.state.tab)) {
+    if (location.state?.tab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(location.state.tab)) {
       return location.state.tab;
     }
     const savedTab = localStorage.getItem('user_profile_active_tab');
-    if (savedTab && ['profile', 'orders', 'wishlist'].includes(savedTab)) {
+    if (savedTab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(savedTab)) {
       return savedTab;
     }
     return 'profile';
@@ -46,7 +47,7 @@ const UserProfilePage = ({ user, setUser }) => {
   // Lắng nghe nếu searchParams hoặc location.state thay đổi từ bên ngoài
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && tabFromUrl !== activeTab && ['profile', 'orders', 'wishlist'].includes(tabFromUrl)) {
+    if (tabFromUrl && tabFromUrl !== activeTab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
       localStorage.setItem('user_profile_active_tab', tabFromUrl);
     } else if (location.state?.tab && location.state.tab !== activeTab) {
@@ -340,6 +341,16 @@ const UserProfilePage = ({ user, setUser }) => {
 
               <Nav.Item>
                 <Nav.Link
+                  eventKey="souvenirs"
+                  className={`user-sidebar-link ${activeTab === 'souvenirs' ? 'active' : ''}`}
+                >
+                  <Camera size={17} />
+                  <span>Kỷ niệm chuyến đi</span>
+                </Nav.Link>
+              </Nav.Item>
+
+              <Nav.Item>
+                <Nav.Link
                   onClick={handleLogout}
                   className="user-sidebar-link nav-link-logout"
                 >
@@ -442,6 +453,21 @@ const UserProfilePage = ({ user, setUser }) => {
                   <div className="text-center py-5 text-muted bg-light rounded-3">
                     Chưa có tour nào trong danh sách yêu thích
                   </div>
+                </div>
+              )}
+
+              {/* TAB 4: KỶ NIỆM CHUYẾN ĐI */}
+              {activeTab === 'souvenirs' && (
+                <div>
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                      <h4 className="mb-1" style={{ color: '#ea580c', fontWeight: 700 }}>Kỷ niệm chuyến đi</h4>
+                      <p className="text-muted mb-0" style={{ fontSize: '13.5px' }}>
+                        Xem lại thiệp tri ân và album ảnh từ những hành trình bạn đã hoàn thành
+                      </p>
+                    </div>
+                  </div>
+                  <MySouvenirCardsList />
                 </div>
               )}
             </Card.Body>

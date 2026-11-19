@@ -9,9 +9,11 @@
     "test:rbac": "node test/testRbacSecurity.js",
     "test:edge": "node test/test_edge_cases.js",
     "test:order": "node test/test_order_module.js",
-    "test:journey": "node test/test_journey_module.js"
+    "test:journey": "node test/test_journey_module.js",
+    "test:souvenir": "node test/test_souvenir_module.js"
   },
   "dependencies": {
+    "archiver": "^8.0.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.11.0",
     "cors": "^2.8.5",

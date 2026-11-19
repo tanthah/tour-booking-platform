@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText, Inbox, Navigation } from 'lucide-react';
+import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText, Inbox, Navigation, Camera, Sparkles } from 'lucide-react';
 
 function getStoredUser() {
   try {
@@ -109,6 +109,26 @@ function Sidebar() {
           >
             <Compass size={20} />
             <span>Hành trình phụ trách</span>
+          </NavLink>
+        )}
+
+        {(isAdmin || isStaff || hasPerm(['souvenir.album.view', 'souvenir.card.view'])) && (
+          <NavLink 
+            to="/admin/souvenirs" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Camera size={20} />
+            <span>Thiệp & Album kỷ niệm</span>
+          </NavLink>
+        )}
+
+        {(isAdmin || hasPerm('souvenir.card.review')) && (
+          <NavLink 
+            to="/admin/souvenirs/review-queue" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Sparkles size={20} />
+            <span>Hộp duyệt Thiệp</span>
           </NavLink>
         )}
 
