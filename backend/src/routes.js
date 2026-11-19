@@ -1,0 +1,66 @@
+const express = require('express');
+const router = express.Router();
+
+// Import router của các sub-module
+const userRoutes = require('./modules/user/user.routes');
+const tourRoutes = require('./modules/tour/tour.routes');
+const departureRoutes = require('./modules/tour/tourDeparture.routes');
+const categoryRoutes = require('./modules/category/category.routes');
+const uploadRoutes = require('./modules/upload/upload.routes');
+const cartRoutes = require('./modules/cart/cart.routes');
+const orderRoutes = require('./modules/order/order.routes');
+const settingRoutes = require('./modules/setting/setting.routes');
+const couponRoutes = require('./modules/coupon/coupon.routes');
+const paymentRoutes = require('./modules/payment/payment.routes');
+const articleRoutes = require('./modules/article/article.routes');
+const reviewRoutes = require('./modules/review/review.routes');
+const adminRoutes = require('./modules/admin/admin.routes');
+const journeyRoutes = require('./modules/journey/journey.routes');
+const souvenirRoutes = require('./modules/souvenir/souvenir.routes');
+
+// Đăng ký các Endpoint phân hệ User & Authentication theo prefix /auth
+router.use('/auth', userRoutes);
+
+// Đăng ký các Endpoint phân hệ Tour theo prefix /tours (bao gồm đợt khởi hành nested)
+router.use('/tours', tourRoutes);
+
+// Đăng ký các Endpoint Đợt khởi hành theo prefix /departures (dùng departure ID)
+router.use('/departures', departureRoutes);
+
+// Đăng ký các Endpoint phân hệ Danh mục theo prefix /categories
+router.use('/categories', categoryRoutes);
+
+// Đăng ký các Endpoint Upload ảnh theo prefix /upload
+router.use('/upload', uploadRoutes);
+
+// Đăng ký các Endpoint phân hệ Giỏ hàng theo prefix /cart
+router.use('/cart', cartRoutes);
+
+// Đăng ký các Endpoint phân hệ Đơn hàng theo prefix /orders
+router.use('/orders', orderRoutes);
+
+// Đăng ký các Endpoint phân hệ Cài đặt chung theo prefix /settings
+router.use('/settings', settingRoutes);
+
+// Đăng ký các Endpoint phân hệ Mã giảm giá theo prefix /coupons
+router.use('/coupons', couponRoutes);
+
+// Đăng ký các Endpoint phân hệ Thanh toán ZaloPay theo prefix /payments
+router.use('/payments', paymentRoutes);
+
+// Đăng ký các Endpoint phân hệ Tin tức du lịch theo prefix /articles
+router.use('/articles', articleRoutes);
+
+// Đăng ký các Endpoint phân hệ Đánh giá Tour theo prefix /reviews
+router.use('/reviews', reviewRoutes);
+
+// Đăng ký các Endpoint Quản trị phân quyền & tài khoản theo prefix /admin
+router.use('/admin', adminRoutes);
+
+// Đăng ký các Endpoint phân hệ Hành trình Tour (Tour Journey Tracking)
+router.use('/journeys', journeyRoutes);
+
+// Đăng ký các Endpoint phân hệ Thiệp điện tử & Album kỷ niệm chuyến đi
+router.use('/souvenirs', souvenirRoutes);
+
+module.exports = router;

@@ -1,0 +1,221 @@
+/**
+ * Danh mục mã quyền (Permission Codes) tập trung cho toàn hệ thống
+ */
+
+const PERMISSIONS = {
+  // Quản lý Tour
+  TOUR_VIEW: 'tour.view',
+  TOUR_CREATE: 'tour.create',
+  TOUR_UPDATE: 'tour.update',
+  TOUR_DELETE: 'tour.delete',
+
+  // Quản lý Lịch khởi hành
+  SCHEDULE_VIEW: 'schedule.view',
+  SCHEDULE_CREATE: 'schedule.create',
+  SCHEDULE_UPDATE: 'schedule.update',
+  SCHEDULE_DELETE: 'schedule.delete',
+
+  // Quản lý Danh mục Tour
+  CATEGORY_MANAGE: 'category.manage',
+
+  // Quản lý Đơn hàng
+  BOOKING_VIEW: 'booking.view',
+  BOOKING_MANAGE: 'booking.manage',
+
+  // Quản lý Mã giảm giá (Coupon)
+  COUPON_VIEW: 'coupon.view',
+  COUPON_MANAGE: 'coupon.manage',
+
+  // Tải lên tệp/ảnh
+  UPLOAD_IMAGE: 'upload.image',
+
+  // Quản lý Người dùng
+  USER_VIEW: 'user.view',
+  USER_MANAGE: 'user.manage',
+
+  // Quản lý Vai trò & Phân quyền
+  ROLE_MANAGE: 'role.manage',
+
+  // Cài đặt hệ thống
+  SETTINGS_MANAGE: 'settings.manage',
+
+  // Xem lịch sử Audit Log
+  AUDIT_VIEW: 'audit.view',
+
+  // Quản lý Tin tức / Bài viết
+  ARTICLE_VIEW: 'article.view',
+  ARTICLE_CREATE: 'article.create',
+  ARTICLE_UPDATE: 'article.update',
+  ARTICLE_REVIEW: 'article.review',
+  ARTICLE_PUBLISH: 'article.publish',
+  ARTICLE_MANAGE: 'article.manage',
+  ARTICLE_CATEGORY_MANAGE: 'article_category.manage',
+
+  // Quản lý Hành trình Tour (Tour Journey Tracking)
+  JOURNEY_VIEW: 'journey.view',
+  JOURNEY_MANAGE: 'journey.manage',
+  JOURNEY_ADMIN: 'journey.admin',
+  JOURNEY_ASSIGN_GUIDE: 'journey.assign_guide',
+
+  // Quản lý Thiệp điện tử & Album kỷ niệm chuyến đi (Souvenir Card & Album)
+  SOUVENIR_ALBUM_VIEW: 'souvenir.album.view',
+  SOUVENIR_ALBUM_CREATE: 'souvenir.album.create',
+  SOUVENIR_ALBUM_UPDATE: 'souvenir.album.update',
+  SOUVENIR_ALBUM_DELETE: 'souvenir.album.delete',
+  SOUVENIR_PHOTO_UPLOAD: 'souvenir.photo.upload',
+  SOUVENIR_PHOTO_DELETE: 'souvenir.photo.delete',
+  SOUVENIR_PHOTO_ASSIGN: 'souvenir.photo.assign',
+  SOUVENIR_CARD_VIEW: 'souvenir.card.view',
+  SOUVENIR_CARD_CREATE: 'souvenir.card.create',
+  SOUVENIR_CARD_UPDATE: 'souvenir.card.update',
+  SOUVENIR_CARD_PREVIEW: 'souvenir.card.preview',
+  SOUVENIR_CARD_SUBMIT_REVIEW: 'souvenir.card.submit_review',
+  SOUVENIR_CARD_REVIEW: 'souvenir.card.review',
+  SOUVENIR_CARD_PUBLISH: 'souvenir.card.publish',
+  SOUVENIR_CARD_REVOKE: 'souvenir.card.revoke',
+  SOUVENIR_EMAIL_SEND: 'souvenir.email.send',
+  SOUVENIR_EMAIL_RESEND: 'souvenir.email.resend',
+};
+
+const ALL_PERMISSIONS = Object.values(PERMISSIONS);
+
+// Nhóm các quyền theo module để hiển thị trên UI Admin
+const PERMISSION_GROUPS = [
+  {
+    module: 'Article',
+    name: 'Tin tức / Bài viết',
+    permissions: [
+      { code: PERMISSIONS.ARTICLE_VIEW, name: 'Xem danh sách & chi tiết bài viết (quản trị)' },
+      { code: PERMISSIONS.ARTICLE_CREATE, name: 'Tạo bài viết mới' },
+      { code: PERMISSIONS.ARTICLE_UPDATE, name: 'Sửa nội dung bài viết' },
+      { code: PERMISSIONS.ARTICLE_REVIEW, name: 'Duyệt / Yêu cầu chỉnh sửa bài viết' },
+      { code: PERMISSIONS.ARTICLE_PUBLISH, name: 'Xuất bản bài viết đã duyệt' },
+      { code: PERMISSIONS.ARTICLE_MANAGE, name: 'Phân công, lưu trữ, quản lý bài nổi bật' },
+    ],
+  },
+  {
+    module: 'ArticleCategory',
+    name: 'Danh mục Tin tức',
+    permissions: [
+      { code: PERMISSIONS.ARTICLE_CATEGORY_MANAGE, name: 'Toàn quyền danh mục tin tức (Xem, tạo, sửa, trạng thái)' },
+    ],
+  },
+  {
+    module: 'Tour',
+    name: 'Quản lý Tour',
+    permissions: [
+      { code: PERMISSIONS.TOUR_VIEW, name: 'Xem danh sách & chi tiết Tour' },
+      { code: PERMISSIONS.TOUR_CREATE, name: 'Tạo Tour mới' },
+      { code: PERMISSIONS.TOUR_UPDATE, name: 'Cập nhật Tour & trạng thái' },
+      { code: PERMISSIONS.TOUR_DELETE, name: 'Xóa Tour' },
+    ],
+  },
+  {
+    module: 'Schedule',
+    name: 'Lịch khởi hành',
+    permissions: [
+      { code: PERMISSIONS.SCHEDULE_VIEW, name: 'Xem lịch khởi hành' },
+      { code: PERMISSIONS.SCHEDULE_CREATE, name: 'Tạo đợt khởi hành' },
+      { code: PERMISSIONS.SCHEDULE_UPDATE, name: 'Cập nhật lịch khởi hành' },
+      { code: PERMISSIONS.SCHEDULE_DELETE, name: 'Xóa đợt khởi hành' },
+    ],
+  },
+  {
+    module: 'Category',
+    name: 'Danh mục Tour',
+    permissions: [
+      { code: PERMISSIONS.CATEGORY_MANAGE, name: 'Toàn quyền danh mục (Xem, tạo, sửa, xóa)' },
+    ],
+  },
+  {
+    module: 'Booking',
+    name: 'Đơn hàng (Booking)',
+    permissions: [
+      { code: PERMISSIONS.BOOKING_VIEW, name: 'Xem danh sách & chi tiết đơn hàng' },
+      { code: PERMISSIONS.BOOKING_MANAGE, name: 'Cập nhật trạng thái đơn hàng & thanh toán' },
+    ],
+  },
+  {
+    module: 'Coupon',
+    name: 'Mã giảm giá',
+    permissions: [
+      { code: PERMISSIONS.COUPON_VIEW, name: 'Xem danh sách coupon & báo cáo' },
+      { code: PERMISSIONS.COUPON_MANAGE, name: 'Tạo, sửa, xóa, phát hành lô coupon' },
+    ],
+  },
+  {
+    module: 'Media',
+    name: 'Tải lên hình ảnh',
+    permissions: [
+      { code: PERMISSIONS.UPLOAD_IMAGE, name: 'Tải lên hình ảnh tour/tin tức' },
+    ],
+  },
+  {
+    module: 'User',
+    name: 'Người dùng',
+    permissions: [
+      { code: PERMISSIONS.USER_VIEW, name: 'Xem danh sách & chi tiết người dùng' },
+      { code: PERMISSIONS.USER_MANAGE, name: 'Khóa / mở khóa tài khoản người dùng' },
+    ],
+  },
+  {
+    module: 'Role',
+    name: 'Vai trò & Phân quyền',
+    permissions: [
+      { code: PERMISSIONS.ROLE_MANAGE, name: 'Quản lý Role & gán Permission Override' },
+    ],
+  },
+  {
+    module: 'Settings',
+    name: 'Cài đặt hệ thống',
+    permissions: [
+      { code: PERMISSIONS.SETTINGS_MANAGE, name: 'Thay đổi cấu hình hệ thống chung' },
+    ],
+  },
+  {
+    module: 'Audit',
+    name: 'Nhật ký hệ thống (Audit Log)',
+    permissions: [
+      { code: PERMISSIONS.AUDIT_VIEW, name: 'Xem lịch sử thay đổi quyền & trạng thái' },
+    ],
+  },
+  {
+    module: 'Journey',
+    name: 'Hành trình Tour (Tour Journey)',
+    permissions: [
+      { code: PERMISSIONS.JOURNEY_VIEW, name: 'Xem hành trình tour được phân công' },
+      { code: PERMISSIONS.JOURNEY_MANAGE, name: 'Bắt đầu, kết thúc, cập nhật điểm & điều chỉnh lịch trình được phân công' },
+      { code: PERMISSIONS.JOURNEY_ADMIN, name: 'Giám sát & can thiệp tất cả hành trình' },
+      { code: PERMISSIONS.JOURNEY_ASSIGN_GUIDE, name: 'Phân công nhân viên hướng dẫn cho hành trình' },
+    ],
+  },
+  {
+    module: 'Souvenir',
+    name: 'Thiệp điện tử & Album kỷ niệm',
+    permissions: [
+      { code: PERMISSIONS.SOUVENIR_ALBUM_VIEW, name: 'Xem danh sách và chi tiết Album' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_CREATE, name: 'Tạo Album cho đợt khởi hành' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_UPDATE, name: 'Cập nhật thông tin Album' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_DELETE, name: 'Xóa hoặc lưu trữ Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_UPLOAD, name: 'Tải ảnh lên Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_DELETE, name: 'Xóa ảnh khỏi Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_ASSIGN, name: 'Gắn ảnh riêng cho hành khách' },
+      { code: PERMISSIONS.SOUVENIR_CARD_VIEW, name: 'Xem danh sách thiệp điện tử' },
+      { code: PERMISSIONS.SOUVENIR_CARD_CREATE, name: 'Tạo thiệp điện tử cho hành khách' },
+      { code: PERMISSIONS.SOUVENIR_CARD_UPDATE, name: 'Biên tập nội dung và ảnh bìa thiệp' },
+      { code: PERMISSIONS.SOUVENIR_CARD_PREVIEW, name: 'Xem trước thiệp điện tử' },
+      { code: PERMISSIONS.SOUVENIR_CARD_SUBMIT_REVIEW, name: 'Gửi thiệp sang Admin chờ duyệt' },
+      { code: PERMISSIONS.SOUVENIR_CARD_REVIEW, name: 'Duyệt hoặc yêu cầu chỉnh sửa thiệp (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_CARD_PUBLISH, name: 'Phát hành thiệp cho khách hàng (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_CARD_REVOKE, name: 'Thu hồi thiệp đã phát hành (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_EMAIL_SEND, name: 'Gửi email thông báo thiệp cho khách' },
+      { code: PERMISSIONS.SOUVENIR_EMAIL_RESEND, name: 'Gửi lại email khi thất bại' },
+    ],
+  },
+];
+
+module.exports = {
+  PERMISSIONS,
+  ALL_PERMISSIONS,
+  PERMISSION_GROUPS,
+};

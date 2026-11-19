@@ -1,13 +1,25 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminLayout from './layouts/AdminLayout';
-import Categories from './pages/Categories';
-import CategoryForm from './pages/CategoryForm';
-import Tours from './pages/Tours';
-import TourForm from './pages/TourForm';
-import Orders from './pages/Orders';
+import Categories from './modules/categories/pages/CategoryManagement';
+import CategoryForm from './modules/categories/pages/CategoryForm';
+import Tours from './modules/tours/pages/TourManagement';
+import TourForm from './modules/tours/pages/TourForm';
+import Orders from './modules/orders/pages/OrderManagement';
 import Settings from './pages/Settings';
-import Coupons from './pages/Coupons';
-import CouponForm from './pages/CouponForm';
+import Coupons from './modules/coupons/pages/CouponManagement';
+import CouponForm from './modules/coupons/pages/CouponForm';
+import Users from './pages/Users';
+import Roles from './pages/Roles';
+import AuditLogs from './pages/AuditLogs';
+import Articles from './modules/article/pages/ArticleManagement';
+import ArticleForm from './modules/article/pages/ArticleForm';
+import ArticleCategories from './modules/article/pages/ArticleCategories';
+import ArticleReviewQueue from './modules/article/pages/ArticleReviewQueue';
+import JourneyList from './modules/journey/pages/JourneyList';
+import JourneyManage from './modules/journey/pages/JourneyManage';
+import SouvenirDepartures from './modules/souvenir/pages/SouvenirDepartures';
+import AlbumManage from './modules/souvenir/pages/AlbumManage';
+import SouvenirReviewQueue from './modules/souvenir/pages/SouvenirReviewQueue';
 import './index.css';
 
 function App() {
@@ -20,6 +32,22 @@ function App() {
         {/* Routes quản lý Đơn hàng */}
         <Route path="orders" element={<Orders />} />
 
+        {/* Routes Hành trình Tour (Admin giám sát & Staff điều hành) */}
+        <Route path="journeys" element={<JourneyList />} />
+        <Route path="my-journeys" element={<JourneyList mode="staff" />} />
+        <Route path="journeys/:journeyId" element={<JourneyManage />} />
+
+        {/* Routes Thiệp điện tử & Album kỷ niệm */}
+        <Route path="souvenirs" element={<SouvenirDepartures />} />
+        <Route path="souvenirs/albums/:albumId" element={<AlbumManage />} />
+        <Route path="souvenirs/review-queue" element={<SouvenirReviewQueue />} />
+
+        {/* Routes quản lý Tin tức */}
+        <Route path="articles" element={<Articles />} />
+        <Route path="articles/review-queue" element={<ArticleReviewQueue />} />
+        <Route path="articles/create" element={<ArticleForm />} />
+        <Route path="articles/edit/:id" element={<ArticleForm />} />
+        <Route path="article-categories" element={<ArticleCategories />} />
 
         {/* Routes quản lý Mã giảm giá (Coupon) */}
         <Route path="coupons" element={<Coupons />} />
@@ -36,6 +64,15 @@ function App() {
         <Route path="categories/create" element={<CategoryForm />} />
         <Route path="categories/edit/:id" element={<CategoryForm />} />
 
+        {/* Routes Quản lý Tài khoản & Nhân viên */}
+        <Route path="users" element={<Users />} />
+
+        {/* Routes Quản lý Vai trò & Phân quyền */}
+        <Route path="roles" element={<Roles />} />
+
+        {/* Routes Nhật ký hệ thống */}
+        <Route path="audit-logs" element={<AuditLogs />} />
+
         {/* Routes Cài đặt chung */}
         <Route path="settings" element={<Settings />} />
       </Route>
@@ -44,4 +81,3 @@ function App() {
 }
 
 export default App;
-
