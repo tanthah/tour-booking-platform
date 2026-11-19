@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
-import TourCard from '../components/TourCard';
+import TourCard from '../modules/tours/components/TourCard';
 import axiosClient from '../config/axiosClient';
 import '../assets/styles/tour.css';
 
@@ -214,7 +214,7 @@ const TourListPage = ({ categoryType }) => {
               </h2>
               <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
                 {isAll
-                  ? 'Khám phá tất cả các hành trình du lịch trong nước và quốc tế hấp dẫn với dịch vụ tiêu chuẩn tốt nhất từ Tourn Go.'
+                  ? 'Khám phá tất cả các hành trình du lịch trong nước và quốc tế hấp dẫn với dịch vụ tiêu chuẩn tốt nhất từ TourGo.'
                   : isDomestic
                   ? 'Khám phá những danh lam thắng cảnh tuyệt sắc của dải đất hình chữ S từ Bắc chí Nam cùng dịch vụ tour trọn gói chu đáo nhất.'
                   : 'Du lịch Châu Á & Thế Giới: Trải nghiệm những nền văn hóa độc đáo, công trình kiến trúc kỳ vĩ và cảnh quan ngoạn mục năm châu.'}

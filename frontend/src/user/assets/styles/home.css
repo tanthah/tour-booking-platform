@@ -247,6 +247,16 @@
   border: 1px solid #f1f5f9;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
   height: 100%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.news-featured-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.news-featured-card:hover .news-featured-img {
+  transform: scale(1.04);
 }
 
 /* Mobile Responsiveness for Home Page */

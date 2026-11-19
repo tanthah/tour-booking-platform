@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import axiosAdmin from '../config/axiosAdmin';
-import ImageUploader from '../components/ImageUploader';
+import { ImageUploader } from '../components/common';
 import { Form, Button, Row, Col, Card } from 'react-bootstrap';
 
 const API_URL = '/settings';

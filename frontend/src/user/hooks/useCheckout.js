@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axiosClient from '../config/axiosClient';
-import { validateCustomerInfo, validateAllPassengers } from '../components/checkout/checkoutValidation';
+import { validateCustomerInfo, validateAllPassengers } from '../modules/checkout/components/checkoutValidation';
 import {
   createInitialPassengers,
   buildOrderPayload,
@@ -9,7 +9,7 @@ import {
   validateAndApplyCoupon,
   fetchBestCouponRecommendation,
   checkDepositEligibility,
-} from '../components/checkout/checkoutHelpers';
+} from '../modules/checkout/components/checkoutHelpers';
 import { createZaloPayPayment } from '../modules/payment/paymentService';
 
 export const useCheckout = () => {

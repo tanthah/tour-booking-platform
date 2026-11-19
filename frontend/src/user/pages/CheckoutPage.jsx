@@ -1,9 +1,9 @@
 import { Container, Row, Col, Form, Spinner, Alert } from 'react-bootstrap';
-import PassengerItemForm from '../components/checkout/PassengerItemForm';
-import CustomerInfoSection from '../components/checkout/CustomerInfoSection';
-import PaymentMethodSection from '../components/checkout/PaymentMethodSection';
-import CheckoutSummaryCard from '../components/checkout/CheckoutSummaryCard';
-import ZaloPayQRModal from '../components/checkout/ZaloPayQRModal';
+import PassengerItemForm from '../modules/checkout/components/PassengerItemForm';
+import CustomerInfoSection from '../modules/checkout/components/CustomerInfoSection';
+import PaymentMethodSection from '../modules/checkout/components/PaymentMethodSection';
+import CheckoutSummaryCard from '../modules/checkout/components/CheckoutSummaryCard';
+import ZaloPayQRModal from '../modules/checkout/components/ZaloPayQRModal';
 import useCheckout from '../hooks/useCheckout';
 import '../assets/styles/checkout.css';
 
