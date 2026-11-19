@@ -359,6 +359,21 @@ class TourDepartureService {
 
     departure.status = newStatus;
     await departure.save();
+
+    // Đồng bộ hủy hành trình thực tế nếu đợt khởi hành bị hủy
+    if (newStatus === 'CANCELLED') {
+      try {
+        const journeyAdminService = require('../journey/journeyAdmin.service');
+        await journeyAdminService.syncCancelByDeparture(
+          departure._id,
+          null,
+          'Đợt khởi hành đã bị hủy'
+        );
+      } catch (syncErr) {
+        console.error('[TourDepartureService] Lỗi đồng bộ hủy hành trình:', syncErr.message);
+      }
+    }
+
     return departure;
   }
 

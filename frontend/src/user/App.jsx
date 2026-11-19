@@ -12,6 +12,10 @@ import OrderDetailPage from './pages/OrderDetailPage';
 import UserProfilePage from './pages/UserProfilePage';
 import ArticleListPage from './pages/ArticleListPage';
 import ArticleDetailPage from './pages/ArticleDetailPage';
+import MyJourneys from './modules/journey/pages/MyJourneys';
+import JourneyDetail from './modules/journey/pages/JourneyDetail';
+import MySouvenirsPage from './modules/souvenir/pages/MySouvenirsPage';
+import SouvenirCardViewPage from './modules/souvenir/pages/SouvenirCardViewPage';
 import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
@@ -109,6 +113,11 @@ function App() {
                 <Route path="/gio-hang" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
                 <Route path="/don-hang/:id" element={<OrderDetailPage />} />
+                <Route path="/my-journeys" element={user ? <MyJourneys /> : <HomePage />} />
+                <Route path="/journey/:journeyId" element={user ? <JourneyDetail /> : <HomePage />} />
+                <Route path="/my-souvenirs" element={user ? <MySouvenirsPage /> : <HomePage />} />
+                <Route path="/account/souvenirs" element={user ? <MySouvenirsPage /> : <HomePage />} />
+                <Route path="/account/souvenirs/:identifier" element={user ? <SouvenirCardViewPage /> : <HomePage />} />
                 <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
               </Routes>
             </div>

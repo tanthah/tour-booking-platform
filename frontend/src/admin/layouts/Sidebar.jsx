@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText, Inbox } from 'lucide-react';
+import { Compass, Map, Grid, ShoppingBag, Ticket, Settings as SettingsIcon, Users as UsersIcon, ShieldCheck, FileText, Inbox, Navigation, Camera, Sparkles } from 'lucide-react';
 
 function getStoredUser() {
   try {
@@ -13,6 +13,9 @@ function Sidebar() {
   const user = getStoredUser();
   const permissions = Array.isArray(user.permissions) ? user.permissions : [];
   const isAdmin = user.role?.code === 'admin' || (Array.isArray(user.roles) && user.roles.includes('ADMIN'));
+  const isStaff =
+    user.role?.code?.includes('staff') ||
+    (Array.isArray(user.roles) && user.roles.includes('STAFF'));
 
   const hasPerm = (requiredPerms) => {
     if (isAdmin) return true;
@@ -86,6 +89,46 @@ function Sidebar() {
           >
             <ShoppingBag size={20} />
             <span>Quản lý Đơn hàng</span>
+          </NavLink>
+        )}
+
+        {(isAdmin || hasPerm(['journey.admin', 'journey.assign_guide'])) && (
+          <NavLink 
+            to="/admin/journeys" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Navigation size={20} />
+            <span>Giám sát Hành trình</span>
+          </NavLink>
+        )}
+
+        {(isStaff || hasPerm(['journey.view', 'journey.manage'])) && (
+          <NavLink 
+            to="/admin/my-journeys" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Compass size={20} />
+            <span>Hành trình phụ trách</span>
+          </NavLink>
+        )}
+
+        {(isAdmin || isStaff || hasPerm(['souvenir.album.view', 'souvenir.card.view'])) && (
+          <NavLink 
+            to="/admin/souvenirs" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Camera size={20} />
+            <span>Thiệp & Album kỷ niệm</span>
+          </NavLink>
+        )}
+
+        {(isAdmin || hasPerm('souvenir.card.review')) && (
+          <NavLink 
+            to="/admin/souvenirs/review-queue" 
+            className={({ isActive }) => `menu-item ${isActive ? 'active' : ''}`}
+          >
+            <Sparkles size={20} />
+            <span>Hộp duyệt Thiệp</span>
           </NavLink>
         )}
 

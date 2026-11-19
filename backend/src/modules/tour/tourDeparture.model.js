@@ -49,7 +49,7 @@ const tourDepartureSchema = new mongoose.Schema(
     // ========== TRẠNG THÁI ==========
     status: {
       type: String,
-      enum: ['OPEN', 'FULL', 'CLOSED', 'CANCELLED'],
+      enum: ['OPEN', 'FULL', 'CLOSED', 'CANCELLED', 'COMPLETED'],
       default: 'OPEN',
     },
     // Xóa mềm

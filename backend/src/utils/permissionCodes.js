@@ -50,6 +50,31 @@ const PERMISSIONS = {
   ARTICLE_PUBLISH: 'article.publish',
   ARTICLE_MANAGE: 'article.manage',
   ARTICLE_CATEGORY_MANAGE: 'article_category.manage',
+
+  // Quản lý Hành trình Tour (Tour Journey Tracking)
+  JOURNEY_VIEW: 'journey.view',
+  JOURNEY_MANAGE: 'journey.manage',
+  JOURNEY_ADMIN: 'journey.admin',
+  JOURNEY_ASSIGN_GUIDE: 'journey.assign_guide',
+
+  // Quản lý Thiệp điện tử & Album kỷ niệm chuyến đi (Souvenir Card & Album)
+  SOUVENIR_ALBUM_VIEW: 'souvenir.album.view',
+  SOUVENIR_ALBUM_CREATE: 'souvenir.album.create',
+  SOUVENIR_ALBUM_UPDATE: 'souvenir.album.update',
+  SOUVENIR_ALBUM_DELETE: 'souvenir.album.delete',
+  SOUVENIR_PHOTO_UPLOAD: 'souvenir.photo.upload',
+  SOUVENIR_PHOTO_DELETE: 'souvenir.photo.delete',
+  SOUVENIR_PHOTO_ASSIGN: 'souvenir.photo.assign',
+  SOUVENIR_CARD_VIEW: 'souvenir.card.view',
+  SOUVENIR_CARD_CREATE: 'souvenir.card.create',
+  SOUVENIR_CARD_UPDATE: 'souvenir.card.update',
+  SOUVENIR_CARD_PREVIEW: 'souvenir.card.preview',
+  SOUVENIR_CARD_SUBMIT_REVIEW: 'souvenir.card.submit_review',
+  SOUVENIR_CARD_REVIEW: 'souvenir.card.review',
+  SOUVENIR_CARD_PUBLISH: 'souvenir.card.publish',
+  SOUVENIR_CARD_REVOKE: 'souvenir.card.revoke',
+  SOUVENIR_EMAIL_SEND: 'souvenir.email.send',
+  SOUVENIR_EMAIL_RESEND: 'souvenir.email.resend',
 };
 
 const ALL_PERMISSIONS = Object.values(PERMISSIONS);
@@ -152,6 +177,39 @@ const PERMISSION_GROUPS = [
     name: 'Nhật ký hệ thống (Audit Log)',
     permissions: [
       { code: PERMISSIONS.AUDIT_VIEW, name: 'Xem lịch sử thay đổi quyền & trạng thái' },
+    ],
+  },
+  {
+    module: 'Journey',
+    name: 'Hành trình Tour (Tour Journey)',
+    permissions: [
+      { code: PERMISSIONS.JOURNEY_VIEW, name: 'Xem hành trình tour được phân công' },
+      { code: PERMISSIONS.JOURNEY_MANAGE, name: 'Bắt đầu, kết thúc, cập nhật điểm & điều chỉnh lịch trình được phân công' },
+      { code: PERMISSIONS.JOURNEY_ADMIN, name: 'Giám sát & can thiệp tất cả hành trình' },
+      { code: PERMISSIONS.JOURNEY_ASSIGN_GUIDE, name: 'Phân công nhân viên hướng dẫn cho hành trình' },
+    ],
+  },
+  {
+    module: 'Souvenir',
+    name: 'Thiệp điện tử & Album kỷ niệm',
+    permissions: [
+      { code: PERMISSIONS.SOUVENIR_ALBUM_VIEW, name: 'Xem danh sách và chi tiết Album' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_CREATE, name: 'Tạo Album cho đợt khởi hành' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_UPDATE, name: 'Cập nhật thông tin Album' },
+      { code: PERMISSIONS.SOUVENIR_ALBUM_DELETE, name: 'Xóa hoặc lưu trữ Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_UPLOAD, name: 'Tải ảnh lên Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_DELETE, name: 'Xóa ảnh khỏi Album' },
+      { code: PERMISSIONS.SOUVENIR_PHOTO_ASSIGN, name: 'Gắn ảnh riêng cho hành khách' },
+      { code: PERMISSIONS.SOUVENIR_CARD_VIEW, name: 'Xem danh sách thiệp điện tử' },
+      { code: PERMISSIONS.SOUVENIR_CARD_CREATE, name: 'Tạo thiệp điện tử cho hành khách' },
+      { code: PERMISSIONS.SOUVENIR_CARD_UPDATE, name: 'Biên tập nội dung và ảnh bìa thiệp' },
+      { code: PERMISSIONS.SOUVENIR_CARD_PREVIEW, name: 'Xem trước thiệp điện tử' },
+      { code: PERMISSIONS.SOUVENIR_CARD_SUBMIT_REVIEW, name: 'Gửi thiệp sang Admin chờ duyệt' },
+      { code: PERMISSIONS.SOUVENIR_CARD_REVIEW, name: 'Duyệt hoặc yêu cầu chỉnh sửa thiệp (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_CARD_PUBLISH, name: 'Phát hành thiệp cho khách hàng (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_CARD_REVOKE, name: 'Thu hồi thiệp đã phát hành (Admin)' },
+      { code: PERMISSIONS.SOUVENIR_EMAIL_SEND, name: 'Gửi email thông báo thiệp cho khách' },
+      { code: PERMISSIONS.SOUVENIR_EMAIL_RESEND, name: 'Gửi lại email khi thất bại' },
     ],
   },
 ];
