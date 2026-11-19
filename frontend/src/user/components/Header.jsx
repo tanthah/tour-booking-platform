@@ -172,6 +172,26 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
                 Tin Tức
               </Nav.Link>
 
+              {user && (
+                <Nav.Link
+                  as={Link}
+                  to="/my-journeys"
+                  className={`header-nav-link ${location.pathname.startsWith('/my-journeys') || location.pathname.startsWith('/journey/') ? 'active' : ''}`}
+                >
+                  Hành Trình
+                </Nav.Link>
+              )}
+
+              {user && (
+                <Nav.Link
+                  as={Link}
+                  to="/my-souvenirs"
+                  className={`header-nav-link ${location.pathname.startsWith('/my-souvenirs') || location.pathname.startsWith('/account/souvenirs') ? 'active' : ''}`}
+                >
+                  Kỷ Niệm Tour
+                </Nav.Link>
+              )}
+
               <Nav.Link
                 as={Link}
                 to="/lien-he"
