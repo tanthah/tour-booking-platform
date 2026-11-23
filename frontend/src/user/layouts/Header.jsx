@@ -3,6 +3,7 @@ import { Navbar, Container, Nav, NavDropdown, Button } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
 import Logo from '../components/common/Logo';
 import useCart from '../hooks/useCart';
+import NotificationBell from '../modules/notification/components/NotificationBell';
 import '../assets/styles/header.css';
 
 /**
@@ -232,6 +233,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
               {/* User Authentication Actions */}
               {user ? (
                 <div className="d-flex align-items-center gap-2">
+                  <NotificationBell />
                   <Link to="/ho-so-ca-nhan" style={{ textDecoration: 'none' }} title="Hồ sơ cá nhân">
                     {user.avatar_url ? (
                       <img

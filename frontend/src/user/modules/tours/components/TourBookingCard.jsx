@@ -1,5 +1,6 @@
 import { Form, Button } from 'react-bootstrap';
-import { Heart, Calendar, Clock, MapPin, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, CheckCircle2 } from 'lucide-react';
+import FavoriteButton from '../../wishlist/components/FavoriteButton';
 
 /**
  * TourBookingCard Component - Khối đặt tour và chọn số lượng hành khách
@@ -268,15 +269,7 @@ const TourBookingCard = ({
             : 'Thêm Vào Giỏ Hàng'}
         </Button>
 
-        {/* Nút yêu thích */}
-        <Button
-          variant="outline-danger"
-          className="d-flex justify-content-center align-items-center m-0"
-          style={{ width: '48px', borderRadius: '10px' }}
-          title="Thêm vào danh sách yêu thích"
-        >
-          <Heart size={20} />
-        </Button>
+        <FavoriteButton tour={tour} className="tour-booking-wishlist" />
       </div>
     </div>
   );

@@ -1,0 +1,144 @@
+.tour-card-image-wrap {
+  position: relative;
+  height: 170px;
+  overflow: hidden;
+}
+
+.tour-card-image-wrap > a {
+  height: 100%;
+}
+
+.wishlist-toggle-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.wishlist-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  border-radius: 50%;
+  color: #e11d48;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.14);
+  cursor: pointer;
+  transition: color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+}
+
+.wishlist-toggle-button:hover:not(:disabled) {
+  color: #be123c;
+  background: #fff1f2;
+  transform: scale(1.05);
+}
+
+.wishlist-toggle-button.is-favorite {
+  color: #e11d48;
+  background: #fff1f2;
+}
+
+.wishlist-toggle-button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.tour-card-favorite {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+}
+
+.tour-booking-wishlist {
+  width: 48px;
+}
+
+.tour-booking-wishlist .wishlist-toggle-button {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.wishlist-toggle-error {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  right: 0;
+  width: max-content;
+  max-width: 220px;
+  padding: 6px 9px;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  color: #b91c1c;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+  font-size: 11px;
+}
+
+.user-wishlist-heading {
+  margin-bottom: 18px;
+}
+
+.user-wishlist-heading h4 {
+  margin: 0 0 4px;
+  color: #ea580c;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.user-wishlist-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.wishlist-state,
+.wishlist-empty-state {
+  display: flex;
+  min-height: 230px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #94a3b8;
+  text-align: center;
+  font-size: 13px;
+}
+
+.wishlist-empty-state > svg {
+  color: #fb7185;
+}
+
+.wishlist-empty-state strong {
+  color: #334155;
+  font-size: 15px;
+}
+
+.wishlist-empty-state a {
+  margin-top: 5px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #fff;
+  background: #ea580c;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.wishlist-empty-state a:hover {
+  background: #c2410c;
+  color: #fff;
+}
+
+.wishlist-error {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  color: #b91c1c;
+  background: #fef2f2;
+  font-size: 13px;
+}

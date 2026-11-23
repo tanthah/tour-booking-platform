@@ -1,5 +1,13 @@
 const { sendMail } = require('../../config/mailer');
 
+const escapeHtml = (value = '') => String(value).replace(/[&<>"']/g, (char) => ({
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+}[char]));
+
 // ============================================================
 //  EMAIL TEMPLATES - Các template HTML cho từng loại email
 // ============================================================
@@ -75,6 +83,30 @@ const buildForgotPasswordTemplate = (otp) => {
     </div>
   `;
 };
+
+/**
+ * Template email chào mừng sau khi khách hàng xác thực tài khoản thành công.
+ */
+const buildRegistrationWelcomeTemplate = (fullName) => `
+  <div style="font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:linear-gradient(135deg,#ea580c 0%,#f97316 55%,#fb923c 100%);padding:36px 30px;border-radius:16px 16px 0 0;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:26px;">Chào mừng đến với TourGo ✈️</h1>
+      <p style="color:rgba(255,255,255,.9);margin:8px 0 0;font-size:14px;">Những hành trình đáng nhớ bắt đầu từ đây</p>
+    </div>
+    <div style="background:#fff;padding:36px 32px;border-radius:0 0 16px 16px;box-shadow:0 4px 24px rgba(0,0,0,.1);">
+      <h2 style="color:#1e293b;font-size:22px;margin:0 0 14px;">Chúc mừng ${escapeHtml(fullName || 'bạn')}! 🎉</h2>
+      <p style="color:#475569;line-height:1.7;margin:0 0 14px;">
+        Tài khoản TourGo của bạn đã được xác thực và sẵn sàng sử dụng.
+      </p>
+      <p style="color:#475569;line-height:1.7;margin:0;">
+        Cảm ơn bạn đã đăng ký. Hãy đăng nhập để khám phá các tour và chuẩn bị cho chuyến đi tiếp theo nhé!
+      </p>
+    </div>
+    <p style="text-align:center;color:#94a3b8;font-size:12px;margin-top:20px;">
+      © 2026 TourGo · Chúc bạn có những chuyến đi tuyệt vời.
+    </p>
+  </div>
+`;
 
 /**
  * Template email thông báo thay đổi địa điểm tập trung chuyến đi
@@ -169,6 +201,11 @@ const sendForgotPasswordEmail = async (to, otp) => {
   await sendMail(to, subject, html);
 };
 
+const sendRegistrationWelcomeEmail = async (to, fullName) => {
+  const subject = '🎉 Chúc mừng bạn đã đăng ký thành công - Chào mừng đến với TourGo!';
+  await sendMail(to, subject, buildRegistrationWelcomeTemplate(fullName));
+};
+
 /**
  * Gửi email thông báo thay đổi địa điểm tập trung chuyến đi
  * @param {string} to - Email người nhận
@@ -184,5 +221,6 @@ const sendMeetingPointChangeEmail = async (to, customerName, data) => {
 module.exports = {
   sendWelcomeOtpEmail,
   sendForgotPasswordEmail,
+  sendRegistrationWelcomeEmail,
   sendMeetingPointChangeEmail,
 };

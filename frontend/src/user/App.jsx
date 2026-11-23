@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './layouts/Header';
 import Footer from './layouts/Footer';
 import HomePage from './pages/HomePage';
@@ -20,6 +20,9 @@ import AuthModal from './modules/user/components/AuthModal';
 import useAuthModal from './modules/user/useAuthModal';
 import axiosClient from './config/axiosClient';
 import ScrollToTop from './components/common/ScrollToTop';
+import { NotificationProvider } from './modules/notification/NotificationContext';
+import NotificationToast from './modules/notification/components/NotificationToast';
+import { WishlistProvider } from './modules/wishlist/WishlistContext';
 
 import AdminApp from '../admin/App';
 
@@ -52,6 +55,12 @@ function App() {
     };
     fetchSettings();
   }, []);
+
+  useEffect(() => {
+    const openLoginModal = () => openModal('login');
+    window.addEventListener('tourgo:open-login', openLoginModal);
+    return () => window.removeEventListener('tourgo:open-login', openLoginModal);
+  }, [openModal]);
 
   // Callback Handler khi đăng nhập thành công
   const handleLoginSuccess = useCallback((data) => {
@@ -88,41 +97,46 @@ function App() {
         
         {/* Route dành cho Client */}
         <Route path="/*" element={
-          <>
-            <Header
-              user={user}
-              onOpenLogin={() => openModal('login')}
-              onOpenRegister={() => openModal('register')}
-              onLogout={handleLogout}
-              settings={settings}
-            />
-            <div style={{ paddingTop: '102px', minHeight: 'calc(100vh - 350px)' }}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/tour-trong-nuoc" element={<TourListPage categoryType="domestic" />} />
-                <Route path="/tour-trong-nuoc/:region" element={<TourListPage categoryType="domestic" />} />
-                <Route path="/tour-nuoc-ngoai" element={<TourListPage categoryType="international" />} />
-                <Route path="/tour-nuoc-ngoai/:region" element={<TourListPage categoryType="international" />} />
-                <Route path="/tours" element={<TourListPage categoryType="all" />} />
-                <Route path="/uu-dai" element={<PromotionPage />} />
-                <Route path="/khuyen-mai" element={<PromotionPage />} />
-                <Route path="/tin-tuc" element={<ArticleListPage />} />
-                <Route path="/tin-tuc/:slug" element={<ArticleDetailPage />} />
-                <Route path="/tour/:id" element={<TourDetailPage />} />
-                <Route path="/tours/:id" element={<TourDetailPage />} />
-                <Route path="/gio-hang" element={<CartPage />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/don-hang/:id" element={<OrderDetailPage />} />
-                <Route path="/my-journeys" element={user ? <MyJourneys /> : <HomePage />} />
-                <Route path="/journey/:journeyId" element={user ? <JourneyDetail /> : <HomePage />} />
-                <Route path="/my-souvenirs" element={user ? <MySouvenirsPage /> : <HomePage />} />
-                <Route path="/account/souvenirs" element={user ? <MySouvenirsPage /> : <HomePage />} />
-                <Route path="/account/souvenirs/:identifier" element={user ? <SouvenirCardViewPage /> : <HomePage />} />
-                <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
-              </Routes>
-            </div>
-            <Footer settings={settings} />
-          </>
+          <NotificationProvider user={user}>
+            <WishlistProvider user={user}>
+              <>
+                <Header
+                  user={user}
+                  onOpenLogin={() => openModal('login')}
+                  onOpenRegister={() => openModal('register')}
+                  onLogout={handleLogout}
+                  settings={settings}
+                />
+                <NotificationToast />
+                <div style={{ paddingTop: '102px', minHeight: 'calc(100vh - 350px)' }}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/tour-trong-nuoc" element={<TourListPage categoryType="domestic" />} />
+                    <Route path="/tour-trong-nuoc/:region" element={<TourListPage categoryType="domestic" />} />
+                    <Route path="/tour-nuoc-ngoai" element={<TourListPage categoryType="international" />} />
+                    <Route path="/tour-nuoc-ngoai/:region" element={<TourListPage categoryType="international" />} />
+                    <Route path="/tours" element={<TourListPage categoryType="all" />} />
+                    <Route path="/uu-dai" element={<PromotionPage />} />
+                    <Route path="/khuyen-mai" element={<PromotionPage />} />
+                    <Route path="/tin-tuc" element={<ArticleListPage />} />
+                    <Route path="/tin-tuc/:slug" element={<ArticleDetailPage />} />
+                    <Route path="/tour/:id" element={<TourDetailPage />} />
+                    <Route path="/tours/:id" element={<TourDetailPage />} />
+                    <Route path="/gio-hang" element={<CartPage />} />
+                    <Route path="/checkout" element={<CheckoutPage />} />
+                    <Route path="/don-hang/:id" element={<OrderDetailPage />} />
+                    <Route path="/my-journeys" element={user ? <Navigate to="/ho-so-ca-nhan?tab=journeys" replace /> : <HomePage />} />
+                    <Route path="/journey/:journeyId" element={user ? <JourneyDetail /> : <HomePage />} />
+                    <Route path="/my-souvenirs" element={user ? <Navigate to="/ho-so-ca-nhan?tab=souvenirs" replace /> : <HomePage />} />
+                    <Route path="/account/souvenirs" element={user ? <Navigate to="/ho-so-ca-nhan?tab=souvenirs" replace /> : <HomePage />} />
+                    <Route path="/account/souvenirs/:identifier" element={user ? <SouvenirCardViewPage /> : <HomePage />} />
+                    <Route path="/ho-so-ca-nhan" element={user ? <UserProfilePage user={user} setUser={setUser} /> : <HomePage />} />
+                  </Routes>
+                </div>
+                <Footer settings={settings} />
+              </>
+            </WishlistProvider>
+          </NotificationProvider>
         } />
       </Routes>
 

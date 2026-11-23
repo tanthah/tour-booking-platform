@@ -9,6 +9,8 @@ const {
 const { verifyCallbackMac } = require('./zalopay.signature');
 const { confirmSlotsForOrder } = require('../order/order.helper');
 const { processZaloPayRefund, expirePendingPayments } = require('./paymentRefund.service');
+const notificationService = require('../notification/notification.service');
+const EVENTS = require('../notification/notificationEvents');
 
 /**
  * Tính số tiền cần thanh toán theo loại (cọc 30%, phần còn lại, hoặc toàn bộ)
@@ -174,6 +176,16 @@ async function updateOrderOnPaymentSuccess(payment, zp_trans_id, dataJson) {
     action: payment.payment_type === 'deposit' ? 'DEPOSIT_PAID' : 'FULL_PAID',
     description: `ZaloPay xác nhận thanh toán thành công: ${payment.amount.toLocaleString('vi-VN')} đ. Mã GD: ${zp_trans_id}`,
     metadata: { app_trans_id: payment.app_trans_id, zp_trans_id, amount: payment.amount },
+  });
+
+  // Thông báo thanh toán thành công cho khách
+  const firstTourName = order.items?.[0]?.tour_name || 'Tour du lịch';
+  notificationService.sendCustomerNotification(EVENTS.PAYMENT_SUCCESS, order.user_id, {
+    orderId: order._id.toString(),
+    orderCode: order.order_code,
+    tourName: firstTourName,
+    paidAmount: payment.amount,
+    transactionId: zp_trans_id ? String(zp_trans_id) : payment.app_trans_id,
   });
 }
 

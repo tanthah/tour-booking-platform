@@ -1,7 +1,7 @@
 /**
- * Seed script tạo dữ liệu mẫu đa dạng cho 4 Tour (IN_PROGRESS, NOT_STARTED hôm nay, NOT_STARTED tương lai, COMPLETED)
- * Giúp kiểm tra đầy đủ luồng Khách hàng, Nhân viên hướng dẫn và Admin.
+ * Seed dữ liệu mẫu hành trình và đảm bảo mọi tour ACTIVE có ít nhất một đợt khởi hành còn chỗ.
  * Chạy bằng: node src/scripts/seed_journey_sample.js
+ * Chỉ thêm đợt khởi hành: node src/scripts/seed_journey_sample.js --departures-only
  */
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
@@ -18,10 +18,59 @@ const JourneyLog = require('../modules/journey/journeyLog.model');
 const JourneyNotification = require('../modules/journey/journeyNotification.model');
 const User = require('../modules/user/user.model');
 
+async function ensureBookableDepartureForActiveTours() {
+  const activeTours = await Tour.find({ status: 'ACTIVE', deleted_at: null })
+    .select('_id code')
+    .lean();
+  const now = new Date();
+  const upcomingDepartures = await TourDeparture.find({
+    product_id: { $in: activeTours.map((tour) => tour._id) },
+    status: 'OPEN',
+    deleted_at: null,
+    start_datetime: { $gt: now },
+  })
+    .select('product_id total_slots booked_slots reserved_slots')
+    .lean();
+
+  const toursWithAvailability = new Set(
+    upcomingDepartures
+      .filter((departure) => (
+        (departure.total_slots || 0) - (departure.booked_slots || 0) - (departure.reserved_slots || 0) > 0
+      ))
+      .map((departure) => departure.product_id.toString())
+  );
+  const toursToSeed = activeTours.filter((tour) => !toursWithAvailability.has(tour._id.toString()));
+
+  for (const [index, tour] of toursToSeed.entries()) {
+    const startDatetime = new Date();
+    startDatetime.setDate(startDatetime.getDate() + 14 + (index % 4) * 7);
+    startDatetime.setHours(8, 0, 0, 0);
+
+    await TourDeparture.create({
+      product_id: tour._id,
+      start_datetime: startDatetime,
+      meeting_point: 'Văn phòng TourGo, Quận 1, TP. Hồ Chí Minh',
+      total_slots: 30,
+      booked_slots: 0,
+      reserved_slots: 0,
+      status: 'OPEN',
+      deleted_at: null,
+    });
+  }
+
+  console.log(`Đợt khởi hành mẫu: thêm ${toursToSeed.length}, đã có lịch còn chỗ ${activeTours.length - toursToSeed.length} tour ACTIVE.`);
+}
+
 async function seed() {
-  const dbUri = MONGO_URI || 'mongodb://127.0.0.1:27017/tour-booking';
+  const dbUri = MONGO_URI || 'mongodb://127.0.0.1:27017/tour_booking_db';
   await mongoose.connect(dbUri);
   console.log('Connected to MongoDB');
+
+  if (process.argv.includes('--departures-only')) {
+    await ensureBookableDepartureForActiveTours();
+    await mongoose.disconnect();
+    return;
+  }
 
   // Lấy tài khoản Admin, Staff (HDV) và Customer đang ACTIVE trong DB
   const admin = await User.findOne({
@@ -487,7 +536,8 @@ async function seed() {
     console.log(`✅ Đã tạo hành trình [${cfg.journeyStatus}] cho tour ${tour.code} (${journey._id})`);
   }
 
-  console.log('\n🎉 Hoàn tất tạo dữ liệu mẫu cho 4 tour!');
+  await ensureBookableDepartureForActiveTours();
+  console.log('\n🎉 Hoàn tất tạo dữ liệu mẫu hành trình và lịch khởi hành có thể đặt.');
   await mongoose.disconnect();
   process.exit(0);
 }

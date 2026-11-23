@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import FavoriteButton from '../../wishlist/components/FavoriteButton';
 
 /**
  * TourCard Component - Thẻ hiển thị sản phẩm Tour chuẩn thiết kế
@@ -74,22 +75,25 @@ const TourCard = ({ tour = {} }) => {
   return (
     <div className="tour-card-item">
       {/* Hình ảnh Tour kèm nhãn khuyến mãi và Link xem chi tiết */}
-      <Link
-        to={detailUrl}
-        style={{ textDecoration: 'none', display: 'block', position: 'relative', overflow: 'hidden', height: '170px' }}
-      >
-        <img
-          src={image}
-          alt={title}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
-          loading="lazy"
-        />
-        {discountDisplay && (
-          <div className="tour-card-badge-sale">
-            <span>⚡ GIẢM {discountDisplay}</span>
-          </div>
-        )}
-      </Link>
+      <div className="tour-card-image-wrap">
+        <Link
+          to={detailUrl}
+          style={{ textDecoration: 'none', display: 'block', position: 'relative', overflow: 'hidden', height: '170px' }}
+        >
+          <img
+            src={image}
+            alt={title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+            loading="lazy"
+          />
+          {discountDisplay && (
+            <div className="tour-card-badge-sale">
+              <span>⚡ GIẢM {discountDisplay}</span>
+            </div>
+          )}
+        </Link>
+        <FavoriteButton tour={tour} className="tour-card-favorite" />
+      </div>
 
       {/* Nội dung chi tiết Tour */}
       <div style={{ padding: '14px 14px 12px', display: 'flex', flexDirection: 'column', flex: 1 }}>

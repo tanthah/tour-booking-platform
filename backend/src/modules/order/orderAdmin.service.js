@@ -4,6 +4,8 @@ const couponService = require('../coupon/coupon.service');
 const refundService = require('./refund.service');
 const { confirmSlotsForOrder, releaseSlotsForOrder } = require('./order.helper');
 const { getCancelFeePercent, calculateRefundAmount } = require('./booking.policy');
+const notificationService = require('../notification/notification.service');
+const EVENTS = require('../notification/notificationEvents');
 
 const getAllOrdersAdmin = async (queryParams) => {
   const page = parseInt(queryParams.page, 10) || 1;
@@ -68,6 +70,18 @@ const updateOrderStatus = async (orderId, statusData, staffId = null) => {
       action: 'STATUS_CHANGED',
       description: `Đơn hàng đã bị hủy bởi nhân viên: ${order.cancel_reason}`,
     });
+
+    // Thông báo cho khách: đơn bị hủy phía công ty (coi là cancel được phê duyệt)
+    const firstTourName = order.items?.[0]?.tour_name || 'Tour du lịch';
+    notificationService.sendCustomerNotification(EVENTS.CANCEL_APPROVED, order.user_id, {
+      orderId: order._id.toString(),
+      orderCode: order.order_code,
+      tourName: firstTourName,
+      refundAmount: 0,
+      cancelFeePercent: 0,
+      reason: order.cancel_reason,
+    });
+
     return order;
   }
 
@@ -155,6 +169,16 @@ const companyCancelOrder = async (orderId, staffId = null, reason = 'Công ty th
     description: `Công ty hủy tour: ${reason}. Số tiền hoàn: ${paidAmount.toLocaleString('vi-VN')} đ.`,
     metadata: { refund_amount: paidAmount },
   });
+
+  // Thông báo cho khách: công ty hủy chuyến đi
+  const firstTourName = order.items?.[0]?.tour_name || 'Tour du lịch';
+  notificationService.sendCustomerNotification(EVENTS.DEPARTURE_CANCELLED, order.user_id, {
+    orderId: order._id.toString(),
+    orderCode: order.order_code,
+    tourName: firstTourName,
+    reason,
+  });
+
   return { order, refund };
 };
 
@@ -222,6 +246,17 @@ const resolveOverdueOrder = async (orderId, staffId, payload) => {
       description: `Nhân viên hủy đơn quá hạn. Phí hủy ${feePercent}% (${cancelFeeAmount.toLocaleString('vi-VN')} đ), Hoàn ${refundAmount.toLocaleString('vi-VN')} đ.`,
       metadata: { feePercent, cancelFeeAmount, refundAmount },
     });
+
+    // Thông báo cho khách: yêu cầu hủy được duyệt
+    const firstTourName = order.items?.[0]?.tour_name || 'Tour du lịch';
+    notificationService.sendCustomerNotification(EVENTS.CANCEL_APPROVED, order.user_id, {
+      orderId: order._id.toString(),
+      orderCode: order.order_code,
+      tourName: firstTourName,
+      refundAmount,
+      cancelFeePercent: feePercent,
+    });
+
     return { order, refund };
   }
 

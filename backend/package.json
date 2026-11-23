@@ -10,7 +10,8 @@
     "test:edge": "node test/test_edge_cases.js",
     "test:order": "node test/test_order_module.js",
     "test:journey": "node test/test_journey_module.js",
-    "test:souvenir": "node test/test_souvenir_module.js"
+    "test:souvenir": "node test/test_souvenir_module.js",
+    "seed:notification-demo": "node src/scripts/seed_notification_demo.js"
   },
   "dependencies": {
     "archiver": "^8.0.0",

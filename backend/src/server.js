@@ -5,6 +5,8 @@ const connectDB = require('./config/db');
 const { PORT } = require('./config/env');
 const { expirePendingPayments } = require('./modules/payment/paymentRefund.service');
 const { initJourneySocket } = require('./modules/journey/journeySocket.service');
+const { initNotificationSocket } = require('./modules/notification/notificationSocket.service');
+const notificationService = require('./modules/notification/notification.service');
 
 // Kết nối MongoDB database và khởi động HTTP Express + Socket.IO server
 const startServer = async () => {
@@ -21,6 +23,10 @@ const startServer = async () => {
 
     app.set('io', io);
     initJourneySocket(io);
+    initNotificationSocket(io);
+
+    // Cấp io cho notification service (singleton)
+    notificationService.setIO(io);
 
     server.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

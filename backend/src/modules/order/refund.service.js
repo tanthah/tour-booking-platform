@@ -1,6 +1,8 @@
 const Refund = require('./refund.model');
 const Order = require('./order.model');
 const OrderLog = require('./orderLog.model');
+const notificationService = require('../notification/notification.service');
+const EVENTS = require('../notification/notificationEvents');
 
 /**
  * Refund Service — Quản lý quy trình hoàn tiền theo 4 trạng thái
@@ -87,6 +89,15 @@ const completeRefund = async (refundId, staffId, transactionId = null) => {
     action: 'REFUND_COMPLETED',
     description: `Hoàn tiền thành công: ${refund.refund_amount.toLocaleString('vi-VN')} đ.${transactionId ? ` Mã GD: ${transactionId}` : ''}`,
     metadata: { refund_id: refund._id, transaction_id: transactionId },
+  });
+
+  // Thông báo hoàn tiền thành công cho khách
+  notificationService.sendCustomerNotification(EVENTS.REFUND_SUCCESS, refund.user_id, {
+    orderId: refund.order_id.toString(),
+    orderCode: refund.order_id?.order_code || '',
+    refundAmount: refund.refund_amount,
+    paymentMethod: refund.refund_method,
+    transactionId: transactionId || '',
   });
 
   return refund;

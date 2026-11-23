@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Container, Row, Col, Nav, Card, Form, Button, Spinner, ToastContainer, Toast } from 'react-bootstrap';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { User as UserIcon, Package, Heart, LogOut, Camera, Sparkles } from 'lucide-react';
+import { User as UserIcon, Package, Heart, LogOut, Camera, Sparkles, Compass, Bell } from 'lucide-react';
 import axiosClient from '../config/axiosClient';
 import UserOrdersList from '../modules/order/components/UserOrdersList';
 import MySouvenirCardsList from '../modules/souvenir/components/MySouvenirCardsList';
+import MyJourneys from '../modules/journey/pages/MyJourneys';
+import UserNotificationsList from '../modules/notification/components/UserNotificationsList';
+import { useNotification } from '../modules/notification/NotificationContext';
+import UserWishlistList from '../modules/wishlist/components/UserWishlistList';
 import '../assets/styles/tour.css';
 
 const UserProfilePage = ({ user, setUser }) => {
@@ -12,17 +16,19 @@ const UserProfilePage = ({ user, setUser }) => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const VALID_TABS = ['profile', 'orders', 'journeys', 'souvenirs', 'wishlist', 'notifications'];
+  const { unreadCount } = useNotification();
   // Xác định tab ban đầu: Ưu tiên URL param ?tab=, kế đến location.state, kế đến localStorage, mặc định 'profile'
   const getInitialTab = () => {
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(tabFromUrl)) {
+    if (tabFromUrl && VALID_TABS.includes(tabFromUrl)) {
       return tabFromUrl;
     }
-    if (location.state?.tab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(location.state.tab)) {
+    if (location.state?.tab && VALID_TABS.includes(location.state.tab)) {
       return location.state.tab;
     }
     const savedTab = localStorage.getItem('user_profile_active_tab');
-    if (savedTab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(savedTab)) {
+    if (savedTab && VALID_TABS.includes(savedTab)) {
       return savedTab;
     }
     return 'profile';
@@ -47,7 +53,7 @@ const UserProfilePage = ({ user, setUser }) => {
   // Lắng nghe nếu searchParams hoặc location.state thay đổi từ bên ngoài
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && tabFromUrl !== activeTab && ['profile', 'orders', 'wishlist', 'souvenirs'].includes(tabFromUrl)) {
+    if (tabFromUrl && tabFromUrl !== activeTab && VALID_TABS.includes(tabFromUrl)) {
       setActiveTab(tabFromUrl);
       localStorage.setItem('user_profile_active_tab', tabFromUrl);
     } else if (location.state?.tab && location.state.tab !== activeTab) {
@@ -331,11 +337,22 @@ const UserProfilePage = ({ user, setUser }) => {
 
               <Nav.Item>
                 <Nav.Link
-                  eventKey="wishlist"
-                  className={`user-sidebar-link ${activeTab === 'wishlist' ? 'active' : ''}`}
+                  eventKey="notifications"
+                  className={`user-sidebar-link ${activeTab === 'notifications' ? 'active' : ''}`}
                 >
-                  <Heart size={17} />
-                  <span>Danh sách yêu thích</span>
+                  <Bell size={17} />
+                  <span>Thông báo</span>
+                  {unreadCount > 0 && <span className="user-sidebar-notification-count">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+                </Nav.Link>
+              </Nav.Item>
+
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="journeys"
+                  className={`user-sidebar-link ${activeTab === 'journeys' ? 'active' : ''}`}
+                >
+                  <Compass size={17} />
+                  <span>Hành trình tour</span>
                 </Nav.Link>
               </Nav.Item>
 
@@ -346,6 +363,16 @@ const UserProfilePage = ({ user, setUser }) => {
                 >
                   <Camera size={17} />
                   <span>Kỷ niệm chuyến đi</span>
+                </Nav.Link>
+              </Nav.Item>
+
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="wishlist"
+                  className={`user-sidebar-link ${activeTab === 'wishlist' ? 'active' : ''}`}
+                >
+                  <Heart size={17} />
+                  <span>Danh sách yêu thích</span>
                 </Nav.Link>
               </Nav.Item>
 
@@ -446,17 +473,41 @@ const UserProfilePage = ({ user, setUser }) => {
                 <UserOrdersList />
               )}
 
-              {/* TAB 3: DANH SÁCH YÊU THÍCH */}
-              {activeTab === 'wishlist' && (
+              {activeTab === 'notifications' && (
+                <UserNotificationsList />
+              )}
+
+              {activeTab === 'journeys' && (
                 <div>
-                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 700 }}>Danh sách yêu thích</h4>
-                  <div className="text-center py-5 text-muted bg-light rounded-3">
-                    Chưa có tour nào trong danh sách yêu thích
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                      <h4 className="mb-1" style={{ color: '#ea580c', fontWeight: 700 }}>Hành trình tour</h4>
+                      <p className="text-muted mb-0" style={{ fontSize: '13.5px' }}>
+                        Theo dõi tiến độ tham quan thực tế, lịch trình và bản đồ cho các tour bạn đã đặt
+                      </p>
+                    </div>
                   </div>
+                  <MyJourneys />
                 </div>
               )}
 
-              {/* TAB 4: KỶ NIỆM CHUYẾN ĐI */}
+              {activeTab === 'souvenirs' && (
+                <div>
+                  <div className="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                      <h4 className="mb-1" style={{ color: '#ea580c', fontWeight: 700 }}>Kỷ niệm tour</h4>
+                      <p className="text-muted mb-0" style={{ fontSize: '13.5px' }}>
+                        Xem lại thiệp tri ân và album ảnh từ những hành trình bạn đã hoàn thành
+                      </p>
+                    </div>
+                  </div>
+                  <MySouvenirCardsList />
+                </div>
+              )}
+
+              {activeTab === 'wishlist' && (
+                <UserWishlistList />
+              )}
               {activeTab === 'souvenirs' && (
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-4">
