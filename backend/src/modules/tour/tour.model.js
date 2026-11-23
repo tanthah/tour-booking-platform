@@ -23,16 +23,21 @@ const tourSchema = new mongoose.Schema(
       trim: true,
       maxlength: [255, 'Tên Tour không được quá 255 ký tự'],
     },
-    // Phân loại: Tour trong nước hoặc quốc tế
+    // Danh mục Tour — liên kết bảng Category
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      required: [true, 'Danh mục Tour là bắt buộc'],
+    },
+    // Phân loại cũ (tương thích dữ liệu trước đó, không bắt buộc)
     category: {
       type: String,
       enum: ['DOMESTIC', 'INTERNATIONAL'],
-      required: [true, 'Phân loại Tour là bắt buộc (DOMESTIC hoặc INTERNATIONAL)'],
+      default: null,
     },
-    // Khu vực — phải phù hợp với danh mục
+    // Khu vực cũ (tương thích dữ liệu trước đó)
     region: {
       type: String,
-      enum: ['MIEN_BAC', 'MIEN_TRUNG', 'MIEN_NAM', 'CHAU_A', 'CHAU_AU', 'CHAU_MY', 'CHAU_UC'],
       default: null,
     },
     // Điểm đến chính của Tour
@@ -170,6 +175,7 @@ tourSchema.pre('findOneAndUpdate', function (next) {
 });
 
 // ========== INDEX ==========
+tourSchema.index({ category_id: 1 });
 tourSchema.index({ category: 1, region: 1 });
 tourSchema.index({ sale_price: 1 });
 tourSchema.index({ status: 1 });

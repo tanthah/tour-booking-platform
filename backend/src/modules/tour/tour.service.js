@@ -1,4 +1,5 @@
 const Tour = require('./tour.model');
+const Category = require('../category/category.model');
 
 /**
  * TourService — Xử lý logic nghiệp vụ Tour (không bao gồm đợt khởi hành)
@@ -11,11 +12,31 @@ class TourService {
    * Lấy danh sách Tour đang ACTIVE có phân trang, lọc, tìm kiếm, sắp xếp
    */
   async getPublishedTours(queryParams) {
-    const { page = 1, limit = 12, category, region, search, sort, min_price, max_price } = queryParams;
+    const { page = 1, limit = 12, category_id, category, region, search, sort, min_price, max_price } = queryParams;
 
     const filter = { status: 'ACTIVE', deleted_at: null };
 
-    if (category) filter.category = category;
+    if (category_id) {
+      filter.category_id = category_id;
+    } else if (category) {
+      // Hỗ trợ lọc theo mã DOMESTIC / INTERNATIONAL hoặc Category root
+      try {
+        const root = await Category.findOne({
+          $or: [{ code: category.toUpperCase() }, { slug: category.toLowerCase() }],
+          deleted_at: null,
+        });
+        if (root) {
+          const children = await Category.find({ parent_id: root._id, deleted_at: null }).select('_id');
+          const catIds = [root._id, ...children.map((c) => c._id)];
+          filter.$or = [{ category_id: { $in: catIds } }, { category: category.toUpperCase() }];
+        } else {
+          filter.category = category;
+        }
+      } catch {
+        filter.category = category;
+      }
+    }
+
     if (region) filter.region = region;
     if (min_price || max_price) {
       filter.sale_price = {};
@@ -23,18 +44,29 @@ class TourService {
       if (max_price) filter.sale_price.$lte = Number(max_price);
     }
     if (search) {
-      filter.$or = [
+      const searchCondition = [
         { title: { $regex: search, $options: 'i' } },
         { destination_location: { $regex: search, $options: 'i' } },
         { code: { $regex: search, $options: 'i' } },
       ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchCondition }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchCondition;
+      }
     }
 
     const sortOption = this._buildSortOption(sort);
     const skip = (Number(page) - 1) * Number(limit);
 
     const [tours, total] = await Promise.all([
-      Tour.find(filter).sort(sortOption).skip(skip).limit(Number(limit)).lean(),
+      Tour.find(filter)
+        .populate('category_id', 'name slug parent_id')
+        .sort(sortOption)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
       Tour.countDocuments(filter),
     ]);
 
@@ -57,7 +89,9 @@ class TourService {
       _id: tourId,
       status: 'ACTIVE',
       deleted_at: null,
-    }).lean();
+    })
+      .populate('category_id', 'name slug parent_id')
+      .lean();
 
     if (!tour) {
       const error = new Error('Tour không tồn tại hoặc chưa được công khai');
@@ -84,6 +118,18 @@ class TourService {
     const tourData = { ...data };
     delete tourData.sale_price;
 
+    if (tourData.category_id && !tourData.category) {
+      try {
+        const cat = await Category.findById(tourData.category_id).populate('parent_id');
+        if (cat) {
+          const rootCode = cat.parent_id?.code || cat.code;
+          if (rootCode) tourData.category = rootCode;
+        }
+      } catch (err) {
+        console.error('Lỗi suy diễn root category:', err);
+      }
+    }
+
     const tour = new Tour(tourData);
     // Pre-save hook sẽ tự tính sale_price
     await tour.save();
@@ -94,24 +140,54 @@ class TourService {
    * Lấy danh sách tất cả Tour (ADMIN — bao gồm mọi trạng thái)
    */
   async getAllTours(queryParams) {
-    const { page = 1, limit = 12, category, region, status, search, sort } = queryParams;
+    const { page = 1, limit = 12, category_id, category, region, status, search, sort } = queryParams;
 
     const filter = { deleted_at: null };
-    if (category) filter.category = category;
+    if (category_id) {
+      filter.category_id = category_id;
+    } else if (category) {
+      try {
+        const root = await Category.findOne({
+          $or: [{ code: category.toUpperCase() }, { slug: category.toLowerCase() }],
+          deleted_at: null,
+        });
+        if (root) {
+          const children = await Category.find({ parent_id: root._id, deleted_at: null }).select('_id');
+          const catIds = [root._id, ...children.map((c) => c._id)];
+          filter.$or = [{ category_id: { $in: catIds } }, { category: category.toUpperCase() }];
+        } else {
+          filter.category = category;
+        }
+      } catch {
+        filter.category = category;
+      }
+    }
+
     if (region) filter.region = region;
     if (status) filter.status = status;
     if (search) {
-      filter.$or = [
+      const searchCondition = [
         { title: { $regex: search, $options: 'i' } },
         { code: { $regex: search, $options: 'i' } },
       ];
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, { $or: searchCondition }];
+        delete filter.$or;
+      } else {
+        filter.$or = searchCondition;
+      }
     }
 
     const sortOption = this._buildSortOption(sort);
     const skip = (Number(page) - 1) * Number(limit);
 
     const [tours, total] = await Promise.all([
-      Tour.find(filter).sort(sortOption).skip(skip).limit(Number(limit)).lean(),
+      Tour.find(filter)
+        .populate('category_id', 'name slug parent_id')
+        .sort(sortOption)
+        .skip(skip)
+        .limit(Number(limit))
+        .lean(),
       Tour.countDocuments(filter),
     ]);
 
@@ -130,7 +206,9 @@ class TourService {
    * Lấy chi tiết Tour theo ID (ADMIN — mọi trạng thái)
    */
   async getTourById(tourId) {
-    const tour = await Tour.findOne({ _id: tourId, deleted_at: null }).lean();
+    const tour = await Tour.findOne({ _id: tourId, deleted_at: null })
+      .populate('category_id', 'name slug parent_id')
+      .lean();
     if (!tour) {
       const error = new Error('Tour không tồn tại');
       error.statusCode = 404;
@@ -159,7 +237,7 @@ class TourService {
 
     // Whitelist: chỉ cho phép cập nhật các trường được phép
     const allowedFields = [
-      'title', 'category', 'region', 'destination_location', 'duration',
+      'title', 'category_id', 'category', 'region', 'destination_location', 'duration',
       'original_price', 'discount_percent',
       'is_flash_sale', 'is_hot',
       'main_image', 'gallery', 'content_html', 'itinerary',
@@ -174,6 +252,18 @@ class TourService {
         tour[key] = updateData[key];
       }
     });
+
+    if (updateData.category_id) {
+      try {
+        const cat = await Category.findById(updateData.category_id).populate('parent_id');
+        if (cat) {
+          const rootCode = cat.parent_id?.code || cat.code;
+          if (rootCode) tour.category = rootCode;
+        }
+      } catch (err) {
+        console.error('Lỗi suy diễn root category khi update:', err);
+      }
+    }
 
     // Không tin sale_price từ frontend — pre-save hook sẽ tự tính
     await tour.save();

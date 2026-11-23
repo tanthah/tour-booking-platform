@@ -10,16 +10,6 @@ import {
   ActionButtons,
 } from '../../..//components/common';
 
-const REGION_NAMES = {
-  MIEN_BAC: 'Miền Bắc',
-  MIEN_TRUNG: 'Miền Trung',
-  MIEN_NAM: 'Miền Nam',
-  CHAU_A: 'Châu Á',
-  CHAU_AU: 'Châu Âu',
-  CHAU_MY: 'Châu Mỹ',
-  CHAU_UC: 'Châu Úc',
-};
-
 const STATUS_MAP = {
   ACTIVE: { label: 'Hoạt động', className: 'status-active' },
   INACTIVE: { label: 'Ngừng HĐ', className: 'status-inactive' },
@@ -33,14 +23,27 @@ const STATUS_MAP = {
 function Tours() {
   const navigate = useNavigate();
   const [tours, setTours] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Bộ lọc
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [regionFilter, setRegionFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  // Tải danh mục cho bộ lọc
+  useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const res = await axiosAdmin.get('/categories/active');
+        setCategories(res?.data || []);
+      } catch (err) {
+        console.error('Lỗi khi tải danh mục:', err);
+      }
+    };
+    fetchCats();
+  }, []);
 
   // Phân trang
   const [page, setPage] = useState(1);
@@ -56,8 +59,7 @@ function Tours() {
         limit: pageSize,
       };
       if (statusFilter && statusFilter !== 'ALL') params.status = statusFilter;
-      if (categoryFilter && categoryFilter !== 'ALL') params.category = categoryFilter;
-      if (regionFilter && regionFilter !== 'ALL') params.region = regionFilter;
+      if (categoryFilter && categoryFilter !== 'ALL') params.category_id = categoryFilter;
       if (search.trim()) params.search = search.trim();
 
       const res = await axiosAdmin.get('/tours', { params });
@@ -71,7 +73,7 @@ function Tours() {
     } finally {
       setLoading(false);
     }
-  }, [page, pageSize, statusFilter, categoryFilter, regionFilter, search]);
+  }, [page, pageSize, statusFilter, categoryFilter, search]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,7 +86,6 @@ function Tours() {
   const handleClearFilters = () => {
     setSearch('');
     setCategoryFilter('');
-    setRegionFilter('');
     setStatusFilter('');
     setPage(1);
   };
@@ -167,19 +168,27 @@ function Tours() {
       ),
     },
     {
-      key: 'category_region',
-      title: 'Phân loại / Vùng',
-      width: '160px',
-      render: (tour) => (
-        <div>
-          <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-            {tour.category === 'DOMESTIC' ? 'Trong nước' : 'Quốc tế'}
+      key: 'category',
+      title: 'Danh mục',
+      width: '180px',
+      render: (tour) => {
+        const catName =
+          tour.category_id?.name ||
+          (tour.category === 'DOMESTIC' ? 'Tour trong nước' : tour.category === 'INTERNATIONAL' ? 'Tour nước ngoài' : '-');
+        const parentName = tour.category_id?.parent_id?.name;
+        return (
+          <div>
+            <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#0f172a' }}>
+              {catName}
+            </div>
+            {parentName && (
+              <div style={{ fontSize: '0.78rem', color: '#ea580c' }}>
+                {parentName}
+              </div>
+            )}
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-            {REGION_NAMES[tour.region] || tour.region || '-'}
-          </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       key: 'status',
@@ -265,31 +274,12 @@ function Tours() {
               setCategoryFilter(val);
               setPage(1);
             },
-            placeholder: 'Tất cả phân loại',
-            options: [
-              { value: 'DOMESTIC', label: 'Trong nước' },
-              { value: 'INTERNATIONAL', label: 'Quốc tế' },
-            ],
-            width: '160px',
-          },
-          {
-            key: 'region',
-            value: regionFilter,
-            onChange: (val) => {
-              setRegionFilter(val);
-              setPage(1);
-            },
-            placeholder: 'Tất cả vùng',
-            options: [
-              { value: 'MIEN_BAC', label: 'Miền Bắc' },
-              { value: 'MIEN_TRUNG', label: 'Miền Trung' },
-              { value: 'MIEN_NAM', label: 'Miền Nam' },
-              { value: 'CHAU_A', label: 'Châu Á' },
-              { value: 'CHAU_AU', label: 'Châu Âu' },
-              { value: 'CHAU_MY', label: 'Châu Mỹ' },
-              { value: 'CHAU_UC', label: 'Châu Úc' },
-            ],
-            width: '160px',
+            placeholder: 'Tất cả danh mục',
+            options: categories.map((c) => ({
+              value: c._id,
+              label: c.parent_id?.name ? `${c.name} (${c.parent_id.name})` : c.name,
+            })),
+            width: '200px',
           },
           {
             key: 'status',
