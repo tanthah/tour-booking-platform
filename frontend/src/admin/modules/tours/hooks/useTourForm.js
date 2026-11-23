@@ -16,8 +16,8 @@ const useTourForm = (tourId) => {
 
   // Khởi tạo dữ liệu form mặc định theo API mới
   const [formData, setFormData] = useState({
-    title: '', code: '', category: 'DOMESTIC', status: 'ACTIVE',
-    region: 'MIEN_BAC', destination_location: '', duration: '',
+    title: '', code: '', category_id: '', status: 'ACTIVE',
+    destination_location: '', duration: '',
     original_price: 0, discount_percent: 0,
     main_image: '', gallery: [],
     content_html: '', itinerary: [],
@@ -37,9 +37,8 @@ const useTourForm = (tourId) => {
           const t = res.data;
           setFormData({
             title: t.title || '', code: t.code || '',
-            category: t.category || 'DOMESTIC',
+            category_id: t.category_id?._id || t.category_id || '',
             status: t.status || 'DRAFT',
-            region: t.region || 'MIEN_BAC',
             destination_location: t.destination_location || '',
             duration: t.duration || '',
             original_price: t.original_price || 0,
@@ -85,6 +84,10 @@ const useTourForm = (tourId) => {
     e.preventDefault();
     if (!formData.title.trim() || (!isEdit && !formData.code.trim())) {
       alert('Vui lòng nhập đầy đủ tên và mã Tour');
+      return;
+    }
+    if (!formData.category_id) {
+      alert('Vui lòng chọn danh mục cho Tour');
       return;
     }
     if (!formData.destination_location.trim()) {

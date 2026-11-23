@@ -175,7 +175,7 @@ function SouvenirCardViewPage() {
         <Alert variant="danger" className="mx-auto" style={{ maxWidth: '540px' }}>
           <h5>Không thể truy cập thiệp kỷ niệm</h5>
           <p className="mb-3">{error || 'Thiệp không tồn tại hoặc bạn không có quyền xem.'}</p>
-          <Button as={Link} to="/my-souvenirs" variant="outline-danger" size="sm">
+          <Button as={Link} to="/ho-so-ca-nhan?tab=souvenirs" variant="outline-danger" size="sm">
             Quay lại danh sách thiệp của tôi
           </Button>
         </Alert>
@@ -202,7 +202,7 @@ function SouvenirCardViewPage() {
       >
         <Container className="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <button
-            onClick={() => navigate('/my-souvenirs')}
+            onClick={() => navigate('/ho-so-ca-nhan?tab=souvenirs')}
             style={{
               background: 'none',
               border: 'none',

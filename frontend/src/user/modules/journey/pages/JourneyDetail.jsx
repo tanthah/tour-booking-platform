@@ -195,7 +195,7 @@ function JourneyDetail() {
     return (
       <Container className="py-5 text-center">
         <Alert variant="danger">{error || 'Không tìm thấy hành trình.'}</Alert>
-        <Button as={Link} to="/my-journeys" variant="warning">
+        <Button as={Link} to="/ho-so-ca-nhan?tab=journeys" variant="warning">
           Quay lại hành trình của tôi
         </Button>
       </Container>
@@ -214,7 +214,7 @@ function JourneyDetail() {
         {/* Top bar */}
         <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
           <Link
-            to="/my-journeys"
+            to="/ho-so-ca-nhan?tab=journeys"
             className="text-decoration-none d-inline-flex align-items-center gap-1 fw-semibold"
             style={{ color: '#475569', fontSize: '14px' }}
           >
