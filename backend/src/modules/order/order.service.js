@@ -152,7 +152,10 @@ const createOrderFromCart = async (userId, payload) => {
       orderId: order._id.toString(),
       orderCode: order.order_code,
       tourName: firstTourName,
+      departureDate: orderItems[0]?.departure_date,
       totalAmount,
+      recipientName: order.customer_info?.full_name,
+      recipientEmail: order.customer_info?.email,
     });
 
     return order;
@@ -282,6 +285,9 @@ const cancelOrder = async (userId, orderId, cancelReason) => {
     orderId: order._id.toString(),
     orderCode: order.order_code,
     tourName: firstTourName,
+    reason: order.cancel_reason,
+    recipientName: order.customer_info?.full_name,
+    recipientEmail: order.customer_info?.email,
   });
 
   return { order, refundAmount, cancelFeeAmount, refund };

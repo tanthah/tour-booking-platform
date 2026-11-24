@@ -1,5 +1,6 @@
 const Notification = require('./notification.model');
 const EVENTS = require('./notificationEvents');
+const notificationEmailService = require('../email/notificationEmail.service');
 
 // ============================================================
 //  SINGLETON: lưu io instance được khởi tạo từ server.js
@@ -179,6 +180,10 @@ const sendCustomerNotification = async (eventType, userId, data = {}) => {
       metadata: data,
       isRead: false,
       createdAt: notification.createdAt,
+    });
+
+    notificationEmailService.sendCustomerEventEmail(eventType, userId, data).catch((err) => {
+      console.error(`[Notification] Lỗi gửi email [${eventType}] cho user ${userId}:`, err.message);
     });
 
     return notification;

@@ -186,6 +186,9 @@ async function updateOrderOnPaymentSuccess(payment, zp_trans_id, dataJson) {
     tourName: firstTourName,
     paidAmount: payment.amount,
     transactionId: zp_trans_id ? String(zp_trans_id) : payment.app_trans_id,
+    paymentMethod: order.payment_method || 'ZaloPay',
+    recipientName: order.customer_info?.full_name,
+    recipientEmail: order.customer_info?.email,
   });
 }
 

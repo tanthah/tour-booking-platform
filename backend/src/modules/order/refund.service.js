@@ -81,7 +81,11 @@ const completeRefund = async (refundId, staffId, transactionId = null) => {
   await refund.save();
 
   // Đổi trạng thái thanh toán của đơn thành REFUNDED
-  await Order.findByIdAndUpdate(refund.order_id, { $set: { payment_status: 'REFUNDED' } });
+  const order = await Order.findByIdAndUpdate(
+    refund.order_id,
+    { $set: { payment_status: 'REFUNDED' } },
+    { new: true }
+  ).lean();
 
   await OrderLog.create({
     order_id: refund.order_id,
@@ -94,10 +98,13 @@ const completeRefund = async (refundId, staffId, transactionId = null) => {
   // Thông báo hoàn tiền thành công cho khách
   notificationService.sendCustomerNotification(EVENTS.REFUND_SUCCESS, refund.user_id, {
     orderId: refund.order_id.toString(),
-    orderCode: refund.order_id?.order_code || '',
+    orderCode: order?.order_code || '',
+    refundId: refund._id.toString(),
     refundAmount: refund.refund_amount,
     paymentMethod: refund.refund_method,
     transactionId: transactionId || '',
+    recipientName: order?.customer_info?.full_name,
+    recipientEmail: order?.customer_info?.email,
   });
 
   return refund;

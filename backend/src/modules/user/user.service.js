@@ -9,6 +9,7 @@ const {
   sendForgotPasswordEmail,
   sendRegistrationWelcomeEmail,
 } = require('../email/email.service');
+const notificationEmailService = require('../email/notificationEmail.service');
 const permissionService = require('../../services/permissionService');
 
 class UserService {
@@ -232,6 +233,13 @@ class UserService {
 
     user.password_hash = new_password; // Mật khẩu mới sẽ được mã hóa tự động bởi pre-save hook
     await user.save();
+
+    notificationEmailService.sendCustomerEventEmail('PASSWORD_CHANGED', user._id, {
+      eventId: user.updated_at?.toISOString() || new Date().toISOString(),
+      changedAt: user.updated_at || new Date(),
+    }).catch((error) => {
+      console.error('[UserService] Gửi email xác nhận đổi mật khẩu thất bại:', error.message);
+    });
 
     return { message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' };
   }

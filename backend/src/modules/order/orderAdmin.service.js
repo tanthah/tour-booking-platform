@@ -255,6 +255,7 @@ const resolveOverdueOrder = async (orderId, staffId, payload) => {
       tourName: firstTourName,
       refundAmount,
       cancelFeePercent: feePercent,
+      reason: order.cancel_reason,
     });
 
     return { order, refund };
