@@ -76,6 +76,37 @@ function Categories() {
       render: (cat) => <span style={{ fontWeight: 600 }}>{cat.name}</span>,
     },
     {
+      key: 'parent',
+      title: 'Danh mục cha',
+      width: '180px',
+      render: (cat) => {
+        if (!cat.parent_id) {
+          return (
+            <span
+              style={{
+                backgroundColor: '#fff7ed',
+                color: '#ea580c',
+                fontWeight: 600,
+                fontSize: '12px',
+                padding: '3px 8px',
+                borderRadius: '6px',
+                border: '1px solid #fed7aa',
+                display: 'inline-block',
+              }}
+            >
+              ★ Danh mục gốc
+            </span>
+          );
+        }
+        const parentName = typeof cat.parent_id === 'object' ? cat.parent_id?.name : cat.parent_id;
+        return (
+          <span style={{ fontWeight: 500, color: '#334155' }}>
+            {parentName || '-'}
+          </span>
+        );
+      },
+    },
+    {
       key: 'slug',
       title: 'Slug',
       render: (cat) => <code style={{ fontSize: '13px' }}>{cat.slug}</code>,

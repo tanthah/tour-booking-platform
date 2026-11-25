@@ -15,14 +15,16 @@ const createTourValidation = [
     .notEmpty().withMessage('Tên Tour là bắt buộc')
     .isLength({ min: 5, max: 255 }).withMessage('Tên Tour phải từ 5 đến 255 ký tự'),
 
+  body('category_id')
+    .notEmpty().withMessage('Danh mục Tour là bắt buộc')
+    .isMongoId().withMessage('ID danh mục không hợp lệ'),
+
   body('category')
-    .notEmpty().withMessage('Phân loại Tour là bắt buộc')
+    .optional()
     .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại phải là DOMESTIC hoặc INTERNATIONAL'),
 
   body('region')
-    .optional({ values: 'null' })
-    .isIn(['MIEN_BAC', 'MIEN_TRUNG', 'MIEN_NAM', 'CHAU_A', 'CHAU_AU', 'CHAU_MY', 'CHAU_UC'])
-    .withMessage('Khu vực không hợp lệ'),
+    .optional({ values: 'null' }),
 
   body('destination_location')
     .trim()
@@ -113,14 +115,16 @@ const updateTourValidation = [
     .trim()
     .isLength({ min: 5, max: 255 }).withMessage('Tên Tour phải từ 5 đến 255 ký tự'),
 
+  body('category_id')
+    .optional()
+    .isMongoId().withMessage('ID danh mục không hợp lệ'),
+
   body('category')
     .optional()
     .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại phải là DOMESTIC hoặc INTERNATIONAL'),
 
   body('region')
-    .optional({ values: 'null' })
-    .isIn(['MIEN_BAC', 'MIEN_TRUNG', 'MIEN_NAM', 'CHAU_A', 'CHAU_AU', 'CHAU_MY', 'CHAU_UC'])
-    .withMessage('Khu vực không hợp lệ'),
+    .optional({ values: 'null' }),
 
   body('destination_location')
     .optional()
@@ -217,14 +221,15 @@ const listToursValidation = [
     .optional()
     .isInt({ min: 1, max: 50 }).withMessage('Số lượng mỗi trang từ 1 đến 50'),
 
-  query('category')
+  query('category_id')
     .optional()
-    .isIn(['DOMESTIC', 'INTERNATIONAL']).withMessage('Phân loại không hợp lệ'),
+    .isMongoId().withMessage('ID danh mục không hợp lệ'),
+
+  query('category')
+    .optional(),
 
   query('region')
-    .optional()
-    .isIn(['MIEN_BAC', 'MIEN_TRUNG', 'MIEN_NAM', 'CHAU_A', 'CHAU_AU', 'CHAU_MY', 'CHAU_UC'])
-    .withMessage('Khu vực không hợp lệ'),
+    .optional(),
 
   query('sort')
     .optional()

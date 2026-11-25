@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
+import axiosAdmin from '../../..//config/axiosAdmin';
 import useTourForm from '../hooks/useTourForm';
 import { ImageUploader } from '../../..//components/common';
 import ItineraryEditor from '../components/ItineraryEditor';
@@ -19,6 +20,42 @@ function TourForm() {
     formData, loading, submitting, isEdit,
     handleChange, setField, handleSubmit, navigate, tourId
   } = useTourForm(id);
+
+  // Tải danh mục từ cơ sở dữ liệu
+  const [categories, setCategories] = useState([]);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await axiosAdmin.get('/categories/active');
+        setCategories(res?.data || []);
+      } catch (err) {
+        console.error('Lỗi khi tải danh mục tour:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Phân nhóm danh mục theo Tour trong nước và Tour nước ngoài
+  const domesticRoot = categories.find((c) => !c.parent_id && (c.code === 'DOMESTIC' || c.slug === 'tour-trong-nuoc'));
+  const intlRoot = categories.find((c) => !c.parent_id && (c.code === 'INTERNATIONAL' || c.slug === 'tour-nuoc-ngoai'));
+
+  const domesticSubs = categories.filter((c) => {
+    const parentId = c.parent_id?._id || c.parent_id;
+    return parentId && domesticRoot && String(parentId) === String(domesticRoot._id);
+  });
+
+  const intlSubs = categories.filter((c) => {
+    const parentId = c.parent_id?._id || c.parent_id;
+    return parentId && intlRoot && String(parentId) === String(intlRoot._id);
+  });
+
+  const otherCats = categories.filter((c) => {
+    const isRoot = !c.parent_id;
+    const parentId = c.parent_id?._id || c.parent_id;
+    const isDomesticSub = domesticRoot && String(parentId) === String(domesticRoot._id);
+    const isIntlSub = intlRoot && String(parentId) === String(intlRoot._id);
+    return !isRoot && !isDomesticSub && !isIntlSub;
+  });
 
   const [userTab, setUserTab] = useState(null);
   const activeTab = userTab || (tabFromQuery === 'departures' && isEdit ? 'departures' : 'info');
@@ -58,56 +95,59 @@ function TourForm() {
       {activeTab === 'info' && (
         <div className="card">
           <form onSubmit={handleSubmit}>
-            {/* Tên tour và Danh mục */}
+            {/* Tên tour và Danh mục (chọn từ CSDL) */}
             <div className="form-row">
               <div className="form-group form-col">
-                <label className="form-label">Tên tour</label>
+                <label className="form-label">Tên tour <span style={{ color: '#ef4444' }}>*</span></label>
                 <input type="text" name="title" className="form-control" placeholder="Nhập tên tour..." value={formData.title} onChange={handleChange} required />
               </div>
               <div className="form-group form-col">
-                <label className="form-label">Danh mục</label>
+                <label className="form-label">Danh mục <span style={{ color: '#ef4444' }}>*</span></label>
                 <select
-                  name="category"
+                  name="category_id"
                   className="form-control"
-                  value={formData.category}
-                  onChange={(e) => {
-                    const newCat = e.target.value;
-                    setField('category', newCat);
-                    if (newCat === 'DOMESTIC') setField('region', 'MIEN_BAC');
-                    else setField('region', 'CHAU_A');
-                  }}
+                  value={formData.category_id || ''}
+                  onChange={handleChange}
                   required
                 >
-                  <option value="DOMESTIC">Trong nước (DOMESTIC)</option>
-                  <option value="INTERNATIONAL">Quốc tế (INTERNATIONAL)</option>
+                  <option value="">-- Chọn danh mục tour --</option>
+                  {domesticSubs.length > 0 && (
+                    <optgroup label="Tour trong nước">
+                      {domesticSubs.map((cat) => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {intlSubs.length > 0 && (
+                    <optgroup label="Tour nước ngoài">
+                      {intlSubs.map((cat) => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {otherCats.length > 0 && (
+                    <optgroup label="Danh mục khác">
+                      {otherCats.map((cat) => (
+                        <option key={cat._id} value={cat._id}>{cat.name}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {/* Fallback nếu danh mục cha chưa có con */}
+                  {domesticSubs.length === 0 && domesticRoot && (
+                    <option value={domesticRoot._id}>{domesticRoot.name}</option>
+                  )}
+                  {intlSubs.length === 0 && intlRoot && (
+                    <option value={intlRoot._id}>{intlRoot.name}</option>
+                  )}
                 </select>
               </div>
             </div>
 
-            {/* Mã tour, Khu vực, Trạng thái */}
-            <div className="form-row form-row-3">
+            {/* Mã tour và Trạng thái (đã bỏ ô Khu vực) */}
+            <div className="form-row">
               <div className="form-group form-col">
-                <label className="form-label">Mã tour</label>
+                <label className="form-label">Mã tour <span style={{ color: '#ef4444' }}>*</span></label>
                 <input type="text" name="code" className="form-control" placeholder="VD: DN01" value={formData.code} onChange={handleChange} required disabled={isEdit} />
-              </div>
-              <div className="form-group form-col">
-                <label className="form-label">Khu vực</label>
-                <select name="region" className="form-control" value={formData.region} onChange={handleChange}>
-                  {formData.category === 'DOMESTIC' ? (
-                    <>
-                      <option value="MIEN_BAC">Miền Bắc</option>
-                      <option value="MIEN_TRUNG">Miền Trung</option>
-                      <option value="MIEN_NAM">Miền Nam</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="CHAU_A">Châu Á</option>
-                      <option value="CHAU_AU">Châu Âu</option>
-                      <option value="CHAU_MY">Châu Mỹ</option>
-                      <option value="CHAU_UC">Châu Úc</option>
-                    </>
-                  )}
-                </select>
               </div>
               <div className="form-group form-col">
                 <label className="form-label">Trạng thái</label>

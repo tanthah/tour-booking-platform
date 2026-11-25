@@ -225,7 +225,7 @@ const OrderDetailPage = () => {
 
               {['DEPOSIT_CONFIRMED', 'CONFIRMED', 'COMPLETED'].includes(order.order_status) && (
                 <Link
-                  to="/my-journeys"
+                  to="/ho-so-ca-nhan?tab=journeys"
                   className="btn w-100 py-2 mb-2 text-white"
                   style={{ borderRadius: '10px', fontSize: '14px', fontWeight: 700, backgroundColor: '#ea580c' }}
                 >

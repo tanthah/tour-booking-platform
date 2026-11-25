@@ -28,16 +28,15 @@ function CategoryForm() {
     description: '',
   });
 
-  // Lay danh sach danh muc cha (ACTIVE) de hien thi dropdown
+  // Lay danh sach danh muc cha (chỉ lấy danh mục gốc: Tour trong nước / Tour nước ngoài)
   useEffect(() => {
     const fetchParentCategories = async () => {
       try {
         const res = await axiosAdmin.get('/categories/active');
-        if (res?.success) {
-          // Loc bo chinh no ra khoi danh sach danh muc cha (khi dang sua)
-          const list = (res.data || []).filter((cat) => cat._id !== id);
-          setParentCategories(list);
-        }
+        const allCats = res?.data || [];
+        // Loc lay danh muc goc (khong co parent_id hoac code la DOMESTIC / INTERNATIONAL)
+        const roots = allCats.filter((cat) => !cat.parent_id && cat._id !== id);
+        setParentCategories(roots);
       } catch (err) {
         console.error('Lỗi khi tải danh mục cha:', err);
       }
@@ -140,9 +139,9 @@ function CategoryForm() {
               />
             </div>
             <div className="form-group form-col">
-              <label className="form-label">Danh mục cha</label>
+              <label className="form-label">Danh mục cha (Tour trong nước / Nước ngoài)</label>
               <select name="parent_id" className="form-control" value={formData.parent_id} onChange={handleChange}>
-                <option value="">-- Chọn danh mục --</option>
+                <option value="">-- Chọn danh mục cha --</option>
                 {parentCategories.map((cat) => (
                   <option key={cat._id} value={cat._id}>{cat.name}</option>
                 ))}

@@ -362,7 +362,17 @@ const UserProfilePage = ({ user, setUser }) => {
                   className={`user-sidebar-link ${activeTab === 'souvenirs' ? 'active' : ''}`}
                 >
                   <Camera size={17} />
-                  <span>Kỷ niệm chuyến đi</span>
+                  <span>Kỷ niệm tour</span>
+                </Nav.Link>
+              </Nav.Item>
+
+              <Nav.Item>
+                <Nav.Link
+                  eventKey="wishlist"
+                  className={`user-sidebar-link ${activeTab === 'wishlist' ? 'active' : ''}`}
+                >
+                  <Heart size={17} />
+                  <span>Danh sách yêu thích</span>
                 </Nav.Link>
               </Nav.Item>
 
@@ -512,13 +522,23 @@ const UserProfilePage = ({ user, setUser }) => {
                 <div>
                   <div className="d-flex justify-content-between align-items-center mb-4">
                     <div>
-                      <h4 className="mb-1" style={{ color: '#ea580c', fontWeight: 700 }}>Kỷ niệm chuyến đi</h4>
+                      <h4 className="mb-1" style={{ color: '#ea580c', fontWeight: 700 }}>Kỷ niệm tour</h4>
                       <p className="text-muted mb-0" style={{ fontSize: '13.5px' }}>
                         Xem lại thiệp tri ân và album ảnh từ những hành trình bạn đã hoàn thành
                       </p>
                     </div>
                   </div>
                   <MySouvenirCardsList />
+                </div>
+              )}
+
+              {/* TAB 5: DANH SÁCH YÊU THÍCH */}
+              {activeTab === 'wishlist' && (
+                <div>
+                  <h4 className="mb-4" style={{ color: '#ea580c', fontWeight: 700 }}>Danh sách yêu thích</h4>
+                  <div className="text-center py-5 text-muted bg-light rounded-3">
+                    Chưa có tour nào trong danh sách yêu thích
+                  </div>
                 </div>
               )}
             </Card.Body>
