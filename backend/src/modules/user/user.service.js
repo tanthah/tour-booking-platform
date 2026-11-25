@@ -4,7 +4,12 @@ const Role = require('../role/role.model');
 const OtpVerification = require('./otp.model');
 const { JWT_SECRET, JWT_EXPIRES_IN } = require('../../config/env');
 const { generateOTP } = require('../../utils/otpGenerator');
-const { sendWelcomeOtpEmail, sendForgotPasswordEmail } = require('../email/email.service');
+const {
+  sendWelcomeOtpEmail,
+  sendForgotPasswordEmail,
+  sendRegistrationWelcomeEmail,
+} = require('../email/email.service');
+const notificationEmailService = require('../email/notificationEmail.service');
 const permissionService = require('../../services/permissionService');
 
 class UserService {
@@ -78,10 +83,17 @@ class UserService {
     await otpRecord.save();
 
     // Kích hoạt tài khoản User sang trạng thái ACTIVE
-    await User.findOneAndUpdate(
+    const activatedUser = await User.findOneAndUpdate(
       { email, deleted_at: null },
-      { status: 'ACTIVE' }
-    );
+      { status: 'ACTIVE' },
+      { new: true }
+    ).select('full_name email');
+
+    if (activatedUser) {
+      sendRegistrationWelcomeEmail(activatedUser.email, activatedUser.full_name).catch((error) => {
+        console.error('[UserService] Gửi email chào mừng sau đăng ký thất bại:', error.message);
+      });
+    }
 
     return { message: 'Xác thực thành công. Vui lòng đăng nhập.' };
   }
@@ -221,6 +233,13 @@ class UserService {
 
     user.password_hash = new_password; // Mật khẩu mới sẽ được mã hóa tự động bởi pre-save hook
     await user.save();
+
+    notificationEmailService.sendCustomerEventEmail('PASSWORD_CHANGED', user._id, {
+      eventId: user.updated_at?.toISOString() || new Date().toISOString(),
+      changedAt: user.updated_at || new Date(),
+    }).catch((error) => {
+      console.error('[UserService] Gửi email xác nhận đổi mật khẩu thất bại:', error.message);
+    });
 
     return { message: 'Đổi mật khẩu thành công. Vui lòng đăng nhập lại.' };
   }

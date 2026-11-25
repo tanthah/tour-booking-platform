@@ -10,6 +10,8 @@ const {
   generateOrderCode, buildOrderItems, reserveSlotsForOrderItems,
   mapBookingCustomers, releaseSlotsForOrder, flagOverdueOrders, expirePendingOrders,
 } = require('./order.helper');
+const notificationService = require('../notification/notification.service');
+const EVENTS = require('../notification/notificationEvents');
 
 const supportsTransaction = () => {
   const desc = mongoose.connection?.client?.topology?.description;
@@ -144,6 +146,18 @@ const createOrderFromCart = async (userId, payload) => {
       metadata: { total_amount: totalAmount, deposit_amount: depositAmount },
     });
 
+    // Gửi thông báo realtime cho khách hàng
+    const firstTourName = orderItems[0]?.tour_name || 'Tour du lịch';
+    notificationService.sendCustomerNotification(EVENTS.ORDER_CREATED, userId, {
+      orderId: order._id.toString(),
+      orderCode: order.order_code,
+      tourName: firstTourName,
+      departureDate: orderItems[0]?.departure_date,
+      totalAmount,
+      recipientName: order.customer_info?.full_name,
+      recipientEmail: order.customer_info?.email,
+    });
+
     return order;
   } catch (error) {
     if (session) {
@@ -263,6 +277,17 @@ const cancelOrder = async (userId, orderId, cancelReason) => {
     action: 'CANCEL_REQUESTED',
     description: `Khách hủy đơn hàng. Phí hủy ${feePercent}% (${cancelFeeAmount.toLocaleString('vi-VN')} đ), Hoàn lại ${refundAmount.toLocaleString('vi-VN')} đ.`,
     metadata: { feePercent, cancelFeeAmount, refundAmount },
+  });
+
+  // Thông báo xác nhận cho khách: hệ thống đã nhận yêu cầu hủy
+  const firstTourName = order.items?.[0]?.tour_name || 'Tour du lịch';
+  notificationService.sendCustomerNotification(EVENTS.CANCEL_REQUESTED, userId, {
+    orderId: order._id.toString(),
+    orderCode: order.order_code,
+    tourName: firstTourName,
+    reason: order.cancel_reason,
+    recipientName: order.customer_info?.full_name,
+    recipientEmail: order.customer_info?.email,
   });
 
   return { order, refundAmount, cancelFeeAmount, refund };

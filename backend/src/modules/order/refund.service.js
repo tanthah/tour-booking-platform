@@ -1,6 +1,8 @@
 const Refund = require('./refund.model');
 const Order = require('./order.model');
 const OrderLog = require('./orderLog.model');
+const notificationService = require('../notification/notification.service');
+const EVENTS = require('../notification/notificationEvents');
 
 /**
  * Refund Service — Quản lý quy trình hoàn tiền theo 4 trạng thái
@@ -79,7 +81,11 @@ const completeRefund = async (refundId, staffId, transactionId = null) => {
   await refund.save();
 
   // Đổi trạng thái thanh toán của đơn thành REFUNDED
-  await Order.findByIdAndUpdate(refund.order_id, { $set: { payment_status: 'REFUNDED' } });
+  const order = await Order.findByIdAndUpdate(
+    refund.order_id,
+    { $set: { payment_status: 'REFUNDED' } },
+    { new: true }
+  ).lean();
 
   await OrderLog.create({
     order_id: refund.order_id,
@@ -87,6 +93,18 @@ const completeRefund = async (refundId, staffId, transactionId = null) => {
     action: 'REFUND_COMPLETED',
     description: `Hoàn tiền thành công: ${refund.refund_amount.toLocaleString('vi-VN')} đ.${transactionId ? ` Mã GD: ${transactionId}` : ''}`,
     metadata: { refund_id: refund._id, transaction_id: transactionId },
+  });
+
+  // Thông báo hoàn tiền thành công cho khách
+  notificationService.sendCustomerNotification(EVENTS.REFUND_SUCCESS, refund.user_id, {
+    orderId: refund.order_id.toString(),
+    orderCode: order?.order_code || '',
+    refundId: refund._id.toString(),
+    refundAmount: refund.refund_amount,
+    paymentMethod: refund.refund_method,
+    transactionId: transactionId || '',
+    recipientName: order?.customer_info?.full_name,
+    recipientEmail: order?.customer_info?.email,
   });
 
   return refund;

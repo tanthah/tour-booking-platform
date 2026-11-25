@@ -17,6 +17,8 @@ const reviewRoutes = require('./modules/review/review.routes');
 const adminRoutes = require('./modules/admin/admin.routes');
 const journeyRoutes = require('./modules/journey/journey.routes');
 const souvenirRoutes = require('./modules/souvenir/souvenir.routes');
+const notificationRoutes = require('./modules/notification/notification.routes');
+const wishlistRoutes = require('./modules/wishlist/wishlist.routes');
 
 // Đăng ký các Endpoint phân hệ User & Authentication theo prefix /auth
 router.use('/auth', userRoutes);
@@ -62,5 +64,11 @@ router.use('/journeys', journeyRoutes);
 
 // Đăng ký các Endpoint phân hệ Thiệp điện tử & Album kỷ niệm chuyến đi
 router.use('/souvenirs', souvenirRoutes);
+
+// Đăng ký các Endpoint phân hệ Thông báo realtime
+router.use('/notifications', notificationRoutes);
+
+// Đăng ký API danh sách tour yêu thích của khách hàng
+router.use('/wishlist', wishlistRoutes);
 
 module.exports = router;

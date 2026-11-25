@@ -86,6 +86,124 @@
   box-shadow: 0 2px 4px rgba(239, 68, 68, 0.4);
 }
 
+.header-notification {
+  position: relative;
+}
+
+.header-noti-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #ea580c;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.header-noti-btn:hover,
+.header-noti-btn:focus-visible {
+  background: #fff7ed;
+  transform: translateY(-1px);
+}
+
+.header-noti-badge {
+  position: absolute;
+  top: -1px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 10px;
+  color: #fff;
+  background: #ef4444;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.header-noti-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: -54px;
+  z-index: 1100;
+  width: 370px;
+  max-width: calc(100vw - 24px);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 16px 45px rgba(15, 23, 42, 0.18);
+}
+
+.header-noti-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+}
+
+.header-noti-heading strong {
+  font-size: 16px;
+}
+
+.header-noti-mark-all {
+  padding: 0;
+  border: 0;
+  color: #ea580c;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.header-noti-mark-all:disabled {
+  color: #94a3b8;
+  cursor: default;
+}
+
+.header-noti-list {
+  max-height: 430px;
+  overflow-y: auto;
+}
+
+.header-noti-empty {
+  margin: 0;
+  padding: 32px 18px;
+  color: #64748b;
+  text-align: center;
+  font-size: 13px;
+}
+
+.header-noti-footer {
+  display: block;
+  padding: 13px 18px;
+  border-top: 1px solid #f1f5f9;
+  color: #ea580c;
+  background: #fff;
+  text-align: center;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.header-noti-footer:hover {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
 .header-auth-btn {
   border-radius: 8px;
   font-weight: 600;
@@ -138,6 +256,12 @@
   .header-auth-btn {
     font-size: 12px;
     padding: 5px 10px;
+  }
+
+  .header-noti-dropdown {
+    position: fixed;
+    top: 108px;
+    right: 12px;
   }
 }
 

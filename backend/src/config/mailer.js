@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: MAIL_USER,
-    pass: MAIL_PASS.replace(/\s/g, ''), // Loại bỏ khoảng trắng trong App Password nếu có
+    pass: (MAIL_PASS || '').replace(/\s/g, ''), // Loại bỏ khoảng trắng trong App Password nếu có
   },
   tls: {
     rejectUnauthorized: false, // Bỏ qua lỗi TLS certificate trong môi trường Development
