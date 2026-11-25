@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, MapPin } from 'lucide-react';
 import { addStop } from '../journeyAdminService';
 import JourneyMap from '../../../../user/modules/journey/components/JourneyMap';
+import AddressAutocomplete from './AddressAutocomplete';
 
 function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
   const [name, setName] = useState('');
@@ -17,6 +18,7 @@ function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [panTrigger, setPanTrigger] = useState(0);
 
   useEffect(() => {
     if (!show) return;
@@ -33,6 +35,7 @@ function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
     setInsertAfterStopId('');
     setReason('');
     setNote('');
+    setPanTrigger(0);
   }, [show, stops]);
 
   if (!show) return null;
@@ -40,6 +43,16 @@ function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
   const handleMapClick = ({ lat, lng }) => {
     setLatitude(String(lat));
     setLongitude(String(lng));
+  };
+
+  const handleAddressSelect = ({ name: placeName, address: fullAddr, lat, lng }) => {
+    setAddress(fullAddr);
+    setLatitude(String(lat));
+    setLongitude(String(lng));
+    if (!name.trim() && placeName) {
+      setName(placeName);
+    }
+    setPanTrigger((prev) => prev + 1);
   };
 
   const handleSubmit = async (e) => {
@@ -107,12 +120,13 @@ function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
               </div>
 
               <div className="mb-2">
-                <label className="form-label fw-semibold small">Địa chỉ</label>
-                <input
-                  type="text"
-                  className="form-control form-control-sm"
+                <label className="form-label fw-semibold small">
+                  Địa chỉ <span className="text-muted fw-normal">(gõ để tìm gợi ý)</span>
+                </label>
+                <AddressAutocomplete
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={setAddress}
+                  onSelect={handleAddressSelect}
                 />
               </div>
 
@@ -231,6 +245,7 @@ function AddStopModal({ show, journeyId, stops = [], onClose, onSuccess }) {
                 stops={stops}
                 onMapClick={handleMapClick}
                 pickedCoords={pickedCoords}
+                panTrigger={panTrigger}
                 height="360px"
               />
             </div>
