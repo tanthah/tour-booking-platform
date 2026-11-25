@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -37,6 +37,10 @@ function createNumberedIcon(number, status, isSelected) {
 
 function MapBoundsUpdater({ stops, selectedStopId }) {
   const map = useMap();
+  const stopsKey = useMemo(
+    () => stops.map((s) => `${s._id || ''}:${s.latitude},${s.longitude}`).join('|'),
+    [stops]
+  );
 
   useEffect(() => {
     const validStops = stops.filter(
@@ -58,7 +62,47 @@ function MapBoundsUpdater({ stops, selectedStopId }) {
       const bounds = L.latLngBounds(validStops.map((s) => [s.latitude, s.longitude]));
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 14 });
     }
-  }, [stops, selectedStopId, map]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stopsKey, selectedStopId, map]);
+
+  return null;
+}
+
+function PickedCoordsPanner({ pickedCoords, panTrigger }) {
+  const map = useMap();
+  const prevCoordsRef = useRef(null);
+  const hasMountedRef = useRef(false);
+  const lat = pickedCoords?.lat;
+  const lng = pickedCoords?.lng;
+
+  useEffect(() => {
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      return;
+    }
+
+    // Khi có panTrigger (VD: nhân viên chọn địa điểm từ gợi ý tìm kiếm)
+    if (typeof panTrigger === 'number') {
+      if (panTrigger > 0) {
+        if (map.getZoom() < 15) {
+          map.flyTo([lat, lng], 15, { animate: true });
+        } else {
+          map.panTo([lat, lng], { animate: true });
+        }
+      }
+      return;
+    }
+
+    // Fallback khi không truyền panTrigger: bỏ qua lần mount đầu, chỉ pan khi tọa độ đổi
+    const prev = prevCoordsRef.current;
+    prevCoordsRef.current = { lat, lng };
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (!prev || prev.lat !== lat || prev.lng !== lng) {
+      map.panTo([lat, lng], { animate: true });
+    }
+  }, [lat, lng, panTrigger, map]);
 
   return null;
 }
@@ -80,6 +124,7 @@ function JourneyMap({
   onSelectStop = null,
   onMapClick = null,
   pickedCoords = null,
+  panTrigger = undefined,
   height = '420px',
 }) {
   const validStops = stops.filter(
@@ -133,6 +178,9 @@ function JourneyMap({
           />
 
           <MapBoundsUpdater stops={validStops} selectedStopId={selectedStopId} />
+          {pickedCoords && (
+            <PickedCoordsPanner pickedCoords={pickedCoords} panTrigger={panTrigger} />
+          )}
           {onMapClick && <MapClickHandler onMapClick={onMapClick} />}
 
           {routeCoords.length >= 2 && (
