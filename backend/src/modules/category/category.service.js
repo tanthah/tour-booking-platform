@@ -1,4 +1,10 @@
 const Category = require('./category.model');
+const {
+  extractPublicIdFromUrl,
+  resolvePublicId,
+  cleanupRemovedImages,
+  safeDeleteFromCloudinary,
+} = require('../../utils/cloudinaryHelper');
 
 class CategoryService {
   /**
@@ -22,7 +28,12 @@ class CategoryService {
       }
     }
 
-    const category = new Category(data);
+    const categoryData = { ...data };
+    if (categoryData.image && !categoryData.image_public_id) {
+      categoryData.image_public_id = extractPublicIdFromUrl(categoryData.image) || '';
+    }
+
+    const category = new Category(categoryData);
     await category.save();
     return category;
   }
@@ -133,8 +144,10 @@ class CategoryService {
       }
     }
 
+    const oldImageEntries = [{ url: category.image, public_id: category.image_public_id }];
+
     // Whitelist: chỉ cho phép cập nhật các trường được phép
-    const allowedFields = ['name', 'parent_id', 'position', 'image', 'description', 'status'];
+    const allowedFields = ['name', 'parent_id', 'position', 'image', 'image_public_id', 'description', 'status'];
     const filteredData = {};
     Object.keys(updateData).forEach((key) => {
       if (allowedFields.includes(key)) {
@@ -142,9 +155,20 @@ class CategoryService {
       }
     });
 
+    if (
+      filteredData.image !== undefined &&
+      filteredData.image !== category.image &&
+      filteredData.image_public_id === undefined
+    ) {
+      filteredData.image_public_id = extractPublicIdFromUrl(filteredData.image) || '';
+    }
+
     // Gán dữ liệu mới và lưu để trigger pre-save hook (tự động tạo slug)
     Object.assign(category, filteredData);
     await category.save();
+
+    const newImageEntries = [{ url: category.image, public_id: category.image_public_id }];
+    await cleanupRemovedImages(oldImageEntries, newImageEntries);
 
     return category;
   }
@@ -173,6 +197,12 @@ class CategoryService {
 
     category.deleted_at = new Date();
     await category.save();
+
+    const oldPublicId = resolvePublicId(category.image, category.image_public_id);
+    if (oldPublicId) {
+      await safeDeleteFromCloudinary(oldPublicId);
+    }
+
     return { message: 'Xóa danh mục thành công' };
   }
 }

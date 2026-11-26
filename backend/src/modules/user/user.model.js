@@ -31,6 +31,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    avatar_public_id: {
+      type: String,
+      default: null,
+    },
     date_of_birth: {
       type: Date,
       default: null,

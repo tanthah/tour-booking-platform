@@ -5,8 +5,9 @@ const SouvenirCard = require('../models/souvenirCard.model');
 const TourDeparture = require('../../tour/tourDeparture.model');
 const Tour = require('../../tour/tour.model');
 const TourJourney = require('../../journey/tourJourney.model');
-const { uploadToCloudinary, deleteFromCloudinary } = require('../../../middlewares/upload.middleware');
+const { uploadToCloudinary } = require('../../../middlewares/upload.middleware');
 const cloudinary = require('../../../config/cloudinary');
+const { resolvePublicId, safeDeleteFromCloudinary } = require('../../../utils/cloudinaryHelper');
 const {
   createHttpError,
   isDepartureCompleted,
@@ -219,6 +220,11 @@ class AlbumService {
       throw createHttpError(400, 'Album đã được lưu trữ (ARCHIVED), không thể chỉnh sửa');
     }
 
+    const oldCoverPublicId = resolvePublicId(
+      album.cover_photo?.url,
+      album.cover_photo?.public_id
+    );
+
     if (data.title) album.title = data.title.trim();
     if (data.description !== undefined) album.description = data.description.trim();
     if (data.allow_download !== undefined) album.allow_download = Boolean(data.allow_download);
@@ -229,6 +235,21 @@ class AlbumService {
 
     album.version += 1;
     await album.save();
+
+    const newCoverPublicId = resolvePublicId(
+      album.cover_photo?.url,
+      album.cover_photo?.public_id
+    );
+    if (oldCoverPublicId && oldCoverPublicId !== newCoverPublicId) {
+      const [usedInPhoto, usedInCard] = await Promise.all([
+        AlbumPhoto.exists({ public_id: oldCoverPublicId, deleted_at: null }),
+        SouvenirCard.exists({ 'cover_photo.public_id': oldCoverPublicId, deleted_at: null }),
+      ]);
+      if (!usedInPhoto && !usedInCard) {
+        await safeDeleteFromCloudinary(oldCoverPublicId);
+      }
+    }
+
     return album;
   }
 
@@ -426,10 +447,43 @@ class AlbumService {
     photo.deleted_at = new Date();
     await photo.save();
 
-    // Giảm số lượng ảnh của Album
-    await Album.findByIdAndUpdate(photo.album_id, {
-      $inc: { photo_count: -1 },
-    });
+    // Xóa file ảnh trên Cloudinary nếu không còn AlbumPhoto nào khác dùng chung
+    const photoPublicId = resolvePublicId(photo.url, photo.public_id);
+    if (photoPublicId) {
+      const otherActivePhoto = await AlbumPhoto.exists({
+        _id: { $ne: photo._id },
+        public_id: photoPublicId,
+        deleted_at: null,
+      });
+      if (!otherActivePhoto) {
+        await safeDeleteFromCloudinary(photoPublicId);
+      }
+    }
+
+    // Giảm số lượng ảnh của Album và cập nhật cover nếu ảnh bị xóa đang làm bìa
+    const albumUpdate = { $inc: { photo_count: -1 } };
+    const albumDoc = await Album.findById(photo.album_id);
+    if (albumDoc) {
+      albumDoc.photo_count = Math.max(0, (albumDoc.photo_count || 0) - 1);
+      if (photoPublicId && albumDoc.cover_photo?.public_id === photoPublicId) {
+        const nextPhoto = await AlbumPhoto.findOne({
+          album_id: photo.album_id,
+          deleted_at: null,
+        })
+          .sort({ sort_order: 1, created_at: -1 })
+          .lean();
+        albumDoc.cover_photo = nextPhoto
+          ? {
+              url: nextPhoto.url,
+              public_id: nextPhoto.public_id,
+              thumbnail_url: nextPhoto.thumbnail_url,
+            }
+          : { url: '', public_id: '', thumbnail_url: '' };
+      }
+      await albumDoc.save();
+    } else {
+      await Album.findByIdAndUpdate(photo.album_id, albumUpdate);
+    }
 
     // Xóa liên kết trong các thiệp nếu có
     if (usedInCards > 0) {

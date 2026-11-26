@@ -1,5 +1,10 @@
 const Tour = require('./tour.model');
 const Category = require('../category/category.model');
+const {
+  extractPublicIdFromUrl,
+  cleanupRemovedImages,
+  deleteImages,
+} = require('../../utils/cloudinaryHelper');
 
 /**
  * TourService — Xử lý logic nghiệp vụ Tour (không bao gồm đợt khởi hành)
@@ -117,6 +122,7 @@ class TourService {
     // Không tin sale_price từ frontend
     const tourData = { ...data };
     delete tourData.sale_price;
+    this._normalizeImagePublicIds(tourData);
 
     if (tourData.category_id && !tourData.category) {
       try {
@@ -235,27 +241,40 @@ class TourService {
       throw error;
     }
 
+    const oldImageEntries = this._collectTourImageEntries(tour);
+
     // Whitelist: chỉ cho phép cập nhật các trường được phép
     const allowedFields = [
       'title', 'category_id', 'category', 'region', 'destination_location', 'duration',
       'original_price', 'discount_percent',
       'is_flash_sale', 'is_hot',
-      'main_image', 'gallery', 'content_html', 'itinerary',
+      'main_image', 'main_image_public_id', 'gallery', 'gallery_public_ids',
+      'content_html', 'itinerary',
       'highlights', 'notes',
       'services_included', 'services_excluded', 'special_conditions',
       'status',
     ];
 
+    const normalizedUpdate = { ...updateData };
+    if (
+      normalizedUpdate.main_image !== undefined &&
+      normalizedUpdate.main_image !== tour.main_image &&
+      normalizedUpdate.main_image_public_id === undefined
+    ) {
+      normalizedUpdate.main_image_public_id = extractPublicIdFromUrl(normalizedUpdate.main_image) || null;
+    }
+    this._normalizeImagePublicIds(normalizedUpdate);
+
     // Lọc và gán từng trường được phép
     allowedFields.forEach((key) => {
-      if (updateData[key] !== undefined) {
-        tour[key] = updateData[key];
+      if (normalizedUpdate[key] !== undefined) {
+        tour[key] = normalizedUpdate[key];
       }
     });
 
-    if (updateData.category_id) {
+    if (normalizedUpdate.category_id) {
       try {
-        const cat = await Category.findById(updateData.category_id).populate('parent_id');
+        const cat = await Category.findById(normalizedUpdate.category_id).populate('parent_id');
         if (cat) {
           const rootCode = cat.parent_id?.code || cat.code;
           if (rootCode) tour.category = rootCode;
@@ -267,6 +286,10 @@ class TourService {
 
     // Không tin sale_price từ frontend — pre-save hook sẽ tự tính
     await tour.save();
+
+    const newImageEntries = this._collectTourImageEntries(tour);
+    await cleanupRemovedImages(oldImageEntries, newImageEntries);
+
     return tour;
   }
 
@@ -315,10 +338,74 @@ class TourService {
     // TODO: Kiểm tra ràng buộc Booking trước khi xóa
     tour.deleted_at = new Date();
     await tour.save();
+
+    const imageTargets = this._collectTourImageEntries(tour).map(
+      (entry) => entry.public_id || entry.url
+    );
+    await deleteImages(imageTargets);
+
     return { message: 'Đã xóa Tour thành công' };
   }
 
   // ============ PRIVATE HELPER METHODS ============
+
+  _collectTourImageEntries(tour) {
+    const entries = [];
+    if (tour.main_image || tour.main_image_public_id) {
+      entries.push({ url: tour.main_image || '', public_id: tour.main_image_public_id || '' });
+    }
+    const gallery = Array.isArray(tour.gallery) ? tour.gallery : [];
+    const galleryPublicIds = Array.isArray(tour.gallery_public_ids) ? tour.gallery_public_ids : [];
+    gallery.forEach((url, idx) => {
+      entries.push({ url: url || '', public_id: galleryPublicIds[idx] || '' });
+    });
+    const itinerary = Array.isArray(tour.itinerary) ? tour.itinerary : [];
+    itinerary.forEach((day) => {
+      if (!day) return;
+      if (day.image || day.image_public_id) {
+        entries.push({ url: day.image || '', public_id: day.image_public_id || '' });
+      }
+      const dayImages = Array.isArray(day.images) ? day.images : [];
+      const dayPublicIds = Array.isArray(day.images_public_ids) ? day.images_public_ids : [];
+      dayImages.forEach((url, idx) => {
+        entries.push({ url: url || '', public_id: dayPublicIds[idx] || '' });
+      });
+    });
+    return entries;
+  }
+
+  _normalizeImagePublicIds(data) {
+    if (data.main_image !== undefined && !data.main_image_public_id) {
+      data.main_image_public_id = extractPublicIdFromUrl(data.main_image) || null;
+    }
+    if (Array.isArray(data.gallery)) {
+      const providedIds = Array.isArray(data.gallery_public_ids) ? data.gallery_public_ids : [];
+      data.gallery_public_ids = data.gallery.map(
+        (url, idx) => providedIds[idx] || extractPublicIdFromUrl(url) || ''
+      );
+    }
+    if (Array.isArray(data.itinerary)) {
+      data.itinerary = data.itinerary.map((day) => {
+        if (!day || typeof day !== 'object') return day;
+        const normalizedDay = { ...day };
+        if (normalizedDay.image !== undefined && !normalizedDay.image_public_id) {
+          normalizedDay.image_public_id = extractPublicIdFromUrl(normalizedDay.image) || '';
+        }
+        if (Array.isArray(normalizedDay.images)) {
+          const dayIds = Array.isArray(normalizedDay.images_public_ids)
+            ? normalizedDay.images_public_ids
+            : [];
+          normalizedDay.images_public_ids = normalizedDay.images.map(
+            (url, idx) => dayIds[idx] || extractPublicIdFromUrl(url) || ''
+          );
+          if (!normalizedDay.image_public_id && normalizedDay.images_public_ids[0]) {
+            normalizedDay.image_public_id = normalizedDay.images_public_ids[0];
+          }
+        }
+        return normalizedDay;
+      });
+    }
+  }
 
   _buildSortOption(sort) {
     const sortMap = {

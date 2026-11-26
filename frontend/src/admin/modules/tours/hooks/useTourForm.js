@@ -19,7 +19,7 @@ const useTourForm = (tourId) => {
     title: '', code: '', category_id: '', status: 'ACTIVE',
     destination_location: '', duration: '',
     original_price: 0, discount_percent: 0,
-    main_image: '', gallery: [],
+    main_image: '', main_image_public_id: '', gallery: [], gallery_public_ids: [],
     content_html: '', itinerary: [],
     highlights: [], notes: '',
     services_included: [], services_excluded: [], special_conditions: '',
@@ -43,7 +43,10 @@ const useTourForm = (tourId) => {
             duration: t.duration || '',
             original_price: t.original_price || 0,
             discount_percent: t.discount_percent || 0,
-            main_image: t.main_image || '', gallery: t.gallery || [],
+            main_image: t.main_image || '',
+            main_image_public_id: t.main_image_public_id || '',
+            gallery: t.gallery || [],
+            gallery_public_ids: t.gallery_public_ids || [],
             content_html: t.content_html || '',
             itinerary: t.itinerary || [],
             highlights: t.highlights || [],
@@ -77,6 +80,11 @@ const useTourForm = (tourId) => {
   // Cập nhật trực tiếp một trường bất kỳ
   const setField = useCallback((name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  }, []);
+
+  // Cập nhật nhiều trường cùng lúc
+  const setFields = useCallback((fields) => {
+    setFormData((prev) => ({ ...prev, ...fields }));
   }, []);
 
   // Gửi dữ liệu form lên API
@@ -152,7 +160,7 @@ const useTourForm = (tourId) => {
 
   return {
     formData, loading, submitting, isEdit,
-    handleChange, setField, handleSubmit, navigate, tourId
+    handleChange, setField, setFields, handleSubmit, navigate, tourId
   };
 };
 

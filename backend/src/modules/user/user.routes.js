@@ -43,4 +43,7 @@ router.get('/me', authenticate, userController.getProfile);
 // Endpoint Cập nhật thông tin hồ sơ cá nhân (Profile)
 router.patch('/me', authenticate, upload.single('avatar'), userController.updateProfile);
 
+// Endpoint Cập nhật riêng ảnh đại diện (Avatar)
+router.patch('/me/avatar', authenticate, upload.single('avatar'), userController.updateAvatar);
+
 module.exports = router;

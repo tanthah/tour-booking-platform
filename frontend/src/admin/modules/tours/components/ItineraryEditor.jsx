@@ -18,7 +18,9 @@ const ItineraryEditor = ({ items = [], onChange }) => {
       day_title: `NGÀY ${items.length + 1} | `,
       description: '',
       image: '',
+      image_public_id: '',
       images: [],
+      images_public_ids: [],
       order: items.length + 1,
     };
     onChange([...items, newDay]);
@@ -39,13 +41,15 @@ const ItineraryEditor = ({ items = [], onChange }) => {
   };
 
   // Cập nhật danh sách ảnh của 1 ngày lịch trình (hỗ trợ upload cùng lúc 5 ảnh)
-  const handleDayImagesChange = (index, newImages) => {
+  const handleDayImagesChange = (index, newImages, newPublicIds = []) => {
     const updated = items.map((item, i) => {
       if (i !== index) return item;
       return {
         ...item,
         images: newImages,
+        images_public_ids: newPublicIds,
         image: newImages[0] || '', // Đồng bộ ảnh đầu tiên làm fallback cho nơi chỉ dùng item.image
+        image_public_id: newPublicIds[0] || '',
       };
     });
     onChange(updated);
@@ -63,6 +67,9 @@ const ItineraryEditor = ({ items = [], onChange }) => {
         const dayImages = Array.isArray(item.images) && item.images.length > 0
           ? item.images
           : (item.image ? [item.image] : []);
+        const dayPublicIds = Array.isArray(item.images_public_ids) && item.images_public_ids.length > 0
+          ? item.images_public_ids
+          : (item.image_public_id ? [item.image_public_id] : []);
 
         return (
           <div key={idx} className="itinerary-item">
@@ -108,7 +115,8 @@ const ItineraryEditor = ({ items = [], onChange }) => {
                     multiple={true}
                     maxBatch={5}
                     images={dayImages}
-                    onImagesChange={(imgs) => handleDayImagesChange(idx, imgs)}
+                    publicIds={dayPublicIds}
+                    onImagesChange={(imgs, ids) => handleDayImagesChange(idx, imgs, ids)}
                   />
                 </div>
               </div>

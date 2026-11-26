@@ -11,6 +11,7 @@ const {
 } = require('../email/email.service');
 const notificationEmailService = require('../email/notificationEmail.service');
 const permissionService = require('../../services/permissionService');
+const { extractPublicIdFromUrl, cleanupRemovedImages } = require('../../utils/cloudinaryHelper');
 
 class UserService {
   // Đăng ký tài khoản người dùng mới (Role CUSTOMER)
@@ -261,7 +262,16 @@ class UserService {
    * Cập nhật thông tin hồ sơ cá nhân người dùng (Profile)
    */
   async updateProfile(userId, updateData) {
-    const allowedFields = ['full_name', 'phone', 'avatar_url', 'date_of_birth', 'address', 'gender', 'id_number'];
+    const allowedFields = [
+      'full_name',
+      'phone',
+      'avatar_url',
+      'avatar_public_id',
+      'date_of_birth',
+      'address',
+      'gender',
+      'id_number',
+    ];
     const filteredData = {};
     Object.keys(updateData).forEach((key) => {
       if (allowedFields.includes(key)) {
@@ -269,16 +279,34 @@ class UserService {
       }
     });
 
+    const existingUser = await User.findOne({ _id: userId, deleted_at: null }).select(
+      'avatar_url avatar_public_id'
+    );
+    if (!existingUser) {
+      const error = new Error('Tài khoản không tồn tại');
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (
+      filteredData.avatar_url !== undefined &&
+      filteredData.avatar_url !== existingUser.avatar_url &&
+      filteredData.avatar_public_id === undefined
+    ) {
+      filteredData.avatar_public_id = extractPublicIdFromUrl(filteredData.avatar_url) || null;
+    }
+
     const user = await User.findOneAndUpdate(
       { _id: userId, deleted_at: null },
       filteredData,
       { new: true, runValidators: true }
     ).select('-password_hash');
 
-    if (!user) {
-      const error = new Error('Tài khoản không tồn tại');
-      error.statusCode = 404;
-      throw error;
+    if (filteredData.avatar_url !== undefined) {
+      await cleanupRemovedImages(
+        [{ url: existingUser.avatar_url, public_id: existingUser.avatar_public_id }],
+        [{ url: user.avatar_url, public_id: user.avatar_public_id }]
+      );
     }
 
     return user;

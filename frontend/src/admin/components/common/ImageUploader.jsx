@@ -16,6 +16,7 @@ const ImageUploader = ({
   onChange,
   multiple = false,
   images = [],
+  publicIds = [],
   onImagesChange,
   maxBatch = 5,
 }) => {
@@ -47,7 +48,9 @@ const ImageUploader = ({
         });
         if (res?.success && res.data) {
           const newUrls = res.data.map((item) => item.url);
-          onImagesChange?.([...images, ...newUrls]);
+          const newPublicIds = res.data.map((item) => item.public_id || '');
+          const paddedOldIds = images.map((_, i) => publicIds[i] || '');
+          onImagesChange?.([...images, ...newUrls], [...paddedOldIds, ...newPublicIds]);
         }
       } else {
         // Upload 1 ảnh
@@ -57,7 +60,7 @@ const ImageUploader = ({
           headers: { 'Content-Type': 'multipart/form-data' },
         });
         if (res?.success && res.data) {
-          onChange?.(res.data.url);
+          onChange?.(res.data.url, res.data.public_id || '');
         }
       }
     } catch (err) {
@@ -71,13 +74,16 @@ const ImageUploader = ({
 
   // Xóa ảnh đơn
   const handleRemoveSingle = () => {
-    onChange?.('');
+    onChange?.('', '');
   };
 
   // Xóa 1 ảnh trong danh sách
   const handleRemoveFromList = (index) => {
-    const updated = images.filter((_, i) => i !== index);
-    onImagesChange?.(updated);
+    const updatedUrls = images.filter((_, i) => i !== index);
+    const updatedIds = images
+      .map((_, i) => publicIds[i] || '')
+      .filter((_, i) => i !== index);
+    onImagesChange?.(updatedUrls, updatedIds);
   };
 
   return (

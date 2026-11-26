@@ -9,6 +9,7 @@ import MyJourneys from '../modules/journey/pages/MyJourneys';
 import UserNotificationsList from '../modules/notification/components/UserNotificationsList';
 import { useNotification } from '../modules/notification/NotificationContext';
 import UserWishlistList from '../modules/wishlist/components/UserWishlistList';
+import userService from '../modules/user/userService';
 import '../assets/styles/tour.css';
 
 const UserProfilePage = ({ user, setUser }) => {
@@ -36,6 +37,7 @@ const UserProfilePage = ({ user, setUser }) => {
 
   const [activeTab, setActiveTab] = useState(getInitialTab);
   const [loading, setLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', variant: 'success' });
 
   // State lưu file ảnh được chọn và URL xem trước (Chỉ lưu ở client, không gọi API ngay)
@@ -153,54 +155,74 @@ const UserProfilePage = ({ user, setUser }) => {
 
     setToast({
       show: true,
-      message: 'Đã chọn ảnh mới. Hãy bấm "Lưu thay đổi" bên dưới để hoàn tất cập nhật.',
+      message: 'Đã chọn ảnh mới. Hãy bấm "Cập nhật ảnh đại diện" để lưu.',
       variant: 'info',
     });
   };
 
+  const handleCancelAvatar = () => {
+    if (avatarPreview) {
+      URL.revokeObjectURL(avatarPreview);
+      setAvatarPreview(null);
+    }
+    setAvatarFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   /**
-   * Khi người dùng chủ động bấm "Lưu thay đổi":
-   * Gửi thông tin hồ sơ kèm file ảnh (nếu có) lên server.
-   * Nếu có lỗi phiên đăng nhập (401), chỉ thông báo và chuyển hướng tại thời điểm này.
+   * Cập nhật riêng ảnh đại diện ở sidebar (hoạt động độc lập ở mọi tab)
    */
-  const handleSubmitProfile = async (e) => {
-    e.preventDefault();
+  const handleSubmitAvatar = async () => {
+    if (!avatarFile) {
+      fileInputRef.current?.click();
+      return;
+    }
+
     try {
-      setLoading(true);
-      let res;
-
-      if (avatarFile) {
-        // Gửi cả ảnh và thông tin trong FormData
-        const data = new FormData();
-        data.append('avatar', avatarFile);
-        Object.keys(formData).forEach((key) => {
-          if (formData[key] !== undefined && formData[key] !== null) {
-            data.append(key, formData[key]);
-          }
-        });
-
-        res = await axiosClient.patch('/auth/me', data, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-      } else {
-        // Chỉ cập nhật thông tin văn bản
-        res = await axiosClient.patch('/auth/me', formData);
-      }
-
+      setAvatarLoading(true);
+      const res = await userService.updateAvatar(avatarFile);
       const updatedUser = res?.data || res;
       if (updatedUser) {
         setUser(updatedUser);
         localStorage.setItem('user', JSON.stringify(updatedUser));
       }
 
-      // Xóa preview tạm thời
-      if (avatarPreview) {
-        URL.revokeObjectURL(avatarPreview);
-        setAvatarPreview(null);
+      handleCancelAvatar();
+      setToast({ show: true, message: 'Cập nhật ảnh đại diện thành công!', variant: 'success' });
+    } catch (error) {
+      const isAuthError = error?.status === 401 || error?.statusCode === 401 || error?.response?.status === 401;
+      if (isAuthError) {
+        setToast({ show: true, message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', variant: 'danger' });
+        setTimeout(() => {
+          handleLogout();
+        }, 1500);
+      } else {
+        setToast({
+          show: true,
+          message: error?.message || error?.response?.data?.message || 'Lỗi khi cập nhật ảnh đại diện',
+          variant: 'danger',
+        });
       }
-      setAvatarFile(null);
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
+
+  /**
+   * Khi người dùng chủ động bấm "Lưu thay đổi":
+   * Chỉ cập nhật thông tin hồ sơ cá nhân (tách riêng khỏi phần cập nhật ảnh đại diện).
+   */
+  const handleSubmitProfile = async (e) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const res = await userService.updateProfile(formData);
+
+      const updatedUser = res?.data || res;
+      if (updatedUser) {
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      }
 
       setToast({ show: true, message: 'Cập nhật thông tin thành công!', variant: 'success' });
     } catch (error) {
@@ -278,27 +300,65 @@ const UserProfilePage = ({ user, setUser }) => {
                 <input type="file" ref={fileInputRef} className="d-none" accept="image/*" onChange={handleAvatarChange} />
               </div>
 
-              {/* Thông báo nếu đã chọn ảnh mới nhưng chưa bấm lưu */}
-              {avatarFile && (
-                <div className="mb-2">
-                  <span className="badge bg-warning text-dark px-2 py-1" style={{ fontSize: '11px' }}>
-                    Ảnh mới (Chưa lưu)
-                  </span>
-                  <div>
-                    <button
+              {/* Nút cập nhật ảnh đại diện độc lập ngay trong khung hiển thị avatar */}
+              {avatarFile ? (
+                <div className="mb-3">
+                  <div className="mb-2">
+                    <span className="badge bg-warning text-dark px-2 py-1" style={{ fontSize: '11px' }}>
+                      Ảnh mới (Chưa lưu)
+                    </span>
+                  </div>
+                  <div className="d-flex justify-content-center gap-2">
+                    <Button
                       type="button"
-                      className="btn btn-link p-0 text-danger text-decoration-none"
-                      style={{ fontSize: '11.5px' }}
-                      onClick={() => {
-                        if (avatarPreview) URL.revokeObjectURL(avatarPreview);
-                        setAvatarPreview(null);
-                        setAvatarFile(null);
-                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      size="sm"
+                      disabled={avatarLoading}
+                      onClick={handleSubmitAvatar}
+                      style={{
+                        backgroundColor: '#ea580c',
+                        borderColor: '#ea580c',
+                        fontWeight: 600,
+                        fontSize: '12.5px',
                       }}
                     >
-                      Hủy chọn ảnh
-                    </button>
+                      {avatarLoading ? (
+                        <>
+                          <Spinner size="sm" animation="border" className="me-1" />
+                          Đang lưu...
+                        </>
+                      ) : (
+                        'Cập nhật ảnh đại diện'
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      size="sm"
+                      disabled={avatarLoading}
+                      onClick={handleCancelAvatar}
+                      style={{ fontSize: '12.5px' }}
+                    >
+                      Hủy
+                    </Button>
                   </div>
+                </div>
+              ) : (
+                <div className="mb-3">
+                  <Button
+                    type="button"
+                    variant="outline-warning"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      color: '#ea580c',
+                      borderColor: '#ea580c',
+                      fontWeight: 600,
+                      fontSize: '12.5px',
+                    }}
+                  >
+                    <Camera size={14} className="me-1" />
+                    Cập nhật ảnh đại diện
+                  </Button>
                 </div>
               )}
 

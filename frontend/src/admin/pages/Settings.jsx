@@ -12,6 +12,7 @@ const API_URL = '/settings';
 function Settings() {
   const [formData, setFormData] = useState({
     logo_url: '',
+    logo_public_id: '',
     phone: '',
     email: '',
     address: '',
@@ -33,6 +34,7 @@ function Settings() {
       if (res.data) {
         setFormData({
           logo_url: res.data.logo_url || '',
+          logo_public_id: res.data.logo_public_id || '',
           phone: res.data.phone || '',
           email: res.data.email || '',
           address: res.data.address || '',
@@ -54,8 +56,8 @@ function Settings() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageUpload = (url) => {
-    setFormData((prev) => ({ ...prev, logo_url: url }));
+  const handleImageUpload = (url, publicId) => {
+    setFormData((prev) => ({ ...prev, logo_url: url, logo_public_id: publicId || '' }));
   };
 
   const handleSubmit = async (e) => {

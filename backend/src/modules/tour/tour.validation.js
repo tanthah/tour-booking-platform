@@ -46,9 +46,17 @@ const createTourValidation = [
     .trim()
     .notEmpty().withMessage('Ảnh đại diện Tour là bắt buộc'),
 
+  body('main_image_public_id')
+    .optional({ values: 'null' })
+    .isString().withMessage('Public ID ảnh đại diện phải là chuỗi'),
+
   body('gallery')
     .optional()
     .isArray().withMessage('Thư viện ảnh phải là mảng'),
+
+  body('gallery_public_ids')
+    .optional()
+    .isArray().withMessage('Danh sách Public ID thư viện ảnh phải là mảng'),
 
   body('content_html')
     .optional()
@@ -75,6 +83,14 @@ const createTourValidation = [
   body('itinerary.*.images')
     .optional()
     .isArray().withMessage('Danh sách ảnh lịch trình phải là mảng'),
+
+  body('itinerary.*.image_public_id')
+    .optional({ values: 'null' })
+    .isString().withMessage('Public ID ảnh lịch trình phải là chuỗi'),
+
+  body('itinerary.*.images_public_ids')
+    .optional()
+    .isArray().withMessage('Danh sách Public ID ảnh lịch trình phải là mảng'),
 
   body('services_included')
     .optional()
@@ -149,9 +165,17 @@ const updateTourValidation = [
     .trim()
     .notEmpty().withMessage('Ảnh đại diện không được để trống'),
 
+  body('main_image_public_id')
+    .optional({ values: 'null' })
+    .isString().withMessage('Public ID ảnh đại diện phải là chuỗi'),
+
   body('gallery')
     .optional()
     .isArray().withMessage('Thư viện ảnh phải là mảng'),
+
+  body('gallery_public_ids')
+    .optional()
+    .isArray().withMessage('Danh sách Public ID thư viện ảnh phải là mảng'),
 
   body('content_html')
     .optional()

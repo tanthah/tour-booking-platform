@@ -96,7 +96,15 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Ảnh đại diện Tour là bắt buộc'],
     },
+    main_image_public_id: {
+      type: String,
+      default: null,
+    },
     gallery: {
+      type: [String],
+      default: [],
+    },
+    gallery_public_ids: {
       type: [String],
       default: [],
     },
@@ -112,7 +120,9 @@ const tourSchema = new mongoose.Schema(
         day_title: { type: String, required: true },
         description: { type: String, required: true },
         image: { type: String, default: '' },
+        image_public_id: { type: String, default: '' },
         images: { type: [String], default: [] },
+        images_public_ids: { type: [String], default: [] },
         order: { type: Number, default: 0 },
       },
     ],

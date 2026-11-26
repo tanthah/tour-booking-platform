@@ -21,6 +21,10 @@ const createCategoryValidation = [
     .optional()
     .isString().withMessage('Ảnh đại diện phải là chuỗi URL'),
 
+  body('image_public_id')
+    .optional({ values: 'null' })
+    .isString().withMessage('Public ID ảnh đại diện phải là chuỗi'),
+
   body('description')
     .optional()
     .isLength({ max: 500 }).withMessage('Mô tả không quá 500 ký tự'),
@@ -54,6 +58,10 @@ const updateCategoryValidation = [
   body('image')
     .optional()
     .isString().withMessage('Ảnh đại diện phải là chuỗi URL'),
+
+  body('image_public_id')
+    .optional({ values: 'null' })
+    .isString().withMessage('Public ID ảnh đại diện phải là chuỗi'),
 
   body('description')
     .optional()

@@ -1,6 +1,11 @@
 const Article = require('./article.model');
 const ArticleCategory = require('./articleCategory.model');
 const { createUniqueSlug } = require('../../utils/slugify');
+const {
+  extractPublicIdFromUrl,
+  cleanupRemovedImages,
+  deleteImages,
+} = require('../../utils/cloudinaryHelper');
 
 class ArticleService {
   /**
@@ -9,12 +14,22 @@ class ArticleService {
   async createArticle(data, userId) {
     const slug = await createUniqueSlug(Article, data.title);
 
+    const coverImage = data.cover_image
+      ? {
+          url: data.cover_image.url || '',
+          public_id:
+            data.cover_image.public_id || extractPublicIdFromUrl(data.cover_image.url) || '',
+          alt: data.cover_image.alt || '',
+          caption: data.cover_image.caption || '',
+        }
+      : { url: '', public_id: '', alt: '', caption: '' };
+
     const articleData = {
       title: data.title.trim(),
       slug,
       summary: data.summary ? data.summary.trim() : '',
-      cover_image: data.cover_image || { url: '', alt: '', caption: '' },
-      content: data.content || [],
+      cover_image: coverImage,
+      content: this._normalizeContentImages(data.content || []),
       content_source_type: data.content_source_type || 'original',
       sources: Array.isArray(data.sources) ? data.sources : [],
       category_id: data.category_id,
@@ -46,10 +61,30 @@ class ArticleService {
       throw error;
     }
 
+    const oldImageEntries = this._collectArticleImageEntries(article);
+
     if (data.title) article.title = data.title.trim();
     if (data.summary !== undefined) article.summary = data.summary.trim();
-    if (data.cover_image !== undefined) article.cover_image = data.cover_image;
-    if (data.content !== undefined) article.content = data.content;
+    if (data.cover_image !== undefined) {
+      const nextCover = data.cover_image || {};
+      const nextUrl = nextCover.url || '';
+      const urlChanged = nextUrl !== (article.cover_image?.url || '');
+      let nextPublicId = nextCover.public_id || '';
+      if (urlChanged && (!nextPublicId || nextPublicId === article.cover_image?.public_id)) {
+        nextPublicId = extractPublicIdFromUrl(nextUrl) || '';
+      } else if (!nextPublicId && nextUrl) {
+        nextPublicId = extractPublicIdFromUrl(nextUrl) || '';
+      }
+      article.cover_image = {
+        url: nextUrl,
+        public_id: nextPublicId,
+        alt: nextCover.alt || '',
+        caption: nextCover.caption || '',
+      };
+    }
+    if (data.content !== undefined) {
+      article.content = this._normalizeContentImages(data.content);
+    }
     if (data.content_source_type) article.content_source_type = data.content_source_type;
     if (data.sources !== undefined) article.sources = data.sources;
     if (data.category_id) article.category_id = data.category_id;
@@ -67,6 +102,9 @@ class ArticleService {
     }
 
     await article.save();
+
+    const newImageEntries = this._collectArticleImageEntries(article);
+    await cleanupRemovedImages(oldImageEntries, newImageEntries);
 
     return Article.findById(article._id)
       .populate('category_id', 'name slug')
@@ -169,7 +207,55 @@ class ArticleService {
     }
     article.deleted_at = new Date();
     await article.save();
+
+    const imageTargets = this._collectArticleImageEntries(article).map(
+      (entry) => entry.public_id || entry.url
+    );
+    await deleteImages(imageTargets);
+
     return { success: true };
+  }
+
+  // ============ PRIVATE HELPER METHODS ============
+
+  _collectArticleImageEntries(article) {
+    const entries = [];
+    if (article.cover_image?.url || article.cover_image?.public_id) {
+      entries.push({
+        url: article.cover_image.url || '',
+        public_id: article.cover_image.public_id || '',
+      });
+    }
+    if (Array.isArray(article.content)) {
+      article.content.forEach((block) => {
+        if (block?.type === 'image' && block?.data?.file) {
+          const { url = '', public_id = '' } = block.data.file;
+          if (url || public_id) {
+            entries.push({ url, public_id });
+          }
+        }
+      });
+    }
+    return entries;
+  }
+
+  _normalizeContentImages(content) {
+    if (!Array.isArray(content)) return content;
+    return content.map((block) => {
+      if (block?.type === 'image' && block?.data?.file?.url && !block.data.file.public_id) {
+        return {
+          ...block,
+          data: {
+            ...block.data,
+            file: {
+              ...block.data.file,
+              public_id: extractPublicIdFromUrl(block.data.file.url) || '',
+            },
+          },
+        };
+      }
+      return block;
+    });
   }
 
   /**
