@@ -14,6 +14,7 @@ const {
   getValidDepartureCustomers,
   renderGreetingTemplate,
 } = require('../souvenir.helper');
+const { resolvePublicId, safeDeleteFromCloudinary } = require('../../../utils/cloudinaryHelper');
 
 const DEFAULT_GREETING =
   'Kính gửi {{customer_name}},\nTourGo xin chân thành cảm ơn Quý khách đã đồng hành cùng chúng tôi trong hành trình {{tour_name}} khởi hành ngày {{departure_date}}. Kính chúc Quý khách luôn ngập tràn niềm vui, hạnh phúc và có thêm thật nhiều chuyến đi ý nghĩa!';
@@ -248,6 +249,11 @@ class SouvenirCardService {
       );
     }
 
+    const oldCoverPublicId = resolvePublicId(
+      card.cover_photo?.url,
+      card.cover_photo?.public_id
+    );
+
     if (data.cover_photo) card.cover_photo = data.cover_photo;
     if (data.personal_message !== undefined) card.personal_message = data.personal_message.trim();
     if (data.greeting_message !== undefined) card.greeting_message = data.greeting_message.trim();
@@ -256,6 +262,26 @@ class SouvenirCardService {
 
     card.version += 1;
     await card.save();
+
+    const newCoverPublicId = resolvePublicId(
+      card.cover_photo?.url,
+      card.cover_photo?.public_id
+    );
+    if (oldCoverPublicId && oldCoverPublicId !== newCoverPublicId) {
+      const [usedInAlbum, usedInPhoto, usedInOtherCard] = await Promise.all([
+        Album.exists({ 'cover_photo.public_id': oldCoverPublicId, deleted_at: null }),
+        AlbumPhoto.exists({ public_id: oldCoverPublicId, deleted_at: null }),
+        SouvenirCard.exists({
+          _id: { $ne: card._id },
+          'cover_photo.public_id': oldCoverPublicId,
+          deleted_at: null,
+        }),
+      ]);
+      if (!usedInAlbum && !usedInPhoto && !usedInOtherCard) {
+        await safeDeleteFromCloudinary(oldCoverPublicId);
+      }
+    }
+
     return card;
   }
 

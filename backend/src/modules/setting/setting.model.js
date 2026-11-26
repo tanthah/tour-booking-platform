@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const settingSchema = new mongoose.Schema(
   {
     logo_url: { type: String, default: '' },
+    logo_public_id: { type: String, default: '' },
     phone: { type: String, default: '' },
     email: { type: String, default: '' },
     address: { type: String, default: '' },

@@ -60,6 +60,28 @@ const userService = {
   },
 
   /**
+   * API Cập nhật thông tin hồ sơ cá nhân (không bao gồm ảnh đại diện)
+   * @param {object} data
+   */
+  updateProfile: (data) => {
+    return axiosClient.patch('/auth/me', data);
+  },
+
+  /**
+   * API Cập nhật riêng ảnh đại diện người dùng
+   * @param {File} file
+   */
+  updateAvatar: (file) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return axiosClient.patch('/auth/me/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  /**
    * API Đăng xuất tài khoản
    */
   logout: () => {

@@ -1,0 +1,151 @@
+dự án tôi sẽ có 3 phần: frontend-(client) và frontend-admin, backend. backend sẽ được dùng chung
+
+dư án này tôi sẽ phát triển theo từng model, nên cấu trúc chuẩn sẽ là:
+backend/
+├── config/                     # Cấu hình hệ thống
+│   ├── db.js                   # Kết nối MongoDB (Mongoose)
+│   └── env.js                  # Đọc biến môi trường (.env)
+│
+├── middlewares/                # Middleware dùng chung toàn app
+│   ├── auth.middleware.js      # Xác thực JWT / Session
+│   └── error.middleware.js     # Xử lý lỗi tập trung
+│
+├── utils/                      # Hàm bổ trợ dùng chung
+│   ├── apiResponse.js          # Chuẩn hóa format JSON trả về
+│   └── asyncHandler.js         # Bọc async/await cho Express routes
+│
+└── modules/                    # NƠI QUẢN LÝ THEO TỪNG MODEL
+    │
+    ├── user/                   # Module User
+    │   ├── user.model.js       # Mongoose Schema & Model cho User
+    │   ├── user.controller.js  # Nhận request, gọi service, trả JSON
+    │   ├── user.service.js     # Query DB (find, save, update...) & logic
+    │   ├── user.routes.js     # Định nghĩa API endpoints (/api/users)
+    │   └── user.validation.js # Validate dữ liệu đầu vào (ví dụ: dùng Joi/Express-validator)
+    │
+    ├── product/                # Module Product
+    │   ├── product.model.js
+    │   ├── product.controller.js
+    │   ├── product.service.js
+    │   ├── product.routes.js
+    │   └── product.validation.js
+    │
+    └── order/                  # Module Order
+        ├── order.model.js
+        ├── order.controller.js
+        ├── order.service.js
+        └── order.routes.js
+│
+├── routes.js                   # Gom tất cả routes của các module lại
+├── app.js                      # Khởi tạo Express app, dùng middlewares
+└── server.js                   # Chạy server (app.listen)
+
+frontend/
+├── src/
+│   ├── assets/                 # Hình ảnh, CSS tùy chỉnh ngoài Bootstrap
+│   ├── config/                 # Cấu hình Axios / Fetch client
+│   │   └── axiosClient.js
+│   │
+│   ├── components/             # Layout & Component Bootstrap dùng chung
+│   │   ├── Header.jsx          # Navbar Bootstrap
+│   │   ├── Footer.jsx
+│   │   ├── LoadingSpinner.jsx  # Spinner Bootstrap
+│   │   └── ConfirmModal.jsx    # Modal dùng chung
+│   │
+│   ├── pages/                  # Các trang chính của App (dùng cho React Router)
+│   │   ├── HomePage.jsx
+│   │   ├── LoginPage.jsx
+│   │   └── NotFoundPage.jsx
+│   │
+│   ├── modules/                # NƠI QUẢN LÝ THEO TỪNG MODEL (FEATURES)
+│   │   │
+│   │   ├── user/               # Module User ở Frontend
+│   │   │   ├── components/     # UI chỉ dành cho User (Bootstrap Forms, UserCard...)
+│   │   │   │   ├── UserProfileForm.jsx
+│   │   │   │   └── UserAvatar.jsx
+│   │   │   ├── userService.js  # Gọi API backend liên quan đến User
+│   │   │   └── useUser.js      # Custom Hook quản lý State User (nếu có)
+│   │   │
+│   │   ├── product/            # Module Product
+│   │   │   ├── components/
+│   │   │   │   ├── ProductCard.jsx       # Card Bootstrap hiển thị sản phẩm
+│   │   │   │   ├── ProductTable.jsx      # Table Bootstrap quản lý sản phẩm
+│   │   │   │   └── ProductFilter.jsx
+│   │   │   ├── productService.js         # API calls: getProducts(), createProduct()
+│   │   │   └── useProduct.js
+│   │   │
+│   │   └── order/              # Module Order
+│   │       ├── components/
+│   │       │   └── OrderSummary.jsx
+│   │       └── orderService.js
+│   │
+│   ├── App.jsx                 # Khai báo Routes
+│   └── main.jsx                # Render React + Import Bootstrap CSS 
+
+Không tự ý đổi công nghệ
+	- backend: node.js(version 26.0 + Express.js
+	- frontend; react + javascript
+	- UI: react-bootstrap
+	- Database: mongodb
+
+không được tự ý cài thêm thư viện khi chưa hỏi
+	- danh sách các thư viện sẽ dùng: react, axios, react-bootstrap, cloudinary, socket.io, multer, cors, express-validator, jsonwebtoken, dotenv, express, mongoose, redux toolkit, tanstack query,... nếu càn thêm thư viện hãy hỏi tôi.
+	- hai thư viện: redux toolkit, tanstack  sẽ dùng cho các chứ năng khác nhau đẻ cho hơp lý.
+
+Không tự ý xóa code khi chưa được yêu cầu
+
+Một file mã không dài hơn 300 dòng
+	
+Không tự ý xóa database	
+
+Không tự ý thay đổi API	
+
+Không tự ý thay đổi business rule
+
+Không dùng jQuery
+
+Không sửa migration đã chạy
+
+Không hardcode secret	
+
+Không sửa code ngoài phạm vi task
+
+Phải kiểm tra dependency trước khi sửa
+	
+Phải test sau khi code	
+
+Xử lý lỗi (Error Handling):
+	-"Mọi hàm gọi API hoặc thao tác I/O phải bọc trong try-catch."
+	- "Mã lỗi trả về phải theo chuẩn HTTP Status Code và định nghĩa rõ thông điệp lỗi cho frontend."
+
+
+Secret Management:
+
+	- "Không được hardcode API Key, Password, Token vào mã nguồn."
+
+	- "Tất cả cấu hình nhạy cảm phải đọc từ .env."
+
+Dữ liệu phải được kiểm tra ở frontend và backend, khi thực hiện các chức năng luốn lấy dữ liệu từng database để thự hiện tích toán
+
+Chạy thử & Kiểm tra: "Sau khi viết code xong, hãy chạy linter/format (npm run lint hoặc black .) và tự kiểm tra xem có lỗi syntax/type hay không trước khi báo hoàn thành."
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

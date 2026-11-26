@@ -12,11 +12,13 @@ function ArticleSidebar({ formData, setFormData, categories }) {
       setUploadingCover(true);
       const res = await articleService.uploadImage(file);
       const url = res.data?.url || res.url;
+      const public_id = res.data?.public_id || res.public_id || '';
       setFormData((prev) => ({
         ...prev,
         cover_image: {
           ...prev.cover_image,
           url,
+          public_id,
           alt: file.name.replace(/\.[^/.]+$/, ''),
         },
       }));

@@ -25,6 +25,7 @@ function CategoryForm() {
     position: 0,
     status: 'ACTIVE',
     image: '',
+    image_public_id: '',
     description: '',
   });
 
@@ -59,6 +60,7 @@ function CategoryForm() {
             position: cat.position || 0,
             status: cat.status || 'ACTIVE',
             image: cat.image || '',
+            image_public_id: cat.image_public_id || '',
             description: cat.description || '',
           });
         }
@@ -167,7 +169,16 @@ function CategoryForm() {
           {/* Ảnh đại diện */}
           <div className="form-group">
             <label className="form-label">Ảnh đại diện</label>
-            <ImageUploader value={formData.image} onChange={(url) => setFormData((prev) => ({ ...prev, image: url }))} />
+            <ImageUploader
+              value={formData.image}
+              onChange={(url, publicId) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  image: url,
+                  image_public_id: publicId || '',
+                }))
+              }
+            />
           </div>
 
           {/* Mô tả */}

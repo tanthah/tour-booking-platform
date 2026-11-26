@@ -39,6 +39,10 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    image_public_id: {
+      type: String,
+      default: '',
+    },
     description: {
       type: String,
       default: '',

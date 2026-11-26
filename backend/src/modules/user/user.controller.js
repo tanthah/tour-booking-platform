@@ -3,6 +3,7 @@ const userService = require('./user.service');
 const ApiResponse = require('../../utils/apiResponse');
 const asyncHandler = require('../../utils/asyncHandler');
 const { uploadToCloudinary } = require('../../middlewares/upload.middleware');
+const { safeDeleteFromCloudinary } = require('../../utils/cloudinaryHelper');
 
 /**
  * Hàm helper kiểm tra và xử lý lỗi Validation từ express-validator
@@ -112,13 +113,49 @@ const getProfile = asyncHandler(async (req, res) => {
  * HTTP Method: PATCH /api/auth/me
  */
 const updateProfile = asyncHandler(async (req, res) => {
-  let updateData = { ...req.body };
+  const updateData = { ...req.body };
+  let uploadedResult = null;
+
   if (req.file) {
-    const result = await uploadToCloudinary(req.file.buffer, 'tour-booking/avatars');
-    updateData.avatar_url = result.secure_url;
+    uploadedResult = await uploadToCloudinary(req.file.buffer, 'tour-booking/avatars');
+    updateData.avatar_url = uploadedResult.secure_url;
+    updateData.avatar_public_id = uploadedResult.public_id;
   }
-  const user = await userService.updateProfile(req.user._id, updateData);
-  ApiResponse.success(res, 200, 'Cập nhật thông tin thành công', user);
+
+  try {
+    const user = await userService.updateProfile(req.user._id, updateData);
+    ApiResponse.success(res, 200, 'Cập nhật thông tin thành công', user);
+  } catch (error) {
+    if (uploadedResult?.public_id) {
+      await safeDeleteFromCloudinary(uploadedResult.public_id);
+    }
+    throw error;
+  }
+});
+
+/**
+ * Controller: Cập nhật riêng ảnh đại diện người dùng (Avatar)
+ * HTTP Method: PATCH /api/auth/me/avatar
+ */
+const updateAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    return ApiResponse.error(res, 400, 'Vui lòng chọn file ảnh đại diện để cập nhật');
+  }
+
+  const uploadedResult = await uploadToCloudinary(req.file.buffer, 'tour-booking/avatars');
+
+  try {
+    const user = await userService.updateProfile(req.user._id, {
+      avatar_url: uploadedResult.secure_url,
+      avatar_public_id: uploadedResult.public_id,
+    });
+    ApiResponse.success(res, 200, 'Cập nhật ảnh đại diện thành công', user);
+  } catch (error) {
+    if (uploadedResult?.public_id) {
+      await safeDeleteFromCloudinary(uploadedResult.public_id);
+    }
+    throw error;
+  }
 });
 
 /**
@@ -139,5 +176,6 @@ module.exports = {
   resetPassword,
   getProfile,
   updateProfile,
+  updateAvatar,
   logout,
 };

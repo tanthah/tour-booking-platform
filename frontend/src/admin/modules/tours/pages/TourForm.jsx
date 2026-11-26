@@ -18,7 +18,7 @@ function TourForm() {
 
   const {
     formData, loading, submitting, isEdit,
-    handleChange, setField, handleSubmit, navigate, tourId
+    handleChange, setField, setFields, handleSubmit, navigate, tourId
   } = useTourForm(id);
 
   // Tải danh mục từ cơ sở dữ liệu
@@ -191,13 +191,26 @@ function TourForm() {
             {/* Ảnh đại diện */}
             <div className="form-group">
               <label className="form-label">Ảnh đại diện</label>
-              <ImageUploader value={formData.main_image} onChange={(url) => setField('main_image', url)} />
+              <ImageUploader
+                value={formData.main_image}
+                onChange={(url, publicId) =>
+                  setFields({ main_image: url, main_image_public_id: publicId || '' })
+                }
+              />
             </div>
 
             {/* Thư viện ảnh gallery */}
             <div className="form-group">
               <label className="form-label">Thư viện ảnh (Gallery - chọn cùng lúc tối đa 5 ảnh)</label>
-              <ImageUploader multiple={true} maxBatch={5} images={formData.gallery || []} onImagesChange={(urls) => setField('gallery', urls)} />
+              <ImageUploader
+                multiple={true}
+                maxBatch={5}
+                images={formData.gallery || []}
+                publicIds={formData.gallery_public_ids || []}
+                onImagesChange={(urls, publicIds) =>
+                  setFields({ gallery: urls, gallery_public_ids: publicIds })
+                }
+              />
             </div>
 
             {/* Điểm nổi bật của tour */}
