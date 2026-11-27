@@ -122,6 +122,7 @@ class TourService {
     // Không tin sale_price từ frontend
     const tourData = { ...data };
     delete tourData.sale_price;
+    this._normalizeOptionalPrices(tourData);
     this._normalizeImagePublicIds(tourData);
 
     if (tourData.category_id && !tourData.category) {
@@ -246,7 +247,7 @@ class TourService {
     // Whitelist: chỉ cho phép cập nhật các trường được phép
     const allowedFields = [
       'title', 'category_id', 'category', 'region', 'destination_location', 'duration',
-      'original_price', 'discount_percent',
+      'original_price', 'discount_percent', 'price_child', 'price_baby',
       'is_flash_sale', 'is_hot',
       'main_image', 'main_image_public_id', 'gallery', 'gallery_public_ids',
       'content_html', 'itinerary',
@@ -256,6 +257,7 @@ class TourService {
     ];
 
     const normalizedUpdate = { ...updateData };
+    this._normalizeOptionalPrices(normalizedUpdate);
     if (
       normalizedUpdate.main_image !== undefined &&
       normalizedUpdate.main_image !== tour.main_image &&
@@ -348,6 +350,17 @@ class TourService {
   }
 
   // ============ PRIVATE HELPER METHODS ============
+
+  _normalizeOptionalPrices(data) {
+    ['price_child', 'price_baby'].forEach((field) => {
+      if (data[field] === undefined) return;
+      if (data[field] === '' || data[field] === null) {
+        data[field] = null;
+      } else {
+        data[field] = Number(data[field]);
+      }
+    });
+  }
 
   _collectTourImageEntries(tour) {
     const entries = [];

@@ -64,6 +64,14 @@ function TourForm() {
     return <div className="card" style={{ textAlign: 'center', padding: '40px' }}>Đang tải dữ liệu...</div>;
   }
 
+  const origPrice = Number(formData.original_price) || 0;
+  const discPercent = Number(formData.discount_percent) || 0;
+  const estimatedAdultPrice = Math.round(origPrice * (100 - discPercent) / 100);
+  const hasCustomChildPrice = formData.price_child !== '' && formData.price_child !== null && formData.price_child !== undefined;
+  const hasCustomBabyPrice = formData.price_baby !== '' && formData.price_baby !== null && formData.price_baby !== undefined;
+  const estimatedChildPrice = hasCustomChildPrice ? Number(formData.price_child) : Math.round(estimatedAdultPrice * 0.6);
+  const estimatedBabyPrice = hasCustomBabyPrice ? Number(formData.price_baby) : Math.round(estimatedAdultPrice * 0.2);
+
   return (
     <div>
       <div className="page-header">
@@ -182,10 +190,76 @@ function TourForm() {
                 <input type="number" name="discount_percent" className="form-control" value={formData.discount_percent} onChange={handleChange} min="0" max="100" />
               </div>
             </div>
-            {formData.original_price > 0 && (
-              <p style={{ color: 'var(--success-color)', fontSize: '0.9rem', marginBottom: '16px' }}>
-                Giá bán ước tính: <strong>{(formData.original_price * (100 - formData.discount_percent) / 100).toLocaleString('vi-VN')} VNĐ</strong>
-              </p>
+
+            {/* Giá trẻ em và Giá em bé */}
+            <div className="form-row">
+              <div className="form-group form-col">
+                <label className="form-label">Giá trẻ em (VNĐ)</label>
+                <input
+                  type="number"
+                  name="price_child"
+                  className="form-control"
+                  placeholder="Để trống = 60% giá bán"
+                  value={formData.price_child}
+                  onChange={handleChange}
+                  min="0"
+                />
+                <small style={{ color: '#64748b', fontSize: '0.82rem', display: 'block', marginTop: '4px' }}>
+                  Để trống hệ thống tự tính bằng 60% giá bán người lớn (nhập 0 nếu miễn phí).
+                </small>
+              </div>
+              <div className="form-group form-col">
+                <label className="form-label">Giá em bé (VNĐ)</label>
+                <input
+                  type="number"
+                  name="price_baby"
+                  className="form-control"
+                  placeholder="Để trống = 20% giá bán"
+                  value={formData.price_baby}
+                  onChange={handleChange}
+                  min="0"
+                />
+                <small style={{ color: '#64748b', fontSize: '0.82rem', display: 'block', marginTop: '4px' }}>
+                  Để trống hệ thống tự tính bằng 20% giá bán người lớn (nhập 0 nếu miễn phí).
+                </small>
+              </div>
+            </div>
+
+            {(origPrice > 0 || hasCustomChildPrice || hasCustomBabyPrice) && (
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '20px',
+                  fontSize: '0.9rem',
+                }}
+              >
+                <div style={{ fontWeight: 600, color: '#0f172a', marginBottom: '8px' }}>
+                  Bảng giá bán ước tính
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Người lớn: </span>
+                    <strong style={{ color: 'var(--success-color)' }}>{estimatedAdultPrice.toLocaleString('vi-VN')} VNĐ</strong>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Trẻ em: </span>
+                    <strong style={{ color: '#0f172a' }}>{estimatedChildPrice.toLocaleString('vi-VN')} VNĐ</strong>
+                    <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '4px' }}>
+                      ({hasCustomChildPrice ? 'tự nhập' : '60% giá bán'})
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b' }}>Em bé: </span>
+                    <strong style={{ color: '#0f172a' }}>{estimatedBabyPrice.toLocaleString('vi-VN')} VNĐ</strong>
+                    <span style={{ color: '#64748b', fontSize: '0.8rem', marginLeft: '4px' }}>
+                      ({hasCustomBabyPrice ? 'tự nhập' : '20% giá bán'})
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Ảnh đại diện */}

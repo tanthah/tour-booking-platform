@@ -113,9 +113,9 @@ const TourDetailPage = () => {
   }
 
   const galleryImages = [tour.main_image, ...(tour.gallery || [])].filter(Boolean);
-  const unitPrice = tour.sale_price || tour.original_price || 0;
-  const childPrice = tour.price_child ?? Math.round(unitPrice * 0.7);
-  const babyPrice = tour.price_baby ?? 0;
+  const unitPrice = tour.sale_price ?? tour.original_price ?? 0;
+  const childPrice = tour.price_child ?? Math.round(unitPrice * 0.6);
+  const babyPrice = tour.price_baby ?? Math.round(unitPrice * 0.2);
   const totalPrice = (adults * unitPrice) + (children * childPrice) + (babies * babyPrice);
   const totalPassengers = adults + children + babies;
   const availableSlots = selectedDeparture ? (selectedDeparture.available_slots ?? (selectedDeparture.total_slots - selectedDeparture.booked_slots - selectedDeparture.reserved_slots)) : 0;
