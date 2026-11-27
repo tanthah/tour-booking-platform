@@ -60,6 +60,32 @@ const useCart = () => {
     }
   };
 
+  // Xóa toàn bộ item khỏi giỏ hàng (tuần tự để tránh xung đột ghi document Cart)
+  const clearCart = async () => {
+    if (!cart?.items?.length) return;
+    try {
+      setActionLoading(true);
+      let latestCart = null;
+      for (const item of cart.items) {
+        const res = await axiosClient.delete(`/cart/items/${item._id}`);
+        if (res?.success && res.data) {
+          latestCart = res.data;
+        }
+      }
+      if (latestCart) {
+        setCart(latestCart);
+      } else {
+        await fetchCart();
+      }
+      window.dispatchEvent(new Event('cartUpdated'));
+    } catch (err) {
+      alert(err.message || 'Không thể xóa toàn bộ giỏ hàng.');
+      await fetchCart();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -79,6 +105,7 @@ const useCart = () => {
     fetchCart,
     updateQuantity,
     removeItem,
+    clearCart,
   };
 };
 

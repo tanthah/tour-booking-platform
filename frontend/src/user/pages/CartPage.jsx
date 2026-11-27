@@ -1,22 +1,28 @@
 import { useState, useEffect, useRef } from 'react';
 import { Container, Spinner } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
+import {
+  ShoppingCart,
+  Trash2,
+  Info,
+  CreditCard,
+  ArrowRight,
+  ArrowLeft,
+} from 'lucide-react';
 import useCart from '../hooks/useCart';
 import CartItem from '../modules/cart/components/CartItem';
 import '../assets/styles/cart.css';
 
 /**
- * CartPage - Trang Giỏ hàng
- * Hiển thị danh sách tour đã thêm, số lượng hành khách, mã giảm giá,
- * và điều hướng sang trang Đặt tour (Checkout)
+ * CartPage - Trang Giỏ hàng tour du lịch
+ * Hiển thị danh sách tour đã thêm, số lượng hành khách và điều hướng sang Checkout
  */
 const CartPage = () => {
   const navigate = useNavigate();
-  const { cart, loading, error, actionLoading, updateQuantity, removeItem } = useCart();
+  const { cart, loading, error, actionLoading, updateQuantity, removeItem, clearCart } = useCart();
 
   // Danh sách item được chọn để thanh toán
   const [selectedItems, setSelectedItems] = useState([]);
-
   const isInitialLoaded = useRef(false);
 
   // Tự động chọn tất cả item khi giỏ hàng được tải lần đầu,
@@ -39,15 +45,21 @@ const CartPage = () => {
     );
   };
 
-  // Tính tổng tiền các item được chọn
-  const calculateSelectedTotal = () => {
-    if (!cart?.items) return 0;
-    return cart.items
-      .filter((item) => selectedItems.includes(item._id))
-      .reduce((sum, item) => sum + item.item_total, 0);
+  // Xóa toàn bộ tour trong giỏ
+  const handleClearAll = () => {
+    if (!cart?.items?.length) return;
+    if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ tour trong giỏ hàng?')) {
+      clearCart();
+    }
   };
 
-  const total = calculateSelectedTotal();
+  // Tính tổng tiền và tổng số khách của các tour được chọn
+  const selectedCartItems = (cart?.items || []).filter((item) => selectedItems.includes(item._id));
+  const total = selectedCartItems.reduce((sum, item) => sum + (item.item_total || 0), 0);
+  const totalSelectedPassengers = selectedCartItems.reduce(
+    (sum, item) => sum + (item.quantity || ((item.quantity_adult || 1) + (item.quantity_child || 0) + (item.quantity_baby || 0))),
+    0
+  );
 
   // Tiến hành chuyển sang trang Checkout
   const handleProceedToCheckout = () => {
@@ -89,11 +101,7 @@ const CartPage = () => {
       <div className="cart-page-wrapper">
         <Container>
           <div className="cart-card cart-empty">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5">
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
+            <ShoppingCart size={58} color="#94a3b8" strokeWidth={1.5} />
             <div className="cart-empty-title">Giỏ hàng của bạn đang trống</div>
             <div className="cart-empty-desc">Hãy khám phá các tour du lịch hấp dẫn</div>
             <Link to="/tour-trong-nuoc" className="cart-empty-btn">Khám phá Tour</Link>
@@ -106,44 +114,91 @@ const CartPage = () => {
   return (
     <div className="cart-page-wrapper">
       <Container>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h1 className="cart-page-title">Giỏ Hàng</h1>
-          <Link to="/tour-trong-nuoc" className="cart-back-link">
-            Quay lại mua hàng &rsaquo;
-          </Link>
-        </div>
-
-        <div className="cart-card">
-          {cart.items.map((item) => (
-            <CartItem
-              key={item._id}
-              item={item}
-              isSelected={selectedItems.includes(item._id)}
-              onToggleSelect={toggleSelectItem}
-              onUpdateQuantity={updateQuantity}
-              onRemove={removeItem}
-              actionLoading={actionLoading}
-            />
-          ))}
-
-          {/* Tổng thanh toán */}
-          <div className="mt-4 pt-3 border-top">
-            <div className="cart-summary-row">
-              <span style={{ fontWeight: 700, fontSize: '15px' }}>Tổng thanh toán ({selectedItems.length} tour đã chọn):</span>
-              <span className="cart-summary-total">{total.toLocaleString('vi-VN')} đ</span>
+        <div className="cart-shell">
+          {/* Header trên cùng của giỏ hàng */}
+          <div className="cart-shell-header">
+            <div className="cart-shell-title-group">
+              <div className="cart-header-icon-wrap">
+                <ShoppingCart size={24} className="cart-header-icon" />
+                <span className="cart-header-icon-badge">{cart.items.length}</span>
+              </div>
+              <h1 className="cart-shell-title">Giỏ hàng tour du lịch</h1>
+              <span className="cart-selected-pill">
+                <span className="cart-selected-dot">{selectedItems.length}</span>
+                <span>tour đã chọn</span>
+              </span>
             </div>
+
+            <button
+              type="button"
+              className="cart-clear-all-btn"
+              onClick={handleClearAll}
+              disabled={actionLoading}
+            >
+              <Trash2 size={15} />
+              <span>Xóa tất cả</span>
+            </button>
           </div>
 
-          {/* Nút đặt tour */}
-          <button
-            className="cart-checkout-btn"
-            disabled={selectedItems.length === 0 || actionLoading}
-            onClick={handleProceedToCheckout}
-          >
-            {actionLoading
-              ? 'Đang xử lý...'
-              : `Tiến Hành Đặt Tour (${selectedItems.length} tour đã chọn)`}
-          </button>
+          {/* Danh sách các tour trong giỏ */}
+          <div className="cart-items-list">
+            {cart.items.map((item) => (
+              <CartItem
+                key={item._id}
+                item={item}
+                isSelected={selectedItems.includes(item._id)}
+                onToggleSelect={toggleSelectItem}
+                onUpdateQuantity={updateQuantity}
+                onRemove={removeItem}
+                actionLoading={actionLoading}
+              />
+            ))}
+          </div>
+
+          {/* Thanh tổng kết & hành động phía dưới */}
+          <div className="cart-shell-footer">
+            <div className="cart-note-box">
+              <div className="cart-note-icon">
+                <Info size={18} />
+              </div>
+              <div>
+                <div className="cart-note-title">Lưu ý</div>
+                <div className="cart-note-text">
+                  Vui lòng kiểm tra kỹ thông tin tour, số lượng khách trước khi thanh toán.
+                </div>
+              </div>
+            </div>
+
+            <div className="cart-checkout-summary">
+              <div className="cart-total-block">
+                <div className="cart-total-row">
+                  <span className="cart-total-heading">Tổng cộng:</span>
+                  <span className="cart-summary-total">{total.toLocaleString('vi-VN')} đ</span>
+                </div>
+                <div className="cart-total-sub">
+                  Đã chọn {selectedItems.length} tour ({totalSelectedPassengers} hành khách)
+                </div>
+              </div>
+
+              <div className="cart-footer-actions">
+                <button
+                  type="button"
+                  className="cart-pay-now-btn"
+                  disabled={selectedItems.length === 0 || actionLoading}
+                  onClick={handleProceedToCheckout}
+                >
+                  <CreditCard size={17} />
+                  <span>{actionLoading ? 'Đang xử lý...' : 'Thanh toán ngay'}</span>
+                  {!actionLoading && <ArrowRight size={16} />}
+                </button>
+
+                <Link to="/tour-trong-nuoc" className="cart-continue-btn">
+                  <ArrowLeft size={15} />
+                  <span>Tiếp tục chọn tour</span>
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </Container>
     </div>
