@@ -46,15 +46,19 @@ const updateItemValidation = [
   body('quantity_baby')
     .optional()
     .isInt({ min: 0, max: 50 }).withMessage('Số lượng em bé phải là số nguyên từ 0 đến 50'),
+  body('departure_id')
+    .optional({ values: 'falsy' })
+    .isMongoId().withMessage('Đợt khởi hành ID không hợp lệ'),
   body().custom((value, { req }) => {
-    const { quantity, quantity_adult, quantity_child, quantity_baby } = req.body;
+    const { quantity, quantity_adult, quantity_child, quantity_baby, departure_id } = req.body;
     if (
       quantity === undefined &&
       quantity_adult === undefined &&
       quantity_child === undefined &&
-      quantity_baby === undefined
+      quantity_baby === undefined &&
+      !departure_id
     ) {
-      throw new Error('Cần cung cấp ít nhất một thông tin số lượng để cập nhật');
+      throw new Error('Cần cung cấp ít nhất một thông tin số lượng hoặc đợt khởi hành để cập nhật');
     }
     return true;
   }),

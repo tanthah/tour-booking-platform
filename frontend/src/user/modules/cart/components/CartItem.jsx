@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   MapPin,
   Calendar,
@@ -8,16 +9,47 @@ import {
   Minus,
   Plus,
   AlertTriangle,
+  RefreshCw,
 } from 'lucide-react';
+import axiosClient from '../../../config/axiosClient';
 import '../../../assets/styles/cart.css';
 
 /**
  * CartItem Component - Hiển thị một item tour trong giỏ hàng theo layout hiện đại
  */
 const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove, actionLoading }) => {
+  const [showDepPicker, setShowDepPicker] = useState(false);
+  const [departures, setDepartures] = useState([]);
+  const [loadingDeps, setLoadingDeps] = useState(false);
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'Liên hệ';
     return new Date(dateStr).toLocaleDateString('vi-VN');
+  };
+
+  const handleOpenDeparturePicker = async () => {
+    if (showDepPicker) {
+      setShowDepPicker(false);
+      return;
+    }
+
+    setShowDepPicker(true);
+    setLoadingDeps(true);
+    try {
+      const res = await axiosClient.get(`/tours/${item.tour_id}/departures/public`);
+      const list = Array.isArray(res?.data) ? res.data : [];
+      setDepartures(list.filter((dep) => dep.available_slots > 0));
+    } catch {
+      setDepartures([]);
+    } finally {
+      setLoadingDeps(false);
+    }
+  };
+
+  const handleSelectDeparture = async (newDepartureId) => {
+    if (!newDepartureId) return;
+    await onUpdateQuantity(item._id, { departure_id: newDepartureId });
+    setShowDepPicker(false);
   };
 
   const qtyAdult = item.quantity_adult !== undefined && item.quantity_adult !== null
@@ -93,12 +125,60 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
             <span>Mã Tour:</span>
             <strong>{item.code}</strong>
           </span>
-          <span className="cart-meta-piece">
+          <span className={`cart-meta-piece ${item.is_departure_passed ? 'cart-meta-expired' : ''}`}>
             <Calendar size={14} className="cart-meta-icon-orange" />
             <span>Ngày khởi hành:</span>
-            <strong>{formatDate(item.departure_date)}</strong>
+            <strong>
+              {formatDate(item.departure_date)}
+              {item.is_departure_passed ? ' (Đã qua)' : ''}
+            </strong>
           </span>
+          {item.is_departure_passed && (
+            <button
+              type="button"
+              className="cart-change-dep-btn"
+              onClick={handleOpenDeparturePicker}
+              disabled={actionLoading}
+            >
+              <RefreshCw size={12} />
+              <span>Chọn ngày khởi hành khác</span>
+            </button>
+          )}
         </div>
+
+        {showDepPicker && (
+          <div className="cart-dep-picker">
+            {loadingDeps ? (
+              <span className="cart-dep-status-text">Đang tải lịch khởi hành...</span>
+            ) : departures.length === 0 ? (
+              <span className="cart-dep-status-text">Hiện chưa có ngày khởi hành mới khả dụng.</span>
+            ) : (
+              <select
+                className="cart-dep-select"
+                defaultValue=""
+                disabled={actionLoading}
+                onChange={(e) => handleSelectDeparture(e.target.value)}
+                aria-label="Chọn ngày khởi hành khác"
+              >
+                <option value="" disabled>
+                  -- Chọn ngày khởi hành mới --
+                </option>
+                {departures.map((dep) => (
+                  <option key={dep._id} value={dep._id}>
+                    {formatDate(dep.start_datetime)} (Còn {dep.available_slots} chỗ)
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              type="button"
+              className="cart-dep-close-btn"
+              onClick={() => setShowDepPicker(false)}
+            >
+              Đóng
+            </button>
+          </div>
+        )}
 
         {(item.meeting_point || item.departure_location) && (
           <div className="cart-item-meeting">

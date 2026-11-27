@@ -1,5 +1,6 @@
 const Cart = require('./cart.model');
 const Tour = require('../tour/tour.model');
+const TourDeparture = require('../tour/tourDeparture.model');
 const { resolveTourPrices } = require('../tour/tour.pricing');
 
 /**
@@ -29,7 +30,7 @@ const getCart = async (userId) => {
     },
     {
       path: 'items.departure_id',
-      select: 'departure_date departure_location vehicle total_slots booked_slots reserved_slots status',
+      select: 'start_datetime meeting_point total_slots booked_slots reserved_slots status',
     },
   ]);
 
@@ -54,8 +55,8 @@ const getCart = async (userId) => {
     subtotal += itemTotal;
 
     const departure = item.departure_id;
-    const departureDate = departure?.departure_date || null;
-    const departureLocation = departure?.departure_location || '';
+    const departureDate = departure?.start_datetime || departure?.departure_date || null;
+    const meetingPoint = departure?.meeting_point || departure?.departure_location || '';
     const vehicle = departure?.vehicle || '';
     const availableSlots = departure
       ? (departure.total_slots - (departure.booked_slots || 0) - (departure.reserved_slots || 0))
@@ -83,7 +84,8 @@ const getCart = async (userId) => {
       price_baby: babyPrice,
       main_image: tour.main_image,
       departure_date: departureDate,
-      departure_location: departureLocation,
+      departure_location: meetingPoint,
+      meeting_point: meetingPoint,
       destination_location: tour.destination_location || '',
       vehicle,
       remaining_slots: availableSlots,
@@ -217,7 +219,63 @@ const updateItem = async (userId, itemId, updateData) => {
   }
 
   const totalPassengers = qtyAdult + qtyChild + qtyBaby;
-  if (tour.remaining_slots && totalPassengers > tour.remaining_slots) {
+  const newDepartureId = typeof updateData === 'object' && updateData !== null
+    ? updateData.departure_id
+    : undefined;
+
+  if (newDepartureId) {
+    const newDeparture = await TourDeparture.findOne({
+      _id: newDepartureId,
+      product_id: item.tour_id,
+      deleted_at: null,
+    });
+
+    if (!newDeparture) {
+      throw { statusCode: 404, message: 'Đợt khởi hành không tồn tại.' };
+    }
+    if (newDeparture.status !== 'OPEN') {
+      throw { statusCode: 400, message: 'Đợt khởi hành này hiện không còn mở đặt.' };
+    }
+    if (new Date(newDeparture.start_datetime) <= new Date()) {
+      throw { statusCode: 400, message: 'Đợt khởi hành này đã qua ngày khởi hành.' };
+    }
+
+    const depAvailable = (newDeparture.total_slots || 0)
+      - (newDeparture.booked_slots || 0)
+      - (newDeparture.reserved_slots || 0);
+    if (totalPassengers > depAvailable) {
+      throw { statusCode: 400, message: `Số lượng hành khách vượt quá số chỗ còn lại (${depAvailable} chỗ).` };
+    }
+
+    // Nếu giỏ đã có item khác trùng tour và đợt khởi hành mới, gộp số lượng vào item đó
+    const duplicateItem = cart.items.find(
+      (other) => other._id.toString() !== item._id.toString()
+        && other.tour_id.toString() === item.tour_id.toString()
+        && String(other.departure_id || '') === String(newDepartureId)
+    );
+
+    if (duplicateItem) {
+      const dupAdult = duplicateItem.quantity_adult ?? duplicateItem.quantity ?? 1;
+      const dupChild = duplicateItem.quantity_child || 0;
+      const dupBaby = duplicateItem.quantity_baby || 0;
+      const mergedTotal = dupAdult + dupChild + dupBaby + totalPassengers;
+
+      if (mergedTotal > depAvailable) {
+        throw { statusCode: 400, message: `Tổng số hành khách sau khi gộp vượt quá số chỗ còn lại (${depAvailable} chỗ).` };
+      }
+
+      duplicateItem.quantity_adult = dupAdult + qtyAdult;
+      duplicateItem.quantity_child = dupChild + qtyChild;
+      duplicateItem.quantity_baby = dupBaby + qtyBaby;
+      duplicateItem.quantity = mergedTotal;
+      cart.items.pull(item._id);
+
+      await cart.save();
+      return getCart(userId);
+    }
+
+    item.departure_id = newDepartureId;
+  } else if (tour.remaining_slots && totalPassengers > tour.remaining_slots) {
     throw { statusCode: 400, message: `Số lượng hành khách vượt quá số chỗ còn lại (${tour.remaining_slots} chỗ).` };
   }
 
