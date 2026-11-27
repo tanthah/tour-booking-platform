@@ -1,5 +1,6 @@
 const Cart = require('./cart.model');
 const Tour = require('../tour/tour.model');
+const { resolveTourPrices } = require('../tour/tour.pricing');
 
 /**
  * Lấy hoặc tạo giỏ hàng ACTIVE cho user hiện tại
@@ -37,15 +38,11 @@ const getCart = async (userId) => {
     const tour = item.tour_id;
     if (!tour) return null;
 
-    const adultPrice = (tour.sale_price !== null && tour.sale_price !== undefined)
-      ? tour.sale_price
-      : (tour.original_price ?? 0);
-    const childPrice = (tour.price_child !== null && tour.price_child !== undefined)
-      ? tour.price_child
-      : Math.round(adultPrice * 0.7);
-    const babyPrice = (tour.price_baby !== null && tour.price_baby !== undefined)
-      ? tour.price_baby
-      : Math.round(adultPrice * 0.3);
+    const {
+      priceAdult: adultPrice,
+      priceChild: childPrice,
+      priceBaby: babyPrice,
+    } = resolveTourPrices(tour);
 
     const qtyAdult = item.quantity_adult !== undefined && item.quantity_adult !== null
       ? item.quantity_adult

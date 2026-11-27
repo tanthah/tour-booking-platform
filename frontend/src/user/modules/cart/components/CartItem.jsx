@@ -17,9 +17,9 @@ const CartItem = ({ item, isSelected, onToggleSelect, onUpdateQuantity, onRemove
   const qtyChild = item.quantity_child || 0;
   const qtyBaby = item.quantity_baby || 0;
 
-  const adultPrice = item.price_adult || item.price || 0;
-  const childPrice = item.price_child || Math.round(adultPrice * 0.7);
-  const babyPrice = item.price_baby || Math.round(adultPrice * 0.3);
+  const adultPrice = item.price_adult ?? item.price ?? 0;
+  const childPrice = item.price_child ?? Math.round(adultPrice * 0.6);
+  const babyPrice = item.price_baby ?? Math.round(adultPrice * 0.2);
 
   const totalPassengers = qtyAdult + qtyChild + qtyBaby;
   const canAddPassenger = !item.remaining_slots || totalPassengers < item.remaining_slots;

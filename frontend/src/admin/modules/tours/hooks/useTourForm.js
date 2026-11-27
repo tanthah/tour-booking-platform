@@ -19,6 +19,7 @@ const useTourForm = (tourId) => {
     title: '', code: '', category_id: '', status: 'ACTIVE',
     destination_location: '', duration: '',
     original_price: 0, discount_percent: 0,
+    price_child: '', price_baby: '',
     main_image: '', main_image_public_id: '', gallery: [], gallery_public_ids: [],
     content_html: '', itinerary: [],
     highlights: [], notes: '',
@@ -41,8 +42,10 @@ const useTourForm = (tourId) => {
             status: t.status || 'DRAFT',
             destination_location: t.destination_location || '',
             duration: t.duration || '',
-            original_price: t.original_price || 0,
-            discount_percent: t.discount_percent || 0,
+            original_price: t.original_price ?? 0,
+            discount_percent: t.discount_percent ?? 0,
+            price_child: t.price_child !== null && t.price_child !== undefined ? t.price_child : '',
+            price_baby: t.price_baby !== null && t.price_baby !== undefined ? t.price_baby : '',
             main_image: t.main_image || '',
             main_image_public_id: t.main_image_public_id || '',
             gallery: t.gallery || [],
@@ -73,7 +76,9 @@ const useTourForm = (tourId) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : (type === 'number' ? Number(value) : value),
+      [name]: type === 'checkbox'
+        ? checked
+        : (type === 'number' ? (value === '' ? '' : Number(value)) : value),
     }));
   }, []);
 
@@ -111,6 +116,17 @@ const useTourForm = (tourId) => {
       return;
     }
 
+    const hasCustomChildPrice = formData.price_child !== '' && formData.price_child !== null && formData.price_child !== undefined;
+    const hasCustomBabyPrice = formData.price_baby !== '' && formData.price_baby !== null && formData.price_baby !== undefined;
+    if (hasCustomChildPrice && Number(formData.price_child) < 0) {
+      alert('Giá trẻ em phải >= 0');
+      return;
+    }
+    if (hasCustomBabyPrice && Number(formData.price_baby) < 0) {
+      alert('Giá em bé phải >= 0');
+      return;
+    }
+
     try {
       setSubmitting(true);
       const servicesInc = Array.isArray(formData.services_included)
@@ -127,6 +143,8 @@ const useTourForm = (tourId) => {
         ...formData,
         original_price: Number(formData.original_price) || 0,
         discount_percent: Number(formData.discount_percent) || 0,
+        price_child: hasCustomChildPrice ? Number(formData.price_child) : null,
+        price_baby: hasCustomBabyPrice ? Number(formData.price_baby) : null,
         highlights: highlightsArr,
         notes: (formData.notes || '').trim(),
         services_included: servicesInc,

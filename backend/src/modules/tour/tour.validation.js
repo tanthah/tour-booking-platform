@@ -42,6 +42,14 @@ const createTourValidation = [
     .optional()
     .isFloat({ min: 0, max: 100 }).withMessage('Phần trăm giảm phải từ 0 đến 100'),
 
+  body('price_child')
+    .optional({ values: 'null' })
+    .isFloat({ min: 0 }).withMessage('Giá trẻ em phải là số >= 0'),
+
+  body('price_baby')
+    .optional({ values: 'null' })
+    .isFloat({ min: 0 }).withMessage('Giá em bé phải là số >= 0'),
+
   body('main_image')
     .trim()
     .notEmpty().withMessage('Ảnh đại diện Tour là bắt buộc'),
@@ -159,6 +167,14 @@ const updateTourValidation = [
   body('discount_percent')
     .optional()
     .isFloat({ min: 0, max: 100 }).withMessage('Phần trăm giảm phải từ 0 đến 100'),
+
+  body('price_child')
+    .optional({ values: 'null' })
+    .isFloat({ min: 0 }).withMessage('Giá trẻ em phải là số >= 0'),
+
+  body('price_baby')
+    .optional({ values: 'null' })
+    .isFloat({ min: 0 }).withMessage('Giá em bé phải là số >= 0'),
 
   body('main_image')
     .optional()

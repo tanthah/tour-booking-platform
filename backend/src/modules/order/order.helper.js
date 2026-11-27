@@ -1,5 +1,6 @@
 const Tour = require('../tour/tour.model');
 const TourDeparture = require('../tour/tourDeparture.model');
+const { resolveTourPrices } = require('../tour/tour.pricing');
 const Order = require('./order.model');
 const OrderLog = require('./orderLog.model');
 const couponService = require('../coupon/coupon.service');
@@ -49,17 +50,7 @@ const buildOrderItems = async (cartItems, departuresMap = {}) => {
     }
 
     // Giá 0đ là hợp lệ: ưu tiên sale_price nếu có thiết lập, fallback original_price ?? 0
-    const priceAdult = (tour.sale_price !== null && tour.sale_price !== undefined)
-      ? tour.sale_price
-      : (tour.original_price ?? 0);
-
-    const priceChild = (tour.price_child !== null && tour.price_child !== undefined)
-      ? tour.price_child
-      : Math.round(priceAdult * 0.7);
-
-    const priceBaby = (tour.price_baby !== null && tour.price_baby !== undefined)
-      ? tour.price_baby
-      : Math.round(priceAdult * 0.3);
+    const { priceAdult, priceChild, priceBaby } = resolveTourPrices(tour);
 
     const qtyAdult = cartItem.quantity_adult ?? cartItem.quantity ?? 1;
     const qtyChild = cartItem.quantity_child ?? 0;

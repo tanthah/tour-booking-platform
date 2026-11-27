@@ -104,12 +104,12 @@ const CheckoutSummaryCard = ({
                 </div>
                 {item.quantity_child > 0 && (
                   <div>
-                    • {item.quantity_child} trẻ em × {(item.price_child || Math.round((item.price_adult || 0) * 0.7)).toLocaleString('vi-VN')} đ
+                    • {item.quantity_child} trẻ em × {(item.price_child ?? Math.round((item.price_adult || 0) * 0.6)).toLocaleString('vi-VN')} đ
                   </div>
                 )}
                 {item.quantity_baby > 0 && (
                   <div>
-                    • {item.quantity_baby} em bé × {(item.price_baby || Math.round((item.price_adult || 0) * 0.3)).toLocaleString('vi-VN')} đ
+                    • {item.quantity_baby} em bé × {(item.price_baby ?? Math.round((item.price_adult || 0) * 0.2)).toLocaleString('vi-VN')} đ
                   </div>
                 )}
               </div>
