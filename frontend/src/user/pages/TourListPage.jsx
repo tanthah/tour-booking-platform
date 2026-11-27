@@ -1,8 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Form, Button, Spinner } from 'react-bootstrap';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  Home,
+  SlidersHorizontal,
+  Filter,
+  ChevronUp,
+  ChevronDown,
+  Flame,
+  Calendar,
+  Briefcase,
+} from 'lucide-react';
 import TourCard from '../modules/tours/components/TourCard';
 import axiosClient from '../config/axiosClient';
+import domesticBanner from '../assets/banner_tour_viet_nam.png';
+import worldBanner from '../assets/banner_tour_world.png';
 import '../assets/styles/tour.css';
 
 /**
@@ -75,22 +87,29 @@ const TourListPage = ({ categoryType }) => {
     fetchTours();
   };
 
+  const bannerImage = isDomestic ? domesticBanner : worldBanner;
+
   return (
-    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', paddingBottom: '70px' }}>
-      {/* 1. Header Banner & Breadcrumb */}
-      <section
-        className="tour-page-banner"
-        style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1600&auto=format&fit=crop')`,
-        }}
-      >
-        <div className="tour-page-banner-overlay" />
-        <Container style={{ position: 'relative', zIndex: 2 }}>
-          <h1 className="tour-page-banner-title">{pageTitle}</h1>
-          <div className="tour-page-breadcrumb">
-            <Link to="/">Trang Chủ</Link> » <span>{pageTitle}</span>
-          </div>
-        </Container>
+    <div className="tour-list-page">
+      {/* Breadcrumb phía trên banner */}
+      <div className="tour-detail-breadcrumb-wrap">
+        <div className="tour-breadcrumb-clean">
+          <Link to="/" className="d-inline-flex align-items-center gap-1">
+            <Home size={13} />
+            <span>Trang Chủ</span>
+          </Link>
+          <span className="mx-2 text-muted">/</span>
+          <span className="text-dark fw-semibold">{pageTitle}</span>
+        </div>
+      </div>
+
+      {/* 1. Header Banner */}
+      <section className="tour-page-banner">
+        <img
+          src={bannerImage}
+          alt={pageTitle}
+          className="tour-page-banner-img"
+        />
       </section>
 
       {/* 2. Main Content: Bộ lọc bên trái & Danh sách Tour bên phải */}
@@ -100,10 +119,13 @@ const TourListPage = ({ categoryType }) => {
           <Col lg={3} md={4} xs={12}>
             <div className="tour-filter-card">
               <div className="tour-filter-title">
-                <span>Bộ Lọc</span>
-                <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
-                </svg>
+                <span className="tour-filter-title-left">
+                  <span className="tour-filter-icon-badge">
+                    <Briefcase size={17} />
+                  </span>
+                  <span>Bộ Lọc</span>
+                </span>
+                <SlidersHorizontal size={17} />
               </div>
 
               <Form onSubmit={handleApplyFilter}>
@@ -156,7 +178,7 @@ const TourListPage = ({ categoryType }) => {
                       max="20"
                       value={adults}
                       onChange={(e) => setAdults(Number(e.target.value))}
-                      style={{ width: '70px', height: '34px', fontSize: '13px' }}
+                      className="tour-filter-pax-input"
                     />
                   </div>
                   <div className="tour-filter-passenger-row">
@@ -167,7 +189,7 @@ const TourListPage = ({ categoryType }) => {
                       max="10"
                       value={children}
                       onChange={(e) => setChildren(Number(e.target.value))}
-                      style={{ width: '70px', height: '34px', fontSize: '13px' }}
+                      className="tour-filter-pax-input"
                     />
                   </div>
                   <div className="tour-filter-passenger-row">
@@ -178,7 +200,7 @@ const TourListPage = ({ categoryType }) => {
                       max="10"
                       value={babies}
                       onChange={(e) => setBabies(Number(e.target.value))}
-                      style={{ width: '70px', height: '34px', fontSize: '13px' }}
+                      className="tour-filter-pax-input"
                     />
                   </div>
                 </div>
@@ -198,63 +220,82 @@ const TourListPage = ({ categoryType }) => {
                   </Form.Select>
                 </Form.Group>
 
-                <Button type="submit" className="tour-filter-btn-apply w-100 d-flex justify-content-center align-items-center">
-                  Áp Dụng
+                <Button type="submit" className="tour-filter-btn-apply d-flex justify-content-center align-items-center">
+                  <Filter size={15} />
+                  <span>Áp Dụng</span>
                 </Button>
               </Form>
+
+              {/* Minh họa du lịch nhẹ ở chân bộ lọc */}
+              <div className="tour-filter-illustration" aria-hidden="true">
+                <svg width="200" height="82" viewBox="0 0 200 82" fill="none">
+                  <path d="M12 72 Q55 58 100 72 Q145 84 190 66" fill="#dbeafe" opacity="0.7" />
+                  <path d="M44 68 C45 50 47 36 49 26" stroke="#93c5fd" strokeWidth="3.5" strokeLinecap="round" />
+                  <path d="M49 26 C38 20 26 24 20 32 C30 29 40 29 49 26 Z" fill="#bfdbfe" />
+                  <path d="M49 26 C40 14 28 10 18 14 C28 17 39 20 49 26 Z" fill="#93c5fd" />
+                  <path d="M49 26 C56 14 68 12 78 18 C67 19 58 21 49 26 Z" fill="#bfdbfe" />
+                  <path d="M49 26 C62 22 72 26 78 35 C68 31 58 28 49 26 Z" fill="#93c5fd" />
+                  <path d="M74 56 Q118 46 154 22" stroke="#93c5fd" strokeWidth="1.8" strokeDasharray="4 4" strokeLinecap="round" />
+                  <path d="M158 16 L172 12 L166 20 L170 25 L163 22 L159 26 L160 20 Z" fill="#60a5fa" />
+                </svg>
+              </div>
             </div>
           </Col>
 
           {/* Cột phải: Danh Sách Tour & Thanh Sắp Xếp */}
           <Col lg={9} md={8} xs={12}>
             {/* Tiêu đề & Giới thiệu danh mục */}
-            <div className="mb-4">
-              <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#ea580c', marginBottom: '8px' }}>
-                {pageTitle}
-              </h2>
-              <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+            <div className="tour-list-header">
+              <h2 className="tour-list-heading">{pageTitle}</h2>
+              <p className="tour-list-subtitle">
                 {isAll
                   ? 'Khám phá tất cả các hành trình du lịch trong nước và quốc tế hấp dẫn với dịch vụ tiêu chuẩn tốt nhất từ TourGo.'
                   : isDomestic
-                  ? 'Khám phá những danh lam thắng cảnh tuyệt sắc của dải đất hình chữ S từ Bắc chí Nam cùng dịch vụ tour trọn gói chu đáo nhất.'
-                  : 'Du lịch Châu Á & Thế Giới: Trải nghiệm những nền văn hóa độc đáo, công trình kiến trúc kỳ vĩ và cảnh quan ngoạn mục năm châu.'}
+                    ? 'Khám phá những danh lam thắng cảnh tuyệt sắc của đất nước cùng các tour hấp dẫn nhất!'
+                    : 'Du lịch Châu Á & Thế Giới: Trải nghiệm những nền văn hóa độc đáo, công trình kiến trúc kỳ vĩ và cảnh quan ngoạn mục năm châu.'}
               </p>
             </div>
 
             {/* Toolbar Sắp Xếp */}
             <div className="tour-sort-bar">
               <div className="d-flex flex-wrap align-items-center gap-2">
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#334155' }}>
-                  Sắp xếp :
-                </span>
+                <span className="tour-sort-label">Sắp xếp :</span>
                 <button
+                  type="button"
                   className={`tour-sort-btn ${activeSort === 'price_asc' ? 'active' : ''}`}
                   onClick={() => setActiveSort('price_asc')}
                 >
-                  Giá tăng dần ↗
+                  <span>Giá tăng dần</span>
+                  <ChevronUp size={14} />
                 </button>
                 <button
+                  type="button"
                   className={`tour-sort-btn ${activeSort === 'price_desc' ? 'active' : ''}`}
                   onClick={() => setActiveSort('price_desc')}
                 >
-                  Giá giảm dần ↘
+                  <span>Giá giảm dần</span>
+                  <ChevronDown size={14} />
                 </button>
                 <button
+                  type="button"
                   className={`tour-sort-btn ${activeSort === 'newest' ? 'active' : ''}`}
                   onClick={() => setActiveSort('newest')}
                 >
-                  Mới nhất 🔥
+                  <span>Mới nhất</span>
+                  <Flame size={14} style={{ color: '#f97316' }} />
                 </button>
                 <button
+                  type="button"
                   className={`tour-sort-btn ${activeSort === 'departure_date_asc' ? 'active' : ''}`}
                   onClick={() => setActiveSort('departure_date_asc')}
                 >
-                  Khởi hành sớm 📅
+                  <span>Khởi hành sớm</span>
+                  <Calendar size={14} style={{ color: '#0284c7' }} />
                 </button>
               </div>
 
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
-                Tất cả: <strong className="text-dark">{totalCount} Tour</strong>
+              <div className="tour-total-count">
+                Tất cả: <strong>{totalCount} Tour</strong>
               </div>
             </div>
 

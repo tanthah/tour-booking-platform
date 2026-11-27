@@ -1,41 +1,41 @@
 import { useState, useEffect } from 'react';
 import { Container, Row, Col, Button, Spinner, Alert } from 'react-bootstrap';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
-  Clock,
   MapPin,
-  Compass,
-  Car,
-  Sparkles,
   Calendar,
   Check,
-  X,
-  AlertCircle,
   Star,
   MessageSquare,
   ShieldCheck,
-  FileText,
-  Navigation,
+  Home,
+  Headphones,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
+  Image as ImageIcon,
+  Briefcase,
+  Phone,
 } from 'lucide-react';
 import TourBookingCard from '../modules/tours/components/TourBookingCard';
 import axiosClient from '../config/axiosClient';
+import bannerDetailImg from '../assets/banner_detail_tour_viet_nam.png';
 import '../assets/styles/tour.css';
 
 /**
- * TourDetailPage Component - Trang Chi Tiết Tour với Tab Navigation
- * - Header & Breadcrumb trên nền trắng tinh giản
- * - Khối ảnh gallery
- * - Thanh Tab điều hướng: Điểm nổi bật, Lịch trình, Bao gồm, Lưu ý, Đánh giá
- * - Khung đặt tour tích hợp lịch khởi hành ở phía trên
+ * TourDetailPage Component - Trang Chi Tiết Tour với Banner & Tab Navigation
  */
 const TourDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeImage, setActiveImage] = useState('');
   const [activeTab, setActiveTab] = useState('highlights'); // highlights | itinerary | included | notes | reviews
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Dữ liệu đặt tour
   const [adults, setAdults] = useState(1);
@@ -43,6 +43,7 @@ const TourDetailPage = () => {
   const [babies, setBabies] = useState(0);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [departures, setDepartures] = useState([]);
   const [selectedDeparture, setSelectedDeparture] = useState(null);
 
@@ -153,6 +154,44 @@ const TourDetailPage = () => {
     }
   };
 
+  // Thanh toán ngay: thêm vào giỏ rồi chuyển thẳng sang Checkout với item vừa chọn
+  const handleBuyNow = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Vui lòng đăng nhập để tiến hành đặt tour.');
+      return;
+    }
+
+    if (!selectedDeparture) {
+      alert('Vui lòng chọn đợt khởi hành.');
+      return;
+    }
+
+    try {
+      setBuyingNow(true);
+      const res = await axiosClient.post('/cart/items', {
+        tour_id: tour._id,
+        departure_id: selectedDeparture._id,
+        quantity_adult: adults,
+        quantity_child: children,
+        quantity_baby: babies,
+      });
+      window.dispatchEvent(new Event('cartUpdated'));
+      const cartItems = res?.data?.items || [];
+      const matched = cartItems.find(
+        (it) => String(it.tour_id) === String(tour._id)
+          && String(it.departure_id || '') === String(selectedDeparture._id || '')
+      );
+      navigate('/checkout', {
+        state: matched ? { selectedItems: [matched._id] } : undefined,
+      });
+    } catch (err) {
+      alert(err.response?.data?.message || err.message || 'Không thể tiến hành đặt tour.');
+    } finally {
+      setBuyingNow(false);
+    }
+  };
+
   // Danh sách các điểm nhấn mặc định nếu tour chưa có highlights từ admin
   const defaultHighlights = [
     `Khám phá trọn vẹn điểm đến tuyệt đẹp tại ${tour.destination_location}`,
@@ -166,92 +205,169 @@ const TourDetailPage = () => {
     ? tour.highlights
     : defaultHighlights;
 
-  // Danh sách tabs cấu hình
+  const currentImageIndex = Math.max(
+    0,
+    galleryImages.findIndex((img) => img === (activeImage || tour.main_image))
+  );
+
+  const handlePrevImage = () => {
+    if (galleryImages.length <= 1) return;
+    const prevIdx = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    setActiveImage(galleryImages[prevIdx]);
+  };
+
+  const handleNextImage = () => {
+    if (galleryImages.length <= 1) return;
+    const nextIdx = (currentImageIndex + 1) % galleryImages.length;
+    setActiveImage(galleryImages[nextIdx]);
+  };
+
+  const selectedDepartureDateLabel = selectedDeparture
+    ? new Date(selectedDeparture.start_datetime || selectedDeparture.departure_date).toLocaleDateString('vi-VN')
+    : 'Liên hệ';
+
+  const averageRating = Number(reviewsData.stats?.averageRating || 5.0).toFixed(1);
+  const totalReviews = reviewsData.stats?.totalReviews || 0;
+
+  // Danh sách tabs cấu hình kèm icon
   const tabList = [
-    { id: 'highlights', label: 'Điểm nổi bật' },
-    { id: 'itinerary', label: 'Lịch trình' },
-    { id: 'included', label: 'Bao gồm' },
-    { id: 'notes', label: 'Lưu ý' },
-    { id: 'reviews', label: 'Đánh giá' },
+    { id: 'highlights', label: 'Điểm nổi bật', icon: Star },
+    { id: 'itinerary', label: 'Lịch trình', icon: Calendar },
+    { id: 'included', label: 'Bao gồm', icon: Briefcase },
+    { id: 'notes', label: 'Lưu ý', icon: ShieldCheck },
+    { id: 'reviews', label: 'Đánh giá', icon: MessageSquare },
   ];
 
   return (
-    <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh', paddingBottom: '80px' }}>
+    <div className="tour-detail-page">
       {/* ============================================================
-          1. HEADER BREADCRUMB & TÊN TOUR TRÊN NỀN TRẮNG
+          1. BREADCRUMB TRÊN BANNER, BANNER & HÀNG PILL THÔNG TIN DƯỚI BANNER
           ============================================================ */}
-      <section className="tour-header-white py-4 mb-4">
-        <Container>
-          {/* Breadcrumb bình thường, nền trắng */}
-          <div className="tour-breadcrumb-clean mb-2">
-            <Link to="/">Trang Chủ</Link>
-            <span className="mx-2 text-muted">»</span>
-            <Link to={tour.category === 'DOMESTIC' ? '/tour-trong-nuoc' : '/tour-nuoc-ngoai'}>
-              {tour.category === 'DOMESTIC' ? 'Tour Trong Nước' : 'Tour Nước Ngoài'}
-            </Link>
-            <span className="mx-2 text-muted">»</span>
-            <span className="text-dark fw-semibold">{tour.title}</span>
-          </div>
+      <div className="tour-detail-breadcrumb-wrap">
+        <div className="tour-breadcrumb-clean">
+          <Link to="/" className="d-inline-flex align-items-center gap-1">
+            <Home size={13} />
+            <span>Trang Chủ</span>
+          </Link>
+          <span className="mx-2 text-muted">/</span>
+          <Link to={tour.category === 'DOMESTIC' ? '/tour-trong-nuoc' : '/tour-nuoc-ngoai'}>
+            {tour.category === 'DOMESTIC' ? 'Tour Trong Nước' : 'Tour Nước Ngoài'}
+          </Link>
+          <span className="mx-2 text-muted">/</span>
+          <span className="text-dark fw-semibold">{tour.title}</span>
+        </div>
+      </div>
 
-          {/* Tên tour trên nền trắng */}
-          <h1 className="tour-detail-title-clean">{tour.title}</h1>
-
-          {/* Thông tin thông số nhanh */}
-          <div className="d-flex flex-wrap align-items-center gap-3 text-muted" style={{ fontSize: '13.5px' }}>
-            {tour.code && (
-              <span className="badge bg-light text-secondary border px-2 py-1">
-                Mã tour: <strong className="text-dark">{tour.code}</strong>
-              </span>
-            )}
-            {tour.duration && (
-              <span className="d-inline-flex align-items-center gap-1">
-                <Clock size={15} className="text-warning" />
-                Thời gian: <strong className="text-dark">{tour.duration}</strong>
-              </span>
-            )}
+      <section className="tour-detail-banner">
+        <img
+          src={bannerDetailImg}
+          alt={tour.title}
+          className="tour-detail-banner-img"
+        />
+        <div className="tour-detail-banner-inner">
+          <div className="tour-detail-banner-box">
+            <h1 className="tour-detail-banner-title">{tour.title}</h1>
             {tour.destination_location && (
-              <span className="d-inline-flex align-items-center gap-1">
-                <MapPin size={15} className="text-danger" />
-                Điểm đến: <strong className="text-dark">{tour.destination_location}</strong>
-              </span>
-            )}
-            {(selectedDeparture?.meeting_point || selectedDeparture?.meeting_point_address) && (
-              <span className="d-inline-flex align-items-center gap-1" title={selectedDeparture.meeting_point || selectedDeparture.meeting_point_address}>
-                <Navigation size={15} className="text-warning" />
-                Điểm tập trung: <strong className="text-dark">{selectedDeparture.meeting_point || selectedDeparture.meeting_point_address}</strong>
-              </span>
+              <div className="tour-detail-banner-dest">
+                <MapPin size={15} className="flex-shrink-0" />
+                <span>Điểm đến: {tour.destination_location}</span>
+              </div>
             )}
           </div>
-        </Container>
+        </div>
       </section>
 
       {/* ============================================================
           2. MAIN CONTENT GRID (2 CỘT)
           ============================================================ */}
       <Container>
+        <div className="tour-detail-below-pills mb-4">
+          <span className="tour-meta-pill is-rating">
+            <Star size={14} style={{ fill: '#16a34a', color: '#16a34a' }} />
+            <span>{averageRating} ({totalReviews} đánh giá)</span>
+          </span>
+
+          {tour.duration && (
+            <span className="tour-meta-pill is-duration">
+              <Calendar size={14} />
+              <span>{tour.duration}</span>
+            </span>
+          )}
+
+          <span className="tour-meta-pill is-neutral">
+            <ShieldCheck size={14} />
+            <span>Đảm bảo chất lượng</span>
+          </span>
+
+          <span className="tour-meta-pill is-neutral">
+            <Headphones size={14} />
+            <span>Hỗ trợ 24/7</span>
+          </span>
+
+          <span className="tour-meta-pill is-departure">
+            <MapPin size={14} />
+            <span>Khởi hành: <strong>{selectedDepartureDateLabel}</strong></span>
+          </span>
+        </div>
+
         <Row className="gy-4">
-          {/* CỘT TRÁI (Gallery ảnh, Thanh Tab, Nội dung Tab) - Chiếm 8/12 để rộng rãi hơn */}
+          {/* CỘT TRÁI (Gallery ảnh, Thanh Tab, Nội dung Tab) */}
           <Col lg={8} xs={12}>
-            {/* Gallery ảnh lớn & ảnh nhỏ */}
-            <div className="bg-white p-3 rounded-4 shadow-sm mb-4">
-              <img
-                src={activeImage || tour.main_image}
-                alt={tour.title}
-                className="tour-detail-main-img mb-3"
-              />
+            {/* Gallery ảnh lớn kèm nút chuyển & bộ đếm */}
+            <div className="tour-gallery-card mb-4">
+              <div className="tour-detail-main-stage mb-3">
+                <img
+                  src={activeImage || tour.main_image}
+                  alt={tour.title}
+                  className="tour-detail-main-img"
+                />
+
+                {galleryImages.length > 0 && (
+                  <div className="tour-gallery-counter">
+                    <ImageIcon size={14} />
+                    <span>{currentImageIndex + 1} / {galleryImages.length}</span>
+                  </div>
+                )}
+
+                {galleryImages.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className="tour-gallery-nav prev"
+                      onClick={handlePrevImage}
+                      aria-label="Ảnh trước"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <button
+                      type="button"
+                      className="tour-gallery-nav next"
+                      onClick={handleNextImage}
+                      aria-label="Ảnh tiếp theo"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </>
+                )}
+              </div>
+
               {galleryImages.length > 1 && (
-                <Row className="g-2">
+                <div className="tour-gallery-thumbs-grid">
                   {galleryImages.map((img, idx) => (
-                    <Col key={idx} xs={3}>
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`tour-detail-thumb-btn ${(activeImage || tour.main_image) === img ? 'active' : ''}`}
+                      onClick={() => setActiveImage(img)}
+                    >
                       <img
                         src={img}
                         alt={`Ảnh ${idx + 1}`}
-                        className={`tour-detail-thumb-img ${activeImage === img ? 'active' : ''}`}
-                        onClick={() => setActiveImage(img)}
+                        className="tour-detail-thumb-img"
                       />
-                    </Col>
+                    </button>
                   ))}
-                </Row>
+                </div>
               )}
             </div>
 
@@ -259,52 +375,70 @@ const TourDetailPage = () => {
                 3. TAB BAR NAVIGATION (Điểm nổi bật, Lịch trình, Bao gồm, Lưu ý, Đánh giá)
                 ============================================================ */}
             <div className="tour-tabs-container">
-              {tabList.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`tour-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-                >
-                  {tab.label}
-                </button>
-              ))}
+              {tabList.map((tab) => {
+                const TabIcon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`tour-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
+                  >
+                    <TabIcon size={16} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* ============================================================
                 4. TAB CONTENT
                 ============================================================ */}
 
-            {/* TAB 1: ĐIỂM NỔI BẬT (Nội dung điểm nhấn + Mô tả tổng quan tour - Chữ bình thường) */}
+            {/* TAB 1: ĐIỂM NỔI BẬT */}
             {activeTab === 'highlights' && (
-              <div className="tour-tab-content-card">
-                {/* Điểm nổi bật của chuyến đi */}
-                <div className="mb-4">
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', marginBottom: '14px' }}>
-                    Điểm nổi bật của chuyến đi
+              <>
+                <div className="tour-tab-content-card">
+                  <h3 className="tour-section-heading">
+                    <Star size={20} style={{ fill: '#f97316', color: '#f97316' }} />
+                    <span>Điểm nổi bật</span>
                   </h3>
-                  <ul style={{ margin: 0, paddingLeft: '22px', color: '#334155', fontSize: '14.5px', lineHeight: 1.8 }}>
+                  <ul className="tour-highlights-check-list">
                     {highlightsList.map((hl, index) => (
-                      <li key={index} style={{ marginBottom: '6px' }}>{hl}</li>
+                      <li key={index} className="tour-highlights-check-item">
+                        <Check size={16} className="tour-highlights-check-icon" />
+                        <span>{hl}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
 
-                <hr style={{ borderColor: '#f1f5f9', margin: '24px 0' }} />
-
-                {/* Mô tả tổng quan tour */}
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#1e293b', marginBottom: '14px' }}>
-                    Mô tả tổng quan tour
+                <div className="tour-tab-content-card">
+                  <h3 className="tour-section-heading">
+                    <ImageIcon size={20} style={{ color: '#2563eb' }} />
+                    <span>Mô tả tổng quan tour</span>
                   </h3>
-                  {tour.content_html ? (
-                    <div className="tour-rich-content" dangerouslySetInnerHTML={{ __html: tour.content_html }} />
-                  ) : (
-                    <p style={{ fontSize: '14.5px', color: '#334155', lineHeight: 1.8, margin: 0 }}>
-                      {tour.description || 'Thông tin chi tiết về chuyến tham quan đang được cập nhật.'}
-                    </p>
+                  <div className={`tour-overview-body ${descExpanded ? 'is-expanded' : ''}`}>
+                    {tour.content_html ? (
+                      <div className="tour-rich-content" dangerouslySetInnerHTML={{ __html: tour.content_html }} />
+                    ) : (
+                      <p style={{ fontSize: '14.5px', color: '#334155', lineHeight: 1.8, margin: 0 }}>
+                        {tour.description || 'Thông tin chi tiết về chuyến tham quan đang được cập nhật.'}
+                      </p>
+                    )}
+                  </div>
+                  {(tour.content_html || (tour.description && tour.description.length > 180)) && (
+                    <button
+                      type="button"
+                      className="tour-overview-toggle-btn"
+                      onClick={() => setDescExpanded((prev) => !prev)}
+                    >
+                      <span>{descExpanded ? 'Thu gọn' : 'Xem thêm'}</span>
+                      {descExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                    </button>
                   )}
                 </div>
-              </div>
+              </>
             )}
 
             {/* TAB 2: LỊCH TRÌNH */}
@@ -525,28 +659,47 @@ const TourDetailPage = () => {
             )}
           </Col>
 
-          {/* CỘT PHẢI (Khung đặt tour làm gọn gàng hơn - Chiếm 4/12) */}
+          {/* CỘT PHẢI (Sidebar đặt tour + Hỗ trợ - Chiếm 4/12) */}
           <Col lg={4} xs={12}>
-            <TourBookingCard
-              tour={tour}
-              departures={departures}
-              selectedDeparture={selectedDeparture}
-              setSelectedDeparture={setSelectedDeparture}
-              adults={adults}
-              setAdults={setAdults}
-              children={children}
-              setChildren={setChildren}
-              babies={babies}
-              setBabies={setBabies}
-              unitPrice={unitPrice}
-              childPrice={childPrice}
-              babyPrice={babyPrice}
-              totalPrice={totalPrice}
-              canAddPassenger={canAddPassenger}
-              handleAddToCart={handleAddToCart}
-              addingToCart={addingToCart}
-              isAddedToCart={isAddedToCart}
-            />
+            <div className="tour-detail-sidebar-sticky">
+              <TourBookingCard
+                tour={tour}
+                departures={departures}
+                selectedDeparture={selectedDeparture}
+                setSelectedDeparture={setSelectedDeparture}
+                adults={adults}
+                setAdults={setAdults}
+                children={children}
+                setChildren={setChildren}
+                babies={babies}
+                setBabies={setBabies}
+                unitPrice={unitPrice}
+                childPrice={childPrice}
+                babyPrice={babyPrice}
+                totalPrice={totalPrice}
+                canAddPassenger={canAddPassenger}
+                handleAddToCart={handleAddToCart}
+                handleBuyNow={handleBuyNow}
+                addingToCart={addingToCart}
+                buyingNow={buyingNow}
+                isAddedToCart={isAddedToCart}
+              />
+
+              {/* Thẻ hỗ trợ tư vấn 24/7 */}
+              <div className="tour-support-card mt-3">
+                <div className="tour-support-icon-wrap">
+                  <Headphones size={26} />
+                </div>
+                <div className="tour-support-info">
+                  <div className="tour-support-title">Cần hỗ trợ?</div>
+                  <div className="tour-support-sub">Tư vấn miễn phí 24/7</div>
+                  <a href="tel:19001234" className="tour-support-phone">
+                    <Phone size={15} />
+                    <span>1900 1234</span>
+                  </a>
+                </div>
+              </div>
+            </div>
           </Col>
         </Row>
       </Container>

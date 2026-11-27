@@ -82,7 +82,7 @@ const Header = ({ user, onOpenLogin, onOpenRegister: _onOpenRegister, onLogout: 
         <Container>
           {/* Logo TourGo */}
           <Navbar.Brand as={Link} to="/" className="p-0">
-            <Logo height={65} logoUrl={settings?.logo_url} />
+            <Logo height={47} logoUrl={settings?.logo_url} />
           </Navbar.Brand>
 
           <Navbar.Toggle aria-controls="main-navbar-nav" />
