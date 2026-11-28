@@ -104,9 +104,16 @@ const TourCard = ({ tour = {} }) => {
         </Link>
 
         {/* Khối giá tiền */}
-        <div className="d-flex align-items-baseline gap-2 mb-2">
-          {oldPriceDisplay && <span className="tour-card-price-old">{oldPriceDisplay}</span>}
-          <span className="tour-card-price-new">{priceDisplay}</span>
+        <div className="tour-card-price-block mb-2">
+          <div className="tour-card-price-new">{priceDisplay}</div>
+          {oldPriceDisplay && (
+            <div className="tour-card-old-row">
+              <span className="tour-card-price-old">{oldPriceDisplay}</span>
+              {discountDisplay && (
+                <span className="tour-card-discount-pill">{discountDisplay}</span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Thông số metadata */}
@@ -139,7 +146,7 @@ const TourCard = ({ tour = {} }) => {
             {slots !== null ? (
               <span className={`tour-card-slots ${slots === 0 ? 'bg-secondary' : ''}`}>{slots}</span>
             ) : (
-              <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 700 }}>Còn chỗ</span>
+              <span className="tour-card-slots-available">Còn chỗ</span>
             )}
           </div>
         </div>
